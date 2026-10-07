@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegistroController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\RecepcionistaController;
 use App\Http\Controllers\Admin\AgenciaController;
+use App\Http\Controllers\Admin\ClienteController;
 
 // Página inicial (la landing se hará en el Módulo 10)
 Route::get('/', function () {
@@ -59,6 +60,12 @@ Route::middleware(['auth', 'rol:ADMINISTRADOR'])
             ->whereNumber('agencia')->name('agencias.update');
         Route::patch('/agencias/{agencia}/estado', [AgenciaController::class, 'cambiarEstado'])
             ->whereNumber('agencia')->name('agencias.estado');
+
+        // Clientes (solo lista y activar/desactivar)
+        Route::get('/clientes', [ClienteController::class, 'index'])
+            ->name('clientes.index');
+        Route::patch('/clientes/{cliente}/estado', [ClienteController::class, 'cambiarEstado'])
+            ->whereNumber('cliente')->name('clientes.estado');
     });
 
 Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {

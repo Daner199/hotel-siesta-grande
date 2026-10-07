@@ -17,6 +17,7 @@ return [
         ['grupo' => 'Personas', 'items' => [
             ['texto' => 'Recepcionistas', 'icono' => 'concierge-bell', 'ruta' => 'admin.recepcionistas.index', 'patron' => 'admin.recepcionistas.*'],
             ['texto' => 'Agencias', 'icono' => 'building-2', 'ruta' => 'admin.agencias.index', 'patron' => 'admin.agencias.*'],
+            ['texto' => 'Clientes', 'icono' => 'users', 'ruta' => 'admin.clientes.index', 'patron' => 'admin.clientes.*'],
         ]],
         ['grupo' => 'Hotel', 'items' => [
             ['texto' => 'Habitaciones', 'icono' => 'bed-double', 'ruta' => null],
