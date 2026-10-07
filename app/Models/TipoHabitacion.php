@@ -51,4 +51,23 @@ class TipoHabitacion extends Model
             ->where(fn ($q) => $q->whereNull('fecha_hasta')->orWhere('fecha_hasta', '>', $dia))
             ->first();
     }
+
+    // Próxima tarifa que empieza en el futuro (si hay una programada)
+    public function tarifaProgramada(): ?TarifaHabitacion
+    {
+        return $this->tarifas()
+            ->where('activa', true)
+            ->where('fecha_desde', '>', today()->toDateString())
+            ->orderBy('fecha_desde')
+            ->first();
+    }
+
+    // La tarifa activa que empieza más tarde: una nueva solo puede empezar después de ella
+    public function ultimaTarifa(): ?TarifaHabitacion
+    {
+        return $this->tarifas()
+            ->where('activa', true)
+            ->orderByDesc('fecha_desde')
+            ->first();
+    }
 }

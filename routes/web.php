@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\RecepcionistaController;
 use App\Http\Controllers\Admin\AgenciaController;
 use App\Http\Controllers\Admin\ClienteController;
+use App\Http\Controllers\Admin\TarifaController;
+use App\Http\Controllers\Admin\TipoHabitacionController;
 
 // Página inicial (la landing se hará en el Módulo 10)
 Route::get('/', function () {
@@ -66,6 +68,30 @@ Route::middleware(['auth', 'rol:ADMINISTRADOR'])
             ->name('clientes.index');
         Route::patch('/clientes/{cliente}/estado', [ClienteController::class, 'cambiarEstado'])
             ->whereNumber('cliente')->name('clientes.estado');
+
+        // Tipos de habitación
+        Route::get('/tipos', [TipoHabitacionController::class, 'index'])
+            ->name('tipos.index');
+        Route::get('/tipos/crear', [TipoHabitacionController::class, 'create'])
+            ->name('tipos.create');
+        Route::post('/tipos', [TipoHabitacionController::class, 'store'])
+            ->name('tipos.store');
+        Route::get('/tipos/{tipo}/editar', [TipoHabitacionController::class, 'edit'])
+            ->whereNumber('tipo')->name('tipos.edit');
+        Route::put('/tipos/{tipo}', [TipoHabitacionController::class, 'update'])
+            ->whereNumber('tipo')->name('tipos.update');
+        Route::patch('/tipos/{tipo}/estado', [TipoHabitacionController::class, 'cambiarEstado'])
+            ->whereNumber('tipo')->name('tipos.estado');
+        Route::delete('/tipos/{tipo}', [TipoHabitacionController::class, 'destroy'])
+            ->whereNumber('tipo')->name('tipos.destroy');
+
+        // Tarifas de cada tipo (scopeBindings: la tarifa debe ser de ESE tipo, si no → 404)
+        Route::get('/tipos/{tipo}/tarifas', [TarifaController::class, 'index'])
+            ->whereNumber('tipo')->name('tipos.tarifas');
+        Route::post('/tipos/{tipo}/tarifas', [TarifaController::class, 'store'])
+            ->whereNumber('tipo')->name('tipos.tarifas.store');
+        Route::patch('/tipos/{tipo}/tarifas/{tarifa}/anular', [TarifaController::class, 'anular'])
+            ->whereNumber(['tipo', 'tarifa'])->scopeBindings()->name('tipos.tarifas.anular');
     });
 
 Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {

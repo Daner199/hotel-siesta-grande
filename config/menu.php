@@ -21,7 +21,7 @@ return [
         ]],
         ['grupo' => 'Hotel', 'items' => [
             ['texto' => 'Habitaciones', 'icono' => 'bed-double', 'ruta' => null],
-            ['texto' => 'Tarifas', 'icono' => 'tags', 'ruta' => null],
+            ['texto' => 'Tipos y tarifas', 'icono' => 'tags', 'ruta' => 'admin.tipos.index', 'patron' => 'admin.tipos.*'],
             ['texto' => 'Promociones', 'icono' => 'sparkles', 'ruta' => null],
             ['texto' => 'Beneficios', 'icono' => 'gift', 'ruta' => null],
             ['texto' => 'Salón de eventos', 'icono' => 'party-popper', 'ruta' => null],

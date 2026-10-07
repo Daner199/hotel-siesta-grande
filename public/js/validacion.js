@@ -5,7 +5,8 @@
  *   <form data-validar-form>
  *     <input name="nombre" data-validar="letras" required data-vacio="Escribe tu nombre.">
  *
- * Tipos: letras, email, telefono, password, confirmar, nit
+ * Tipos: letras, email, telefono, password, confirmar, nit, empresa,
+ *        tipo, entero (usa min/max), precio, fecha (usa min)
  * Son las MISMAS reglas que valida Laravel. Laravel siempre vuelve a validar.
  */
 (() => {
@@ -76,6 +77,48 @@
             }
             return null;
         },
+
+        // Nombre de tipo de habitación: solo letras y espacios, 3 a 50
+        tipo(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            const limpio = valor.replace(/\s+/g, ' ');
+            if (limpio.length < 3) return 'Debe tener al menos 3 letras.';
+            if (limpio.length > 50) return 'Es demasiado largo (máximo 50).';
+            if (!/^\p{L}+(?: \p{L}+)*$/u.test(limpio)) return 'Solo puede tener letras y espacios.';
+            return null;
+        },
+
+        // Número entero entre el min y max del campo
+        entero(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            const n = Number(valor);
+            if (!/^\d+$/.test(valor)) return 'Debe ser un número entero.';
+            if (campo.min && n < Number(campo.min)) return `Debe ser al menos ${campo.min}.`;
+            if (campo.max && n > Number(campo.max)) return `No puede ser mayor que ${campo.max}.`;
+            return null;
+        },
+
+        // Precio en Bs: acepta 250 · 250,50 · 1.250,50 (igual que Laravel)
+        precio(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            let v = valor.replace(/\s+/g, '');
+            if (v.includes(',')) v = v.replace(/\./g, '').replace(',', '.');
+            else if (/^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, '');
+            if (!/^\d+(\.\d{1,2})?$/.test(v)) return 'Escribe un precio válido, por ejemplo 250 o 250,50.';
+            if (Number(v) < 1) return 'El precio debe ser de al menos Bs 1.';
+            if (Number(v) > 99999.99) return 'El precio es demasiado alto.';
+            return null;
+        },
+
+        // Fecha (AAAA-MM-DD) que no puede ser anterior al min del campo
+        fecha(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            if (campo.min && valor < campo.min) {
+                const [a, m, d] = campo.min.split('-');
+                return `Debe ser el ${d}/${m}/${a} o después.`;
+            }
+            return null;
+        },
     };
 
     // ----- Filtros: impiden escribir caracteres no permitidos -----
@@ -83,6 +126,8 @@
         letras:   (v) => v.replace(/[0-9]/g, ''),
         telefono: (v) => v.replace(/\D/g, ''),
         nit:      (v) => v.replace(/\D/g, ''),
+        tipo:     (v) => v.replace(/[^\p{L}\s]/gu, ''),
+        precio:   (v) => v.replace(/[^\d.,]/g, ''),
     };
 
     // ----- Mostrar u ocultar el error de un campo -----

@@ -734,3 +734,291 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
 
 .contacto-celda strong { display: block; font-weight: 600; }
 .contacto-celda span { display: block; font-size: .85rem; color: var(--piedra); }
+
+
+/* ============================================================
+   MÓDULO 2 - Tipos y tarifas
+   ============================================================ */
+
+/* ---------- Campos extra de formulario ---------- */
+.campo textarea {
+    width: 100%;
+    padding: .8rem .9rem;
+    font: 1rem/1.5 var(--f-texto);
+    border: 1.5px solid var(--linea);
+    border-radius: var(--radio);
+    background: var(--blanco);
+    resize: vertical;
+}
+.campo textarea:focus { outline: none; border-color: var(--selva); }
+
+.mayusculas { text-transform: uppercase; }
+
+/* Precio con "Bs" delante */
+.campo-moneda { position: relative; }
+.campo-moneda > span {
+    position: absolute;
+    left: .9rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: 600;
+    color: var(--piedra);
+    pointer-events: none;
+}
+.campo-moneda input { padding-left: 2.6rem; }
+
+/* ---------- Lista de tipos ---------- */
+.avatar-tipo {
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--oro), #E2C27A);
+}
+.avatar-tipo svg { width: 18px; height: 18px; }
+
+.dato-icono { display: inline-flex; align-items: center; gap: .4rem; }
+.dato-icono svg { width: 16px; height: 16px; color: var(--piedra); }
+
+.precio { font-weight: 700; font-variant-numeric: tabular-nums; }
+.precio-proximo {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    margin-top: .25rem;
+    font-size: .8rem;
+    color: #8A6418;
+}
+.precio-proximo svg { width: 14px; height: 14px; }
+
+.etiqueta-alerta { background: var(--oro-suave); color: #8A6418; }
+
+.nota-pie {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 1.25rem 0 0;
+    font-size: .88rem;
+    color: var(--piedra);
+}
+.nota-pie svg { width: 16px; height: 16px; flex: none; }
+
+/* ---------- Pantalla de tarifas ---------- */
+.rejilla-tarifas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.tarifa-actual {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #fff;
+    border: 0;
+    background:
+        radial-gradient(90% 70% at 100% 0%, rgba(196, 80, 122, .35), transparent 65%),
+        linear-gradient(135deg, var(--selva), var(--noche));
+}
+.tarifa-actual-titulo {
+    margin: 0;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #E2C27A;
+}
+.tarifa-actual-precio {
+    margin: .5rem 0 .75rem;
+    font-family: var(--f-titulo);
+    font-size: clamp(2.4rem, 5vw, 3.4rem);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.tarifa-actual-precio span {
+    display: block;
+    margin-top: .4rem;
+    font-family: var(--f-texto);
+    font-size: .95rem;
+    opacity: .7;
+}
+.tarifa-actual-vacia { color: #F3C4D5; }
+.tarifa-actual-fechas {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    margin: 0;
+    font-size: .92rem;
+    opacity: .85;
+}
+.tarifa-actual-fechas svg { width: 16px; height: 16px; flex: none; }
+
+.acciones-form-compactas { padding-top: 1rem; }
+
+/* ---------- Línea de tiempo del historial ---------- */
+.linea-tiempo {
+    position: relative;
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0 0;
+    padding: 0 .25rem 1rem;
+    list-style: none;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+}
+
+.hito {
+    position: relative;
+    flex: 0 0 230px;
+    padding-top: 2rem;
+    scroll-snap-align: center;
+}
+
+/* Tramo de línea que sale de cada punto hacia el siguiente */
+.hito::before {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 0;
+    right: -1rem;
+    height: 2px;
+    background: rgba(14, 36, 27, .14);
+}
+
+.hito-punto {
+    position: absolute;
+    top: 0;
+    left: 1.1rem;
+    z-index: 1;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid #B9C1BC;
+}
+
+.hito-tarjeta {
+    display: grid;
+    justify-items: start;
+    gap: .35rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    background: #fff;
+}
+.hito-tarjeta form { margin: .35rem 0 0; }
+
+.hito-precio {
+    font-family: var(--f-titulo);
+    font-size: 1.6rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+.hito-fechas {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-size: .88rem;
+    color: var(--piedra);
+}
+.hito-fechas svg { width: 14px; height: 14px; }
+.hito-nota { font-size: .82rem; font-weight: 600; color: #8A6418; }
+
+/* Etiqueta de estado de cada tarifa */
+.estado-tarifa {
+    padding: .2rem .6rem;
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    border-radius: 999px;
+}
+.estado-tarifa-vigente    { background: var(--tajibo-suave); color: #A63D64; }
+.estado-tarifa-programada { background: var(--oro-suave);    color: #8A6418; }
+.estado-tarifa-finalizada { background: #EEEFEB;             color: var(--piedra); }
+
+/* Vigente: destacada */
+.hito-vigente .hito-punto {
+    background: var(--tajibo);
+    border-color: #fff;
+    box-shadow: 0 0 0 3px var(--tajibo), 0 0 0 8px var(--tajibo-suave);
+    animation: latido 2.4s ease-in-out infinite;
+}
+.hito-vigente .hito-tarjeta {
+    border-color: rgba(196, 80, 122, .45);
+    background: linear-gradient(180deg, #fff, #FDF6F9);
+    box-shadow: 0 18px 34px -22px rgba(196, 80, 122, .55);
+}
+.hito-vigente .hito-precio { font-size: 2rem; }
+
+@keyframes latido {
+    0%, 100% { box-shadow: 0 0 0 3px var(--tajibo), 0 0 0 7px var(--tajibo-suave); }
+    50%      { box-shadow: 0 0 0 3px var(--tajibo), 0 0 0 12px rgba(248, 229, 237, .4); }
+}
+
+/* Programadas: a la derecha, unidas con línea punteada dorada */
+.hito-programada .hito-punto { border-color: var(--oro); }
+.hito-programada .hito-tarjeta { border: 1.5px dashed rgba(201, 154, 59, .6); }
+.hito-vigente::before,
+.hito-programada::before {
+    background: repeating-linear-gradient(90deg, var(--oro) 0 6px, transparent 6px 12px);
+}
+
+/* Finalizadas: atenuadas */
+.hito-finalizada .hito-tarjeta { background: #FAFBF8; }
+.hito-finalizada .hito-tarjeta > * { opacity: .6; }
+.hito-finalizada .hito-precio { font-size: 1.35rem; }
+
+/* El último hito no tiene tramo hacia la derecha */
+.hito:last-child::before { display: none; }
+
+/* ---------- Tarifas anuladas ---------- */
+.anuladas {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--borde);
+    font-size: .9rem;
+    color: var(--piedra);
+}
+.anuladas summary {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+}
+.anuladas summary::-webkit-details-marker { display: none; }
+.anuladas summary svg { width: 16px; height: 16px; transition: transform .2s; }
+.anuladas[open] summary svg { transform: rotate(90deg); }
+.anuladas ul { margin: .6rem 0 0; padding-left: 1.6rem; display: grid; gap: .3rem; }
+
+@media (max-width: 860px) {
+    .rejilla-tarifas { grid-template-columns: 1fr; }
+}
+
+/* En celular la línea de tiempo pasa a vertical */
+@media (max-width: 720px) {
+    .linea-tiempo {
+        flex-direction: column;
+        padding: 0 0 0 2rem;
+        overflow: visible;
+    }
+    .hito { flex: none; padding-top: 0; }
+    .hito::before {
+        top: 1.1rem;
+        bottom: -1rem;
+        left: -1.45rem;
+        right: auto;
+        width: 2px;
+        height: auto;
+    }
+    .hito-vigente::before,
+    .hito-programada::before {
+        background: repeating-linear-gradient(180deg, var(--oro) 0 6px, transparent 6px 12px);
+    }
+    .hito-punto { top: 1.1rem; left: -2rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hito-vigente .hito-punto { animation: none; }
+    .anuladas summary svg { transition: none; }
+}

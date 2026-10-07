@@ -30,8 +30,34 @@ class TarifaHabitacion extends Model
         'activa'       => 'boolean',
     ];
 
+    public const VIGENTE    = 'VIGENTE';
+    public const PROGRAMADA = 'PROGRAMADA';
+    public const FINALIZADA = 'FINALIZADA';
+    public const ANULADA    = 'ANULADA';
+
     public function tipo(): BelongsTo
     {
         return $this->belongsTo(TipoHabitacion::class, 'tipo_habitacion_id');
+    }
+
+    // Estado según la fecha de hoy (no se guarda en la BD, se calcula)
+    public function estado(): string
+    {
+        $hoy = today();
+
+        $terminada = $this->fecha_hasta !== null && $this->fecha_hasta->lte($hoy);
+
+        return match (true) {
+            ! $this->activa              => self::ANULADA,
+            $this->fecha_desde->gt($hoy) => self::PROGRAMADA,
+            $terminada                   => self::FINALIZADA,
+            default                      => self::VIGENTE,
+        };
+    }
+
+    // Solo se puede anular una tarifa que todavía no empezó
+    public function sePuedeAnular(): bool
+    {
+        return $this->estado() === self::PROGRAMADA;
     }
 }

@@ -177,6 +177,10 @@ return [
         'nit'                   => 'NIT',
         'agencia_telefono'      => 'teléfono de la agencia',
         'agencia_telefono_pais' => 'país del teléfono de la agencia',
+        'capacidad'             => 'capacidad',
+        'descripcion'           => 'descripción',
+        'precio_noche'          => 'precio por noche',
+        'fecha_desde'           => 'fecha de inicio',
     ],
 
 ];
