@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 
 
 class LoginController extends Controller
@@ -18,8 +19,11 @@ class LoginController extends Controller
         return view('auth.login');
     }
 
+    // Fallos permitidos y segundos de bloqueo al superarlos
+    private const MAX_INTENTOS = 5;
+    private const BLOQUEO_SEGUNDOS = 60;
+
     // Procesa el formulario
-        // Procesa el formulario
     public function ingresar(Request $request)
     {
         $datos = $request->validate([
@@ -31,11 +35,26 @@ class LoginController extends Controller
             'password.required' => 'Escribe tu contraseña.',
         ]);
 
-        // 1. Buscar el usuario por correo
-        $usuario = Usuario::where('email', Str::lower(trim($datos['email'])))->first();
+        $email = Str::lower(trim($datos['email']));
 
-        // 2. Correo inexistente o contraseña incorrecta: mismo mensaje
+        // 0. Demasiados fallos con este correo desde esta IP: esperar
+        $clave = 'login|' . $email . '|' . $request->ip();
+
+        if (RateLimiter::tooManyAttempts($clave, self::MAX_INTENTOS)) {
+            $segundos = RateLimiter::availableIn($clave);
+
+            return back()
+                ->withErrors(['email' => "Demasiados intentos. Espera {$segundos} segundos e inténtalo de nuevo."])
+                ->onlyInput('email');
+        }
+
+        // 1. Buscar el usuario por correo
+        $usuario = Usuario::where('email', $email)->first();
+
+        // 2. Correo inexistente o contraseña incorrecta: mismo mensaje (y cuenta un fallo)
         if (! $usuario || ! Hash::check($datos['password'], $usuario->password)) {
+            RateLimiter::hit($clave, self::BLOQUEO_SEGUNDOS);
+
             return back()
                 ->withErrors(['email' => 'El correo o la contraseña no son correctos.'])
                 ->onlyInput('email');
@@ -55,7 +74,8 @@ class LoginController extends Controller
                 ->onlyInput('email');
         }
 
-        // 5. Todo correcto: iniciar sesión
+        // 5. Todo correcto: borrar los fallos e iniciar sesión
+        RateLimiter::clear($clave);
         Auth::login($usuario, $request->boolean('recordar'));
         $request->session()->regenerate();
 
