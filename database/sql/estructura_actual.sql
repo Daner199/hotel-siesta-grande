@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict KFRFO1TdCxYfxeglIwvdgch4OVzyl1uGzUx5xyzLZGhlXzbwQJrtWG12Xhq9lbk
+\restrict unK5l6vZIzQ74X1W6kYfQrqw3tNTdEcHsflurg34UewrsAbGcSqagM7LNioXA45
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -702,7 +702,8 @@ CREATE TABLE public.usuario (
     created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     remember_token character varying(100),
-    CONSTRAINT chk_usuario_rol CHECK (((rol)::text = ANY ((ARRAY['CLIENTE'::character varying, 'AGENCIA'::character varying, 'RECEPCIONISTA'::character varying, 'ADMINISTRADOR'::character varying])::text[])))
+    CONSTRAINT chk_usuario_rol CHECK (((rol)::text = ANY ((ARRAY['CLIENTE'::character varying, 'AGENCIA'::character varying, 'RECEPCIONISTA'::character varying, 'ADMINISTRADOR'::character varying])::text[]))),
+    CONSTRAINT chk_usuario_telefono CHECK (((telefono IS NULL) OR ((telefono)::text ~ '^\+[1-9][0-9]{6,14}$'::text)))
 );
 
 
@@ -1374,5 +1375,5 @@ ALTER TABLE ONLY public.tarifa_habitacion
 -- PostgreSQL database dump complete
 --
 
-\unrestrict KFRFO1TdCxYfxeglIwvdgch4OVzyl1uGzUx5xyzLZGhlXzbwQJrtWG12Xhq9lbk
+\unrestrict unK5l6vZIzQ74X1W6kYfQrqw3tNTdEcHsflurg34UewrsAbGcSqagM7LNioXA45
 
