@@ -20,8 +20,8 @@ class ValidacionUsuario
     public static function preparar(Request $request): void
     {
         $request->merge([
-            'nombre'   => self::limpiarTexto($request->input('nombre')),
-            'apellido' => self::limpiarTexto($request->input('apellido')),
+            'nombre'   => self::mayusculaInicial(self::limpiarTexto($request->input('nombre'))),
+            'apellido' => self::mayusculaInicial(self::limpiarTexto($request->input('apellido'))),
             'telefono' => preg_replace('/\D/', '', (string) $request->input('telefono')) ?: null,
             'email'    => Str::lower(trim((string) $request->input('email'))),
         ]);
@@ -98,5 +98,32 @@ class ValidacionUsuario
         $texto = trim(preg_replace('/\s+/u', ' ', (string) $texto));
 
         return $texto === '' ? null : $texto;
+    }
+
+    // Palabras que van en minúscula salvo que sean la primera ("José de la Cruz")
+    private const PARTICULAS = ['de', 'del', 'la', 'las', 'los', 'y'];
+
+    // "maría o'brien-pérez" → "María O'Brien-Pérez" (solo la primera letra; el resto se respeta)
+    public static function mayusculaInicial(?string $texto): ?string
+    {
+        if ($texto === null) {
+            return null;
+        }
+
+        $texto = preg_replace_callback(
+            '/(^|[\s\'-])(\p{Ll})/u',
+            fn ($m) => $m[1] . mb_strtoupper($m[2]),
+            $texto
+        );
+
+        $palabras = explode(' ', $texto);
+
+        foreach ($palabras as $i => $palabra) {
+            if ($i > 0 && in_array(mb_strtolower($palabra), self::PARTICULAS, true)) {
+                $palabras[$i] = mb_strtolower($palabra);
+            }
+        }
+
+        return implode(' ', $palabras);
     }
 }
