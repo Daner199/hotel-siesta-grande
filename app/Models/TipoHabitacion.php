@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Models;
+
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class TipoHabitacion extends Model
+{
+    protected $table = 'tipo_habitacion';
+
+    // La tabla no tiene created_at ni updated_at
+    public $timestamps = false;
+
+    protected $fillable = [
+        'nombre',
+        'descripcion',
+        'capacidad',
+        'activo',
+    ];
+
+    protected $casts = [
+        'capacidad' => 'integer',
+        'activo'    => 'boolean',
+    ];
+
+    // Habitaciones de este tipo
+    public function habitaciones(): HasMany
+    {
+        return $this->hasMany(Habitacion::class, 'tipo_habitacion_id');
+    }
+
+    // Historial de tarifas de este tipo
+    public function tarifas(): HasMany
+    {
+        return $this->hasMany(TarifaHabitacion::class, 'tipo_habitacion_id');
+    }
+
+    /**
+     * Tarifa que rige en una fecha (hoy si no se indica).
+     * Rango [fecha_desde, fecha_hasta): el día fecha_hasta ya rige la siguiente.
+     */
+    public function tarifaVigente(Carbon|string|null $fecha = null): ?TarifaHabitacion
+    {
+        $dia = Carbon::parse($fecha ?? today())->toDateString();
+
+        return $this->tarifas()
+            ->where('activa', true)
+            ->where('fecha_desde', '<=', $dia)
+            ->where(fn ($q) => $q->whereNull('fecha_hasta')->orWhere('fecha_hasta', '>', $dia))
+            ->first();
+    }
+}
