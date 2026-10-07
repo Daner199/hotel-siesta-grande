@@ -725,3 +725,12 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
     color: var(--piedra);
 }
 .conteo-resultados a { color: var(--tajibo); font-weight: 600; }
+/* ---------- Agencias ---------- */
+.avatar-agencia {
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--azul), #6FA0BF);
+}
+.avatar-agencia svg { width: 18px; height: 18px; }
+
+.contacto-celda strong { display: block; font-weight: 600; }
+.contacto-celda span { display: block; font-size: .85rem; color: var(--piedra); }

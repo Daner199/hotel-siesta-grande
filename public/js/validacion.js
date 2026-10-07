@@ -60,9 +60,20 @@
             return null;
         },
 
-        nit(valor, campo) {
+               nit(valor, campo) {
             if (!valor) return campo.required ? vacio(campo) : null;
             if (!/^\d{7,12}$/.test(valor)) return 'El NIT debe tener solo números, entre 7 y 12.';
+            return null;
+        },
+
+        // Nombre de empresa: letras, números y . , & - '
+        empresa(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            if (valor.length < 2) return 'Debe tener al menos 2 caracteres.';
+            if (valor.length > 150) return 'Es demasiado largo.';
+            if (!/^[\p{L}\p{N}\s.,&'-]+$/u.test(valor) || !/\p{L}/u.test(valor)) {
+                return "Usa letras, números y los signos . , & - '";
+            }
             return null;
         },
     };

@@ -93,7 +93,7 @@ class ValidacionUsuario
     }
 
     // Quita espacios al inicio/final y deja uno solo entre palabras
-    private static function limpiarTexto(mixed $texto): ?string
+    public static function limpiarTexto(mixed $texto): ?string
     {
         $texto = trim(preg_replace('/\s+/u', ' ', (string) $texto));
 

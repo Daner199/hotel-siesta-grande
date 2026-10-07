@@ -3,7 +3,7 @@
 /*
 | Menú lateral de cada rol. Cada bloque es el menú que ve ESE rol.
 | 'ruta'   => nombre de la ruta de Laravel, o null si el módulo aún no existe.
-| 'patron' => (opcional) rutas en las que el enlace se marca como activo.
+| 'patron' => (opcional) rutas en las que el enlace se marca cohmo activo.
 | 'icono'  => nombre del ícono en https://lucide.dev/icons
 */
 
@@ -16,7 +16,7 @@ return [
         ]],
         ['grupo' => 'Personas', 'items' => [
             ['texto' => 'Recepcionistas', 'icono' => 'concierge-bell', 'ruta' => 'admin.recepcionistas.index', 'patron' => 'admin.recepcionistas.*'],
-            ['texto' => 'Agencias', 'icono' => 'building-2', 'ruta' => null],
+            ['texto' => 'Agencias', 'icono' => 'building-2', 'ruta' => 'admin.agencias.index', 'patron' => 'admin.agencias.*'],
         ]],
         ['grupo' => 'Hotel', 'items' => [
             ['texto' => 'Habitaciones', 'icono' => 'bed-double', 'ruta' => null],
