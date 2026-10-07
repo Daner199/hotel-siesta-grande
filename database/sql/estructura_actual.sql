@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict unK5l6vZIzQ74X1W6kYfQrqw3tNTdEcHsflurg34UewrsAbGcSqagM7LNioXA45
+\restrict OwUSfu6NpZWCA8x7lbNPj4qBztISJUPbTaZMy0ttE9SEHbd8sAXH7OGy1LWIwvh
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -59,10 +59,10 @@ CREATE TABLE public.agencia (
     id bigint NOT NULL,
     usuario_id bigint NOT NULL,
     nombre character varying(150) NOT NULL,
-    nit character varying(50),
+    nit character varying(50) NOT NULL,
     telefono character varying(30),
     activa boolean DEFAULT true NOT NULL,
-    CONSTRAINT chk_agencia_nit CHECK (((nit IS NULL) OR ((nit)::text ~ '^[0-9]{7,12}$'::text))),
+    CONSTRAINT chk_agencia_nit CHECK (((nit)::text ~ '^[0-9]{7,12}$'::text)),
     CONSTRAINT chk_agencia_telefono CHECK (((telefono IS NULL) OR ((telefono)::text ~ '^\+[1-9][0-9]{6,14}$'::text)))
 );
 
@@ -1375,5 +1375,5 @@ ALTER TABLE ONLY public.tarifa_habitacion
 -- PostgreSQL database dump complete
 --
 
-\unrestrict unK5l6vZIzQ74X1W6kYfQrqw3tNTdEcHsflurg34UewrsAbGcSqagM7LNioXA45
+\unrestrict OwUSfu6NpZWCA8x7lbNPj4qBztISJUPbTaZMy0ttE9SEHbd8sAXH7OGy1LWIwvh
 
