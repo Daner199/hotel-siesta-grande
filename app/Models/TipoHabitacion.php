@@ -50,6 +50,14 @@ class TipoHabitacion extends Model
         return $this->hasOne(FotoTipoHabitacion::class, 'tipo_habitacion_id')->where('es_principal', true);
     }
 
+    // "SUITE PRESIDENCIAL" → "Suite presidencial" (para la página pública)
+    public function nombreVisible(): string
+    {
+        $texto = mb_strtolower($this->nombre);
+
+        return mb_strtoupper(mb_substr($texto, 0, 1)) . mb_substr($texto, 1);
+    }
+
     // Carpeta de sus fotos dentro de storage/app/public
     public function carpetaFotos(): string
     {

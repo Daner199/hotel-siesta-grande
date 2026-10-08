@@ -1,6 +1,7 @@
 -- ============================================================
 -- HOTEL SIESTA GRANDE - Datos iniciales
--- Catálogos, tipos, 60 habitaciones, tarifas, datos del hotel y 4 usuarios de prueba.
+-- Catálogos, tipos, 60 habitaciones, tarifas, datos del hotel y 3 usuarios de prueba
+-- (admin, recepción y agencia; los clientes se registran desde /registro).
 -- Va al final de instalar.sql (después de la estructura). Se ejecuta sobre una BD vacía.
 -- ============================================================
 
@@ -66,16 +67,14 @@ VALUES (1, 'Hotel Siesta Grande', 'Descanso con alma cruceña', 'Av. Monseñor R
 --   admin@siestagrande.com     / Admin12345    ADMINISTRADOR
 --   recepcion@siestagrande.com / Recepcion123  RECEPCIONISTA
 --   agencia@siestagrande.com   / Agencia123    AGENCIA (contacto de "Viajes Bolivia")
---   cliente@siestagrande.com   / Cliente123    CLIENTE
+-- Sin cliente de prueba: los clientes se registran solos desde /registro.
 INSERT INTO usuario (nombre, apellido, telefono, email, password, rol, activo) VALUES
     ('Administrador', 'General', NULL, 'admin@siestagrande.com',
      '$2y$12$mrv6mCHdqOlwxxWF97bueeX6V/5AB4jyqalJLV6T22uXgabuVl69.', 'ADMINISTRADOR', true),
     ('Lucía', 'Rojas', NULL, 'recepcion@siestagrande.com',
      '$2y$12$50BH846rpqg/AogxtH2wBuUZ6PFraYD0/udlL607i5xjY9lHY568.', 'RECEPCIONISTA', true),
     ('Ana', 'Gutiérrez', NULL, 'agencia@siestagrande.com',
-     '$2y$12$3q/DXoNO7Z3568iz6ua7m.uwYxosTd6gX6VnrSAcqakWXn583FP2i', 'AGENCIA', true),
-    ('Carlos', 'Pérez', NULL, 'cliente@siestagrande.com',
-     '$2y$12$eViGjNstLYtKixbSZmizf.F0IX27U/pdwt2BSsHRLzNrKxwC2tb4m', 'CLIENTE', true);
+     '$2y$12$3q/DXoNO7Z3568iz6ua7m.uwYxosTd6gX6VnrSAcqakWXn583FP2i', 'AGENCIA', true);
 
 INSERT INTO agencia (usuario_id, nombre, nit, telefono, activa)
 SELECT id, 'Viajes Bolivia', '1020304050', NULL, true

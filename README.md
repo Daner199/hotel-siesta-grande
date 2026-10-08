@@ -98,29 +98,43 @@ Abre **http://127.0.0.1:8000**
 
 ---
 
-## Usuarios de prueba
+## Primeros pasos
 
-| Rol | Correo | Contraseña |
-|---|---|---|
-| Administrador | admin@siestagrande.com | Admin12345 |
-| Recepcionista | recepcion@siestagrande.com | Recepcion123 |
-| Agencia (Viajes Bolivia) | agencia@siestagrande.com | Agencia123 |
-| Cliente | cliente@siestagrande.com | Cliente123 |
+### 1. Usuarios de prueba
 
-Los clientes también pueden registrarse desde la página pública.
-Los recepcionistas y las agencias los crea el administrador.
+`instalar.sql` crea estos 3 usuarios. Inicia sesión en **http://127.0.0.1:8000/login**:
 
-## Fotos
+| Rol | Correo | Contraseña | Entra a |
+|---|---|---|---|
+| Administrador | admin@siestagrande.com | Admin12345 | `/admin` (panel de administración) |
+| Recepcionista | recepcion@siestagrande.com | Recepcion123 | `/recepcion` |
+| Agencia (Viajes Bolivia, contacto Ana Gutiérrez) | agencia@siestagrande.com | Agencia123 | `/agencia` |
 
-El repositorio **no trae fotos**. El administrador las sube desde su panel:
+### 2. Crea tu cuenta de cliente
 
-- **Datos del hotel**: logo, portada, fachada, piscina y restaurante, además de contacto, redes,
-  horarios y el pin en el mapa.
-- **Tipos y tarifas → Fotos**: galería de cada tipo de habitación.
+No hay cliente de prueba: **crea tu propia cuenta en http://127.0.0.1:8000/registro**.
+Después de registrarte entras directo a tu panel de cliente (`/cliente`).
+
+### 3. Qué revisar con cada rol
+
+| Rol | Qué revisar |
+|---|---|
+| **Administrador** | **Recepcionistas** y **Agencias**: crear, editar, activar y desactivar · **Clientes**: lista, buscador y activar o desactivar · **Tipos y tarifas**: crear tipos, programar precios (línea de tiempo) y pestaña **Fotos** · **Habitaciones**: las 60, filtros, cambiar estado y fotos propias · **Datos del hotel**: fotos, contacto, redes, horarios y pin en el mapa |
+| **Recepcionista** | Por ahora solo su panel (las reservas, check-in y pagos llegan en los próximos módulos) |
+| **Agencia** | Por ahora solo su panel |
+| **Cliente** | Su panel (las reservas llegan en el Módulo 4) |
+| **Página pública** (http://127.0.0.1:8000) | Portada 3D, buscador de disponibilidad con precio total en Bs, habitaciones, servicios, beneficios, promociones vigentes, mapa y contacto |
+
+### 4. Las fotos no vienen en el repositorio
+
+Súbelas desde el panel del **administrador**:
+
+- **Tipos y tarifas → Fotos**: galería de cada tipo de habitación (la usa la página pública).
+- **Datos del hotel**: logo, portada, fachada, piscina y restaurante.
 - **Habitaciones → Editar**: fotos propias de una habitación (opcionales).
 
 Las fotos deben ser JPG, PNG o WEBP de 2 MB como máximo. Mientras no haya fotos, la página
-muestra fondos elegantes en su lugar.
+muestra fondos elegantes en su lugar. Si las fotos se ven rotas, falta `php artisan storage:link`.
 
 ---
 

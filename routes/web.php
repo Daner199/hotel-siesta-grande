@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PanelController;
 use App\Http\Controllers\Auth\RegistroController;
 use Illuminate\Support\Facades\Route;
@@ -14,10 +15,11 @@ use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\TarifaController;
 use App\Http\Controllers\Admin\TipoHabitacionController;
 
-// Página inicial (la landing se hará en el Módulo 10)
-Route::get('/', function () {
-    return view('welcome');
-})->name('inicio');
+// Página pública del hotel (landing) y consulta de disponibilidad (máx. 30 consultas por minuto)
+Route::get('/', [LandingController::class, 'index'])->name('inicio');
+Route::get('/disponibilidad', [LandingController::class, 'disponibilidad'])
+    ->middleware('throttle:30,1')
+    ->name('disponibilidad');
 
 // Solo para quien NO ha iniciado sesión
 Route::middleware('guest')->group(function () {
