@@ -6,7 +6,7 @@
  *     <input name="nombre" data-validar="letras" required data-vacio="Escribe tu nombre.">
  *
  * Tipos: letras, email, telefono, password, confirmar, nit, empresa,
- *        tipo, entero (usa min/max), precio, fecha (usa min)
+ *        tipo, numero, entero (usa min/max), precio, fecha (usa min)
  * Son las MISMAS reglas que valida Laravel. Laravel siempre vuelve a validar.
  */
 (() => {
@@ -88,6 +88,15 @@
             return null;
         },
 
+        // Número de habitación: números, letras y guion (101, 101A), hasta 10
+        numero(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            const v = valor.replace(/\s+/g, '').toUpperCase();
+            if (v.length > 10) return 'Es demasiado largo (máximo 10).';
+            if (!/^[0-9A-Z]+(-[0-9A-Z]+)*$/.test(v)) return 'Usa solo números, letras y guion. Ej.: 101 o 101A.';
+            return null;
+        },
+
         // Número entero entre el min y max del campo
         entero(valor, campo) {
             if (!valor) return campo.required ? vacio(campo) : null;
@@ -128,6 +137,7 @@
         nit:      (v) => v.replace(/\D/g, ''),
         tipo:     (v) => v.replace(/[^\p{L}\s]/gu, ''),
         precio:   (v) => v.replace(/[^\d.,]/g, ''),
+        numero:   (v) => v.replace(/[^0-9A-Za-z-]/g, ''),
     };
 
     // ----- Mostrar u ocultar el error de un campo -----

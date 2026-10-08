@@ -105,6 +105,15 @@
     });
 
 
+    // ----- Selector que guarda solo: <select data-autoenviar> dentro de un <form> -----
+    // Al elegir otra opción envía su formulario (pasa por data-confirmar si lo tiene).
+    // Escucha en todo el documento para funcionar también tras la búsqueda en vivo.
+    document.addEventListener('change', (e) => {
+        const selector = e.target.closest('select[data-autoenviar]');
+        if (selector?.form) selector.form.requestSubmit();
+    });
+
+
     // ----- Respetar a quien desactivó las animaciones en su sistema -----
     // Todo lo que está DEBAJO de esta línea son solo animaciones.
     // Lo importante (menú, avisos, confirmación, búsqueda) va ARRIBA.

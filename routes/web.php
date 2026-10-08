@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\RecepcionistaController;
 use App\Http\Controllers\Admin\AgenciaController;
 use App\Http\Controllers\Admin\ClienteController;
+use App\Http\Controllers\Admin\HabitacionController;
 use App\Http\Controllers\Admin\TarifaController;
 use App\Http\Controllers\Admin\TipoHabitacionController;
 
@@ -92,6 +93,20 @@ Route::middleware(['auth', 'rol:ADMINISTRADOR'])
             ->whereNumber('tipo')->name('tipos.tarifas.store');
         Route::patch('/tipos/{tipo}/tarifas/{tarifa}/anular', [TarifaController::class, 'anular'])
             ->whereNumber(['tipo', 'tarifa'])->scopeBindings()->name('tipos.tarifas.anular');
+
+        // Habitaciones (no se borran: pasan a FUERA_SERVICIO)
+        Route::get('/habitaciones', [HabitacionController::class, 'index'])
+            ->name('habitaciones.index');
+        Route::get('/habitaciones/crear', [HabitacionController::class, 'create'])
+            ->name('habitaciones.create');
+        Route::post('/habitaciones', [HabitacionController::class, 'store'])
+            ->name('habitaciones.store');
+        Route::get('/habitaciones/{habitacion}/editar', [HabitacionController::class, 'edit'])
+            ->whereNumber('habitacion')->name('habitaciones.edit');
+        Route::put('/habitaciones/{habitacion}', [HabitacionController::class, 'update'])
+            ->whereNumber('habitacion')->name('habitaciones.update');
+        Route::patch('/habitaciones/{habitacion}/estado', [HabitacionController::class, 'cambiarEstado'])
+            ->whereNumber('habitacion')->name('habitaciones.estado');
     });
 
 Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {

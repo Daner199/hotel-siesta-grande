@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict OwUSfu6NpZWCA8x7lbNPj4qBztISJUPbTaZMy0ttE9SEHbd8sAXH7OGy1LWIwvh
+\restrict P2A7is3klRUEWFd8dKXCc6NKIGVQrM2ixZX2WFgc5NJMvlhUtpPWbzXFi05OnSL
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -288,11 +288,11 @@ ALTER SEQUENCE public.estado_reserva_id_seq OWNED BY public.estado_reserva.id;
 CREATE TABLE public.habitacion (
     id bigint NOT NULL,
     numero character varying(10) NOT NULL,
-    piso integer,
+    piso integer NOT NULL,
     tipo_habitacion_id bigint NOT NULL,
     estado_habitacion_id smallint NOT NULL,
     descripcion text,
-    CONSTRAINT chk_habitacion_piso CHECK (((piso IS NULL) OR (piso > 0)))
+    CONSTRAINT chk_habitacion_piso CHECK ((piso > 0))
 );
 
 
@@ -1375,5 +1375,5 @@ ALTER TABLE ONLY public.tarifa_habitacion
 -- PostgreSQL database dump complete
 --
 
-\unrestrict OwUSfu6NpZWCA8x7lbNPj4qBztISJUPbTaZMy0ttE9SEHbd8sAXH7OGy1LWIwvh
+\unrestrict P2A7is3klRUEWFd8dKXCc6NKIGVQrM2ixZX2WFgc5NJMvlhUtpPWbzXFi05OnSL
 
