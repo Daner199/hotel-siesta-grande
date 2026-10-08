@@ -7,7 +7,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\RecepcionistaController;
 use App\Http\Controllers\Admin\AgenciaController;
 use App\Http\Controllers\Admin\ClienteController;
+use App\Http\Controllers\Admin\FotoHabitacionController;
+use App\Http\Controllers\Admin\FotoTipoController;
 use App\Http\Controllers\Admin\HabitacionController;
+use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\TarifaController;
 use App\Http\Controllers\Admin\TipoHabitacionController;
 
@@ -94,6 +97,18 @@ Route::middleware(['auth', 'rol:ADMINISTRADOR'])
         Route::patch('/tipos/{tipo}/tarifas/{tarifa}/anular', [TarifaController::class, 'anular'])
             ->whereNumber(['tipo', 'tarifa'])->scopeBindings()->name('tipos.tarifas.anular');
 
+        // Fotos de cada tipo (scopeBindings: la foto debe ser de ESE tipo)
+        Route::get('/tipos/{tipo}/fotos', [FotoTipoController::class, 'index'])
+            ->whereNumber('tipo')->name('tipos.fotos');
+        Route::post('/tipos/{tipo}/fotos', [FotoTipoController::class, 'store'])
+            ->whereNumber('tipo')->name('tipos.fotos.store');
+        Route::patch('/tipos/{tipo}/fotos/{foto}/principal', [FotoTipoController::class, 'principal'])
+            ->whereNumber(['tipo', 'foto'])->scopeBindings()->name('tipos.fotos.principal');
+        Route::patch('/tipos/{tipo}/fotos/{foto}/mover', [FotoTipoController::class, 'mover'])
+            ->whereNumber(['tipo', 'foto'])->scopeBindings()->name('tipos.fotos.mover');
+        Route::delete('/tipos/{tipo}/fotos/{foto}', [FotoTipoController::class, 'destroy'])
+            ->whereNumber(['tipo', 'foto'])->scopeBindings()->name('tipos.fotos.destroy');
+
         // Habitaciones (no se borran: pasan a FUERA_SERVICIO)
         Route::get('/habitaciones', [HabitacionController::class, 'index'])
             ->name('habitaciones.index');
@@ -107,6 +122,20 @@ Route::middleware(['auth', 'rol:ADMINISTRADOR'])
             ->whereNumber('habitacion')->name('habitaciones.update');
         Route::patch('/habitaciones/{habitacion}/estado', [HabitacionController::class, 'cambiarEstado'])
             ->whereNumber('habitacion')->name('habitaciones.estado');
+
+        // Datos del hotel (una sola fila)
+        Route::get('/hotel', [HotelController::class, 'edit'])->name('hotel.edit');
+        Route::put('/hotel', [HotelController::class, 'update'])->name('hotel.update');
+
+        // Fotos propias de cada habitación (opcionales)
+        Route::post('/habitaciones/{habitacion}/fotos', [FotoHabitacionController::class, 'store'])
+            ->whereNumber('habitacion')->name('habitaciones.fotos.store');
+        Route::patch('/habitaciones/{habitacion}/fotos/{foto}/principal', [FotoHabitacionController::class, 'principal'])
+            ->whereNumber(['habitacion', 'foto'])->scopeBindings()->name('habitaciones.fotos.principal');
+        Route::patch('/habitaciones/{habitacion}/fotos/{foto}/mover', [FotoHabitacionController::class, 'mover'])
+            ->whereNumber(['habitacion', 'foto'])->scopeBindings()->name('habitaciones.fotos.mover');
+        Route::delete('/habitaciones/{habitacion}/fotos/{foto}', [FotoHabitacionController::class, 'destroy'])
+            ->whereNumber(['habitacion', 'foto'])->scopeBindings()->name('habitaciones.fotos.destroy');
     });
 
 Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {

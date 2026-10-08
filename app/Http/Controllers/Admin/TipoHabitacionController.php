@@ -8,6 +8,7 @@ use App\Support\ValidacionUsuario;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 /**
@@ -21,6 +22,7 @@ class TipoHabitacionController extends Controller
     {
         $tipos = TipoHabitacion::query()
             ->withCount('habitaciones')
+            ->with('fotoPrincipal')
             ->orderByDesc('activo')
             ->orderBy('id')
             ->get();
@@ -106,6 +108,9 @@ class TipoHabitacionController extends Controller
             }
             throw $e;
         }
+
+        // Sus fotos se borraron en la BD (ON DELETE CASCADE): ahora los archivos
+        Storage::disk('public')->deleteDirectory($tipo->carpetaFotos());
 
         return redirect()
             ->route('admin.tipos.index')

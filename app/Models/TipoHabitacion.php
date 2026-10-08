@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TipoHabitacion extends Model
 {
@@ -35,6 +36,24 @@ class TipoHabitacion extends Model
     public function tarifas(): HasMany
     {
         return $this->hasMany(TarifaHabitacion::class, 'tipo_habitacion_id');
+    }
+
+    // Galería del tipo (la usa la landing), en el orden elegido por el admin
+    public function fotos(): HasMany
+    {
+        return $this->hasMany(FotoTipoHabitacion::class, 'tipo_habitacion_id')
+            ->orderBy('orden')->orderBy('id');
+    }
+
+    public function fotoPrincipal(): HasOne
+    {
+        return $this->hasOne(FotoTipoHabitacion::class, 'tipo_habitacion_id')->where('es_principal', true);
+    }
+
+    // Carpeta de sus fotos dentro de storage/app/public
+    public function carpetaFotos(): string
+    {
+        return "tipos/{$this->id}";
     }
 
     /**

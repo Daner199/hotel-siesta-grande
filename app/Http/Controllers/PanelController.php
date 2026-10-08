@@ -45,6 +45,7 @@ class PanelController extends Controller
                                 ['nombre' => 'Recepcionistas', 'descripcion' => 'Crea y gestiona las cuentas del personal de recepción.', 'icono' => 'concierge-bell', 'paso' => 'Paso 1.4b', 'ruta' => 'admin.recepcionistas.index'],
                 ['nombre' => 'Agencias', 'descripcion' => 'Registra agencias y a su persona de contacto.', 'icono' => 'building-2', 'paso' => 'Paso 1.4c', 'ruta' => 'admin.agencias.index'],
                 ['nombre' => 'Clientes', 'descripcion' => 'Consulta los clientes registrados y activa o desactiva sus cuentas.', 'icono' => 'users', 'paso' => 'Paso 1.5', 'ruta' => 'admin.clientes.index'],
+                ['nombre' => 'Datos del hotel', 'descripcion' => 'Fotos, contacto, redes, horarios y ubicación en el mapa.', 'icono' => 'hotel', 'paso' => 'Paso 2.5', 'ruta' => 'admin.hotel.edit'],
                 ['nombre' => 'Tipos y tarifas', 'descripcion' => 'Capacidad de cada tipo y su historial de precios por noche.', 'icono' => 'tags', 'paso' => 'Paso 2.2', 'ruta' => 'admin.tipos.index'],
                 ['nombre' => 'Habitaciones', 'descripcion' => 'Las 60 habitaciones: número, piso, tipo y estado.', 'icono' => 'bed-double', 'paso' => 'Paso 2.3', 'ruta' => 'admin.habitaciones.index'],
                 ['nombre' => 'Promociones y beneficios', 'descripcion' => 'Paquetes con beneficios configurables y vigencia.', 'icono' => 'sparkles', 'paso' => 'Módulo 3'],

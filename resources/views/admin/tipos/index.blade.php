@@ -57,9 +57,14 @@
                         <tr @class(['fila-inactiva' => ! $tipo->activo])>
                             <td>
                                 <div class="persona">
-                                    <span class="avatar avatar-tabla avatar-tipo" aria-hidden="true">
-                                        <i data-lucide="bed-double"></i>
-                                    </span>
+                                    @if ($tipo->fotoPrincipal)
+                                        <img src="{{ $tipo->fotoPrincipal->url() }}" alt="" class="miniatura-tipo"
+                                             loading="lazy" decoding="async">
+                                    @else
+                                        <span class="avatar avatar-tabla avatar-tipo" aria-hidden="true">
+                                            <i data-lucide="bed-double"></i>
+                                        </span>
+                                    @endif
                                     <div>
                                         <strong>{{ $tipo->nombre }}</strong>
                                         <span>{{ $tipo->descripcion ?? 'Sin descripción' }}</span>
@@ -105,6 +110,11 @@
                                     <a href="{{ route('admin.tipos.tarifas', $tipo) }}" class="boton-accion">
                                         <i data-lucide="tags"></i>
                                         <span>Tarifas</span>
+                                    </a>
+
+                                    <a href="{{ route('admin.tipos.fotos', $tipo) }}" class="boton-accion">
+                                        <i data-lucide="images"></i>
+                                        <span>Fotos</span>
                                     </a>
 
                                     <a href="{{ route('admin.tipos.edit', $tipo) }}" class="boton-accion">

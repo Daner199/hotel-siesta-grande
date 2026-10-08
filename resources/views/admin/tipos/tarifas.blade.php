@@ -56,6 +56,8 @@
     </a>
 </header>
 
+@include('admin.tipos.pestanas', ['activa' => 'tarifas'])
+
 <div class="rejilla-tarifas">
 
     {{-- ===== Precio de hoy ===== --}}

@@ -1096,3 +1096,232 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
 .selector-activa         { background-color: var(--verde-suave); color: #2B7A50; }
 .selector-mantenimiento  { background-color: var(--oro-suave);   color: #8A6418; }
 .selector-fuera_servicio { background-color: #EEEFEB;            color: var(--piedra); }
+
+
+/* ---------- Pestañas (Tarifas | Fotos) ---------- */
+.pestanas {
+    display: flex;
+    gap: .35rem;
+    margin-bottom: 1.25rem;
+    padding: .3rem;
+    width: fit-content;
+    max-width: 100%;
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+}
+.pestana {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .55rem 1rem;
+    font-weight: 600;
+    font-size: .92rem;
+    color: var(--piedra);
+    text-decoration: none;
+    border-radius: 10px;
+    transition: background-color .15s, color .15s;
+}
+.pestana svg { width: 17px; height: 17px; }
+.pestana:hover { color: var(--tinta); background: var(--fondo); }
+.pestana.activa { color: #fff; background: var(--selva); }
+
+/* ---------- Galería de fotos ---------- */
+.galeria { margin-top: 1.25rem; }
+.galeria .bloque-cabecera { margin-bottom: 1.25rem; }
+
+.zona-subida {
+    display: grid;
+    justify-items: center;
+    gap: .35rem;
+    padding: 1.6rem 1rem;
+    text-align: center;
+    border: 2px dashed rgba(14, 36, 27, .18);
+    border-radius: 18px;
+    background: #FAFBF8;
+    cursor: pointer;
+    transition: border-color .15s, background-color .15s;
+}
+.zona-subida:hover,
+.zona-subida.arrastrando { border-color: var(--tajibo); background: #FDF6F9; }
+.zona-subida:focus-within { outline: 2px solid var(--selva); outline-offset: 3px; }
+.zona-subida > span:last-child { font-size: .85rem; color: var(--piedra); }
+.zona-subida-icono {
+    width: 48px;
+    height: 48px;
+    display: grid;
+    place-items: center;
+    margin-bottom: .25rem;
+    border-radius: 14px;
+    background: var(--tajibo-suave);
+    color: var(--tajibo);
+}
+.zona-subida-icono svg { width: 22px; height: 22px; }
+
+.vista-previa {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+    margin: .9rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+.vista-previa:empty { display: none; }
+.vista-previa li {
+    width: 92px;
+    display: grid;
+    gap: .25rem;
+    font-size: .72rem;
+    color: var(--piedra);
+}
+.vista-previa img { width: 92px; height: 70px; object-fit: cover; border-radius: 10px; }
+.vista-previa span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vista-previa .con-error span { color: #A63D64; font-weight: 600; white-space: normal; }
+
+.subir-fotos-acciones { display: flex; justify-content: flex-end; margin-top: 1rem; }
+.btn[disabled] { opacity: .55; cursor: not-allowed; }
+
+.galeria-rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+.foto-tarjeta {
+    overflow: hidden;
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    background: #fff;
+}
+.foto-tarjeta.es-principal {
+    border-color: rgba(196, 80, 122, .5);
+    box-shadow: 0 16px 30px -22px rgba(196, 80, 122, .6);
+}
+.foto-marco { position: relative; aspect-ratio: 4 / 3; background: var(--fondo); }
+.foto-marco img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.foto-sello {
+    position: absolute;
+    top: .6rem;
+    left: .6rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    padding: .25rem .6rem;
+    font-size: .75rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--tajibo);
+    border-radius: 999px;
+}
+.foto-sello svg { width: 13px; height: 13px; fill: currentColor; }
+
+.foto-acciones { display: flex; justify-content: center; gap: .35rem; padding: .6rem; }
+.foto-acciones form { margin: 0; }
+.boton-icono-claro {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    color: var(--tinta);
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color .15s, color .15s, border-color .15s;
+}
+.boton-icono-claro svg { width: 16px; height: 16px; }
+.boton-icono-claro:hover:not([disabled]) { background: var(--fondo); border-color: rgba(14, 36, 27, .2); }
+.boton-icono-claro[disabled] { opacity: .35; cursor: not-allowed; }
+.boton-icono-peligro:hover:not([disabled]) { color: var(--tajibo); background: var(--tajibo-suave); }
+
+.vacio-fotos { padding: 2rem 1rem 1rem; }
+.nota-fuera { margin-top: 1rem; }
+
+/* ---------- Datos del hotel ---------- */
+.rejilla-tres { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.fotos-hotel {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+}
+.foto-campo {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    overflow: hidden;
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    background: #fff;
+}
+.foto-campo-marco {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+}
+.foto-campo-marco img {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+/* Fondo elegante cuando no hay foto (el mismo concepto que usará la landing) */
+.foto-vacia {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, .7);
+    background:
+        radial-gradient(80% 70% at 100% 0%, rgba(196, 80, 122, .45), transparent 60%),
+        radial-gradient(70% 60% at 0% 100%, rgba(201, 154, 59, .35), transparent 60%),
+        linear-gradient(135deg, var(--selva), var(--noche));
+}
+.foto-vacia svg { width: 34px; height: 34px; }
+
+.foto-campo-texto { display: grid; align-content: start; justify-items: start; gap: .4rem; padding: 1rem; }
+.foto-campo-texto > span { font-size: .85rem; color: var(--piedra); }
+.foto-campo-texto .campo-error { margin: 0; }
+
+.boton-archivo { margin-top: .35rem; }
+.boton-archivo:focus-within { outline: 2px solid var(--selva); outline-offset: 2px; }
+
+.casilla {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    font-size: .88rem;
+    color: var(--piedra);
+    cursor: pointer;
+}
+.casilla input { width: 16px; height: 16px; accent-color: var(--tajibo); }
+
+.mapa-admin { margin-top: .5rem; }
+.mapa-pie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin: .75rem 0 1rem;
+}
+.mapa-pie p { margin: 0; font-size: .9rem; color: var(--piedra); font-variant-numeric: tabular-nums; }
+
+@media (max-width: 860px) {
+    .rejilla-tres { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+    .mapa { height: 300px; }
+}
+
+/* Miniatura de la foto principal en la lista de tipos */
+.miniatura-tipo {
+    width: 40px;
+    height: 40px;
+    flex: none;
+    object-fit: cover;
+    border-radius: 12px;
+}

@@ -103,4 +103,24 @@
         </button>
     </div>
 </form>
+
+{{-- ===== Fotos propias (opcionales; solo al editar) ===== --}}
+@if ($editando)
+    @php $deTipo = $habitacion->tipo->fotos()->count(); @endphp
+
+    @include('admin.fotos.galeria', [
+        'fotos'   => $habitacion->fotos()->get(),
+        'prefijo' => 'admin.habitaciones.fotos',
+        'padre'   => $habitacion,
+        'nombre'  => "la habitación {$habitacion->numero}",
+        'vacio'   => $deTipo
+            ? "Son opcionales (vista, balcón...). Mientras no tenga fotos propias se usan las {$deTipo} de su tipo {$habitacion->tipo->nombre}."
+            : "Son opcionales (vista, balcón...). Mientras no tenga fotos propias se usan las de su tipo {$habitacion->tipo->nombre}, que todavía no tiene.",
+    ])
+@else
+    <p class="nota-pie nota-fuera">
+        <i data-lucide="images"></i>
+        Después de crear la habitación podrás subirle fotos propias (opcional).
+    </p>
+@endif
 @endsection

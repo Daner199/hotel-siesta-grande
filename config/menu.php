@@ -20,6 +20,7 @@ return [
             ['texto' => 'Clientes', 'icono' => 'users', 'ruta' => 'admin.clientes.index', 'patron' => 'admin.clientes.*'],
         ]],
         ['grupo' => 'Hotel', 'items' => [
+            ['texto' => 'Datos del hotel', 'icono' => 'hotel', 'ruta' => 'admin.hotel.edit', 'patron' => 'admin.hotel.*'],
             ['texto' => 'Habitaciones', 'icono' => 'bed-double', 'ruta' => 'admin.habitaciones.index', 'patron' => 'admin.habitaciones.*'],
             ['texto' => 'Tipos y tarifas', 'icono' => 'tags', 'ruta' => 'admin.tipos.index', 'patron' => 'admin.tipos.*'],
             ['texto' => 'Promociones', 'icono' => 'sparkles', 'ruta' => null],
