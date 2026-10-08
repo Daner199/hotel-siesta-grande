@@ -1,66 +1,157 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Hotel Siesta Grande
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema web de reservas y gestión hotelera del **Hotel Siesta Grande** (Santa Cruz de la Sierra, Bolivia).
+Proyecto universitario hecho con **Laravel 12 + PostgreSQL + Blade**.
 
-## About Laravel
+- 4 roles: administrador, recepcionista, agencia y cliente.
+- Habitaciones, tipos, tarifas con historial y galerías de fotos.
+- Moneda: solo bolivianos (Bs).
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Requisitos
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| Programa | Versión | Nota |
+|---|---|---|
+| PHP | 8.2 o superior | Con las extensiones `pdo_pgsql`, `pgsql`, `intl` y `fileinfo` activas |
+| Composer | 2 | |
+| PostgreSQL | 13 o superior | Probado con la 18 |
+| Git | cualquiera | |
 
-## Learning Laravel
+En Windows con XAMPP, las extensiones se activan en `C:\xampp\php\php.ini` quitando el `;`
+del inicio de `extension=pdo_pgsql`, `extension=pgsql`, `extension=intl` y `extension=fileinfo`.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+---
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+## Instalación paso a paso
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Los comandos son para **PowerShell** en Windows, desde la carpeta del proyecto.
 
-## Laravel Sponsors
+### 1. Clonar e instalar dependencias
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```powershell
+git clone https://github.com/Daner199/hotel-siesta-grande.git
+cd hotel-siesta-grande
+composer install
+```
 
-### Premium Partners
+### 2. Configurar el `.env`
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+```powershell
+copy .env.example .env
+php artisan key:generate
+```
 
-## Contributing
+Abre `.env` y escribe la contraseña de **tu** usuario `postgres`:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+```
+DB_PASSWORD=tu_contraseña
+```
 
-## Code of Conduct
+El resto ya viene listo: PostgreSQL en `127.0.0.1:5432`, base `hotel_siesta_grande`,
+y sesión, caché y colas en archivos.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### 3. Crear la base de datos
 
-## Security Vulnerabilities
+> ⚠️ **NUNCA ejecutes `php artisan migrate`.** Este proyecto **no usa migraciones**: la base se crea
+> con scripts SQL. `migrate` crearía tablas que no son del proyecto (`users`, `sessions`, `cache`...).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Si `psql` no se reconoce como comando, usa la ruta completa, por ejemplo
+`& "C:\Program Files\PostgreSQL\18\bin\psql.exe"` (cambia el 18 por tu versión).
 
-## License
+```powershell
+# Crear la base vacía en UTF-8 (pide la contraseña de postgres)
+psql -U postgres -c "CREATE DATABASE hotel_siesta_grande ENCODING 'UTF8' TEMPLATE template0"
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+# Crear tablas y cargar los datos iniciales
+psql -U postgres -d hotel_siesta_grande -v ON_ERROR_STOP=1 -f database/sql/instalar.sql
+```
+
+`instalar.sql` crea toda la estructura y carga:
+- los catálogos
+- los 4 tipos de habitación
+- las 60 habitaciones (pisos 1 a 4)
+- las tarifas iniciales
+- los datos del hotel
+- los usuarios de prueba
+
+### 4. Enlace para las fotos
+
+Las fotos que sube el administrador se guardan en `storage/app/public`. Para que el navegador las vea:
+
+```powershell
+php artisan storage:link
+```
+
+> En Windows este comando a veces falla con *"A required privilege is not held by the client"*.
+> En ese caso abre **PowerShell como administrador** (clic derecho → *Ejecutar como administrador*),
+> entra a la carpeta del proyecto y vuelve a ejecutarlo.
+> Otra opción es activar el *Modo de desarrollador* de Windows.
+
+### 5. Iniciar
+
+```powershell
+php artisan serve
+```
+
+Abre **http://127.0.0.1:8000**
+
+---
+
+## Usuarios de prueba
+
+| Rol | Correo | Contraseña |
+|---|---|---|
+| Administrador | admin@siestagrande.com | Admin12345 |
+| Recepcionista | recepcion@siestagrande.com | Recepcion123 |
+| Agencia (Viajes Bolivia) | agencia@siestagrande.com | Agencia123 |
+| Cliente | cliente@siestagrande.com | Cliente123 |
+
+Los clientes también pueden registrarse desde la página pública.
+Los recepcionistas y las agencias los crea el administrador.
+
+## Fotos
+
+El repositorio **no trae fotos**. El administrador las sube desde su panel:
+
+- **Datos del hotel**: logo, portada, fachada, piscina y restaurante, además de contacto, redes,
+  horarios y el pin en el mapa.
+- **Tipos y tarifas → Fotos**: galería de cada tipo de habitación.
+- **Habitaciones → Editar**: fotos propias de una habitación (opcionales).
+
+Las fotos deben ser JPG, PNG o WEBP de 2 MB como máximo. Mientras no haya fotos, la página
+muestra fondos elegantes en su lugar.
+
+---
+
+## Problemas comunes
+
+| Problema | Solución |
+|---|---|
+| `could not find driver` | Falta activar `extension=pdo_pgsql` y `extension=pgsql` en `php.ini`. Reinicia `php artisan serve`. |
+| `Class "NumberFormatter" not found` o errores con teléfonos | Activa `extension=intl` en `php.ini`. |
+| `password authentication failed for user "postgres"` | La contraseña de `DB_PASSWORD` en `.env` no es la de tu PostgreSQL. |
+| `database "hotel_siesta_grande" does not exist` | Falta el paso 3 (crear la base). |
+| `relation "usuario" does not exist` | La base existe pero está vacía: ejecuta `instalar.sql` (paso 3). |
+| Ejecutaste `migrate` por error | Borra la base, créala otra vez y ejecuta `instalar.sql` (paso 3). |
+| Las fotos no se ven (imagen rota) | Falta `php artisan storage:link` (paso 4). |
+| `storage:link` dice *A required privilege is not held* | Ejecútalo en PowerShell como administrador (paso 4). |
+| Al subir una foto: *"no se pudo subir"* | La foto pesa más de 2 MB, o en `php.ini` `upload_max_filesize` / `post_max_size` son muy bajos (XAMPP trae 40M). |
+| *419 Page Expired* al enviar un formulario | La sesión venció: recarga la página (Ctrl+F5) y vuelve a intentar. |
+| En `psql` las tildes se ven raras (Habitaci¢n) | Es solo la consola de Windows: ejecuta `SET client_encoding = 'WIN1252';` en `psql`. Los datos están bien. |
+| `No application encryption key has been specified` | Falta `php artisan key:generate` (paso 2). |
+| Cambié algo y no se ve | `php artisan optimize:clear` y recarga con Ctrl+F5. |
+| *Demasiados intentos* al iniciar sesión | Es la protección del login (5 intentos fallidos): espera 60 segundos. |
+
+---
+
+## Para quien desarrolla
+
+- **Cambios en la base de datos**: van como script numerado en `database/sql/cambios/`.
+  Cada script guarda en UTF-8, empieza con `SET client_encoding = 'UTF8';` y usa `BEGIN/COMMIT`.
+  Después hay que regenerar `database/sql/estructura_actual.sql` e `instalar.sql`.
+- **Datos iniciales**: están en `database/sql/datos_iniciales.sql`.
+- **Estructura**:
+  - controladores del admin en `app/Http/Controllers/Admin/`
+  - vistas en `resources/views/`
+  - CSS y JS propios en `public/css` y `public/js` (sin Vite)
