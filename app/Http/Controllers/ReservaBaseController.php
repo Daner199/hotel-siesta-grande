@@ -2,29 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CobroQr;
+use App\Http\Controllers\Concerns\PagaReservas;
 use App\Models\EstadoReserva;
-use App\Models\Hotel;
 use App\Models\Habitacion;
-use App\Models\MetodoPago;
-use App\Models\Pago;
-use App\Models\Recibo;
 use App\Models\Reserva;
 use App\Models\TipoHabitacion;
 use App\Support\Disponibilidad;
 use App\Support\Moneda;
-use App\Support\CobrosQr;
-use App\Support\Pagos;
-use App\Support\Qr;
-use App\Support\Recibos;
-use Barryvdh\DomPDF\Facade\Pdf;
 use App\Support\Reservas;
 use App\Support\ValidacionUsuario;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -35,6 +25,9 @@ use Illuminate\Validation\ValidationException;
  */
 abstract class ReservaBaseController extends Controller
 {
+    // Pagar, cobro con QR, recibos y lista de pagos (Módulo 5)
+    use PagaReservas;
+
     // Prefijo de las rutas: 'cliente.reservas', 'agencia.reservas' o 'recepcion.reservas'
     abstract protected function prefijo(): string;
 
@@ -113,212 +106,6 @@ abstract class ReservaBaseController extends Controller
         return redirect()->route($this->prefijo() . '.show', $reserva)->with('exito', $mensaje);
     }
 
-    // ---------- Pagar (Módulo 5) ----------
-
-    // Métodos que puede usar este rol (el efectivo solo en recepción)
-    protected function metodosPermitidos(): array
-    {
-        return MetodoPago::EN_LINEA;
-    }
-
-    public function formularioPago(Reserva $reserva)
-    {
-        $this->autorizar($reserva);
-        $reserva->load(['estado', 'habitaciones']);
-
-        $limites = Pagos::limites($reserva);
-        if (! $limites) {
-            return redirect()->route($this->prefijo() . '.show', $reserva)
-                ->with('error', $reserva->sePuedePagar() ? 'Esta reserva ya está pagada por completo.' : 'Esta reserva no admite pagos.');
-        }
-
-        return view('pagos.pagar', [
-            'reserva' => $reserva,
-            'limites' => $limites,
-            'pagado'  => $reserva->totalPagado(),
-            'metodos' => MetodoPago::whereIn('nombre', $this->metodosPermitidos())->orderBy('id')->get(),
-        ] + $this->datosVista());
-    }
-
-    public function pagar(Request $request, Reserva $reserva)
-    {
-        $this->autorizar($reserva);
-
-        $request->merge([
-            'monto'          => Moneda::leer($request->input('monto')),
-            'tarjeta_numero' => preg_replace('/\D/', '', (string) $request->input('tarjeta_numero')) ?: null,
-            'tarjeta_cvv'    => preg_replace('/\D/', '', (string) $request->input('tarjeta_cvv')) ?: null,
-        ]);
-
-        $tarjeta = MetodoPago::TARJETA;
-        $datos = $request->validate([
-            'metodo'         => ['required', Rule::in($this->metodosPermitidos())],
-            'monto'          => ['bail', 'required', 'numeric', 'decimal:0,2', 'gt:0'],
-            'tarjeta_numero' => ["required_if:metodo,{$tarjeta}", 'nullable', 'digits_between:13,19'],
-            'tarjeta_vence'  => ["required_if:metodo,{$tarjeta}", 'nullable', 'regex:/^(0[1-9]|1[0-2])\/\d{2}$/'],
-            'tarjeta_cvv'    => ["required_if:metodo,{$tarjeta}", 'nullable', 'digits_between:3,4'],
-        ], [
-            'metodo.required'            => 'Elige cómo vas a pagar.',
-            'metodo.in'                  => $request->input('metodo') === MetodoPago::EFECTIVO
-                ? 'El efectivo solo se paga en la recepción del hotel.'
-                : 'Elige cómo vas a pagar.',
-            'monto.required'             => 'Escribe el monto.',
-            'monto.numeric'              => 'Escribe un monto válido, por ejemplo 716,25.',
-            'monto.decimal'              => 'El monto puede tener como máximo 2 decimales.',
-            'monto.gt'                   => 'El monto debe ser mayor que 0.',
-            'tarjeta_numero.required_if' => 'Escribe el número de la tarjeta.',
-            'tarjeta_numero.digits_between' => 'El número de la tarjeta debe tener entre 13 y 19 dígitos.',
-            'tarjeta_vence.required_if'  => 'Escribe el vencimiento (MM/AA).',
-            'tarjeta_vence.regex'        => 'El vencimiento debe ser MM/AA, por ejemplo 08/28.',
-            'tarjeta_cvv.required_if'    => 'Escribe el código de seguridad.',
-            'tarjeta_cvv.digits_between' => 'El código de seguridad tiene 3 o 4 dígitos.',
-        ]);
-
-        if ($datos['metodo'] === $tarjeta && $this->tarjetaVencida($datos['tarjeta_vence'])) {
-            throw ValidationException::withMessages(['tarjeta_vence' => 'La tarjeta está vencida.']);
-        }
-
-        // QR dinámico: se genera el cobro y se muestra el QR (lo paga Banco Siesta desde el celular)
-        if ($datos['metodo'] === MetodoPago::QR) {
-            $cobro = CobrosQr::crear($reserva, $request->user(), (float) $datos['monto']);
-
-            return redirect()->route($this->rutaCobros() . '.show', $cobro);
-        }
-
-        // De la tarjeta solo se usan los 4 últimos dígitos (nunca el número completo ni el CVV)
-        $ultimos4 = $datos['metodo'] === $tarjeta ? substr($datos['tarjeta_numero'], -4) : null;
-        $estabaPendiente = $reserva->esEstado(EstadoReserva::PENDIENTE);
-
-        $pago = Pagos::registrar($reserva, $request->user(), $datos['metodo'], (float) $datos['monto'], $ultimos4);
-
-        if ($pago->estado !== Pago::APROBADO) {
-            return redirect()->route($this->prefijo() . '.pagar', $reserva)
-                ->withInput($request->only('metodo', 'monto'))
-                ->with('error', 'Pago rechazado: ' . ($pago->observacion ?? 'el banco no lo aprobó.') . ' No se cobró nada.');
-        }
-
-        $mensaje = 'Pago aprobado: ' . Moneda::formato($pago->monto) . '.';
-        if ($estabaPendiente && $reserva->fresh()->esEstado(EstadoReserva::CONFIRMADA)) {
-            $mensaje .= ' La reserva quedó confirmada.';
-        }
-
-        return redirect()->route(str_replace('.reservas', '.recibos', $this->prefijo()) . '.show', $pago->recibo)
-            ->with('exito', $mensaje);
-    }
-
-    // ---------- Cobro con QR dinámico ----------
-
-    public function cobro(CobroQr $cobro)
-    {
-        $this->autorizar($cobro->reserva);
-        CobrosQr::actualizar($cobro);
-
-        $url = CobrosQr::urlBanco($cobro);
-
-        return view('pagos.qr', [
-            'cobro'   => $cobro->load('reserva'),
-            'urlQr'   => $url,
-            'qr'      => Qr::svg($url),
-            // El celular no llega a 127.0.0.1 ni a localhost: avisar
-            'soloPc'  => (bool) preg_match('#^https?://(127\.0\.0\.1|localhost)(:|/|$)#', $url),
-            'hotel'   => Hotel::datos(),
-        ] + $this->datosVista());
-    }
-
-    // JSON para public/js/cobro-qr.js (se consulta cada 2 segundos)
-    public function estadoCobro(CobroQr $cobro): JsonResponse
-    {
-        $this->autorizar($cobro->reserva);
-        CobrosQr::actualizar($cobro);
-
-        $recibo = $cobro->estado === CobroQr::PAGADO ? $cobro->pago?->recibo : null;
-
-        return response()->json([
-            'estado'      => $cobro->estado,
-            'segundos'    => max(0, (int) now()->diffInSeconds($cobro->vence_en, false)),
-            'transaccion' => $cobro->pago?->referencia,
-            'recibo'      => $recibo ? route(str_replace('.reservas', '.recibos', $this->prefijo()) . '.show', $recibo) : null,
-        ]);
-    }
-
-    public function anularCobro(CobroQr $cobro)
-    {
-        $this->autorizar($cobro->reserva);
-        CobrosQr::anular($cobro);
-
-        return redirect()->route($this->prefijo() . '.pagar', $cobro->reserva_id)
-            ->with('exito', 'El QR quedó anulado.');
-    }
-
-    protected function rutaCobros(): string
-    {
-        return str_replace('.reservas', '.cobros', $this->prefijo());
-    }
-
-    // ---------- Recibos ----------
-
-    public function recibo(Recibo $recibo)
-    {
-        $this->autorizar($recibo->pago->reserva);
-
-        return view('recibos.ver', Recibos::datosVista($recibo) + $this->datosVista());
-    }
-
-    public function reciboPdf(Recibo $recibo)
-    {
-        $this->autorizar($recibo->pago->reserva);
-
-        return Pdf::loadView('recibos.pdf', Recibos::datosVista($recibo))
-            ->setPaper('letter')
-            ->setOption('isFontSubsettingEnabled', true) // solo las letras usadas: PDF liviano
-            ->download($recibo->codigo() . '.pdf');
-    }
-
-    // ---------- Lista de pagos ("Mis pagos" / "Pagos") ----------
-
-    public function pagos(Request $request)
-    {
-        $buscar = trim((string) $request->query('buscar'));
-        $estado = in_array($request->query('estado'), [Pago::APROBADO, Pago::RECHAZADO, Pago::DEVUELTO], true) ? $request->query('estado') : null;
-        $metodo = $request->integer('metodo') ?: null;
-        $texto  = '%' . addcslashes($buscar, '%_\\') . '%';
-
-        $consulta = Pago::query()
-            ->whereIn('reserva_id', $this->misReservas()->select('id'))
-            ->when($buscar !== '', fn ($q) => $q->where(fn ($w) => $w
-                ->where('referencia', 'ILIKE', $texto)
-                ->orWhereHas('reserva', fn ($r) => $r->where('codigo', 'ILIKE', $texto)
-                    ->orWhereRaw('unaccent(nombre_titular) ILIKE unaccent(?)', [$texto]))))
-            ->when($estado, fn ($q) => $q->where('estado', $estado))
-            ->when($metodo, fn ($q) => $q->where('metodo_pago_id', $metodo));
-
-        $totales = (clone $consulta)->reorder()
-            ->selectRaw("COALESCE(SUM(monto) FILTER (WHERE estado = 'APROBADO'), 0) AS aprobado,
-                         COALESCE(SUM(monto) FILTER (WHERE estado = 'DEVUELTO'), 0) AS devuelto")
-            ->first();
-
-        $pagos = $consulta->with(['reserva', 'metodo', 'registradoPor', 'recibo', 'transferencia'])
-            ->orderByDesc('fecha_pago')->orderByDesc('id')
-            ->paginate(15)->withQueryString();
-
-        return view('pagos.index', [
-            'pagos'   => $pagos,
-            'totales' => $totales,
-            'metodos' => MetodoPago::orderBy('id')->get(),
-            'buscar'  => $buscar,
-            'estado'  => $estado,
-            'metodo'  => $metodo,
-        ] + $this->datosVista());
-    }
-
-    // "08/28" → vencida si ya pasó el último día de ese mes
-    private function tarjetaVencida(string $vence): bool
-    {
-        [$mes, $anio] = array_map('intval', explode('/', $vence));
-
-        return Carbon::create(2000 + $anio, $mes, 1)->endOfMonth()->lt(today());
-    }
-
     // ---------- Resumen en vivo (JSON para public/js/reservas.js) ----------
 
     public function cotizar(Request $request): JsonResponse
@@ -390,8 +177,9 @@ abstract class ReservaBaseController extends Controller
         return [
             'prefijo'   => $this->prefijo(),
             'rutaPagos' => str_replace('.reservas', '.pagos', $this->prefijo()) . '.index',
-            'rutaRecibo' => str_replace('.reservas', '.recibos', $this->prefijo()),
+            'rutaRecibo' => $this->rutaRecibos(),
             'rutaCobros' => $this->rutaCobros(),
+            'rutaComprobante' => str_replace('.reservas', '.pagos', $this->prefijo()) . '.comprobante',
             'inicio'    => $this->inicio(),
             'esAgencia' => $this->esAgencia(),
             'rol'       => request()->user()->rol,

@@ -19,6 +19,7 @@
     $limite    = $reserva->limiteCancelacion();
     $editable  = $rol === 'RECEPCIONISTA' && $cancelable;
     $limites   = \App\Support\Pagos::limites($reserva);
+    $enRevision = $reserva->transferenciaEnRevision();
 
     $etiquetas = [];
     if ($reserva->agencia_id) {
@@ -60,7 +61,7 @@
                 Editar datos
             </a>
         @endif
-        @if ($cancelable)
+        @if ($cancelable && ! $enRevision)
             <form method="POST" action="{{ route($prefijo . '.cancelar', $reserva) }}" data-confirmar="{{ $pregunta }}">
                 @csrf
                 @method('PATCH')
@@ -211,6 +212,19 @@
                 <p class="resumen-aviso">
                     <i data-lucide="hourglass"></i>
                     Para confirmarla falta pagar el adelanto de {{ Moneda::formato(max(0, $adelanto - $pagado)) }}.
+                </p>
+            @endif
+
+            @if ($enRevision)
+                <p class="resumen-aviso">
+                    <i data-lucide="landmark"></i>
+                    Transferencia de {{ Moneda::formato($enRevision->monto) }} en revisión
+                    (nro. de operación {{ $enRevision->transferencia->numero_operacion }}).
+                    @if ($rol === 'RECEPCIONISTA')
+                        <a href="{{ route('recepcion.transferencias.show', $enRevision) }}">Revisar</a>
+                    @else
+                        Recepción la verificará pronto.
+                    @endif
                 </p>
             @endif
 

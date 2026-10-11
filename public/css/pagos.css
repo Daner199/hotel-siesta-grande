@@ -155,3 +155,135 @@
     .cobro-qr { grid-template-columns: 1fr; padding: 1.1rem; }
     .cobro-qr-codigo { max-width: 320px; }
 }
+
+/* ---------- Formulario de pago ---------- */
+.pago-columnas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 1.25rem;
+    align-items: start;
+    max-width: 1080px;
+}
+.pago-pasos > .caja-plana + .caja-plana { margin-top: 1rem; }
+.pago-resumen { position: sticky; top: 5.5rem; }
+.pago-resumen .btn-bloque { margin-top: 1.1rem; }
+.enlace-volver {
+    display: inline-block;
+    margin-top: .75rem;
+    padding: 0;
+    font: inherit;
+    font-size: .88rem;
+    color: var(--selva);
+    background: none;
+    border: 0;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* Opciones en lista (radio): filas con separadores finos */
+.opciones { border: 1px solid var(--p-linea); border-radius: 6px; }
+.opcion {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .8rem .9rem;
+    border-bottom: 1px solid var(--p-linea);
+    cursor: pointer;
+}
+.opcion:last-child { border-bottom: 0; }
+.opcion:hover { background: var(--p-suave); }
+.opcion:has(input:checked) { background: #F1F6F3; }
+.opcion input { width: 18px; height: 18px; margin: 0; accent-color: var(--selva); flex: none; }
+.opcion-icono { width: 20px; height: 20px; color: var(--selva); flex: none; }
+.opcion-texto { flex: 1; font-weight: 500; }
+.opcion-texto small { display: block; font-size: .82rem; font-weight: 400; color: var(--p-gris); }
+.opcion-valor { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.campo-monto { max-width: 280px; margin-top: 1rem; margin-bottom: 0; }
+
+.panel-metodo { margin: 1.1rem 0 0; padding: 0; border: 0; min-width: 0; }
+.panel-metodo[hidden] { display: none; }
+.nota-metodo p { margin: 0; padding: .8rem .9rem; font-size: .9rem; color: var(--p-gris); background: var(--p-suave); border-radius: 6px; }
+.nota-pequena { margin: .75rem 0 0; font-size: .82rem; color: var(--p-gris); }
+.paso-texto { margin: 0 0 .5rem; font-size: .9rem; font-weight: 500; }
+.lista-recuadro { margin-bottom: 1.1rem; padding: 0 .9rem; border: 1px solid var(--p-linea); border-radius: 6px; }
+.enlace-copiar { margin-left: .5rem; padding: 0; font: inherit; font-size: .82rem; color: var(--selva); background: none; border: 0; text-decoration: underline; cursor: pointer; }
+
+/* ---------- Tarjeta: vista previa (plana) que se da vuelta en el CVV ---------- */
+.tarjeta-zona { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.tarjeta-vista { position: relative; width: 280px; aspect-ratio: 1.586; perspective: 900px; }
+.tarjeta-cara {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1rem 1.1rem;
+    color: #fff;
+    background: var(--selva);
+    border-radius: 10px;
+    backface-visibility: hidden;
+    transition: transform .5s ease, background-color .3s;
+}
+.tarjeta-dorso { transform: rotateY(180deg); justify-content: flex-start; padding: 1rem 0 0; }
+.tarjeta-vista.girada .tarjeta-frente { transform: rotateY(-180deg); }
+.tarjeta-vista.girada .tarjeta-dorso { transform: rotateY(0); }
+.tarjeta-vista[data-marca="visa"] .tarjeta-cara { background: #1A1F71; }
+.tarjeta-vista[data-marca="mastercard"] .tarjeta-cara { background: #252525; }
+
+.tarjeta-fila { display: flex; justify-content: space-between; align-items: flex-end; gap: .5rem; }
+.tarjeta-chip { width: 34px; height: 26px; background: #D4B46A; border-radius: 4px; }
+.tarjeta-marca { height: 24px; display: flex; align-items: center; }
+.logo-visa { font-size: 1.2rem; font-weight: 800; font-style: italic; letter-spacing: .02em; }
+.logo-mc { width: 40px; height: 24px; }
+.tarjeta-numero { font-family: ui-monospace, Consolas, monospace; font-size: 1.12rem; letter-spacing: .06em; }
+.tarjeta-banco { font-size: .7rem; opacity: .75; }
+.tarjeta-vence { font-family: ui-monospace, Consolas, monospace; font-size: .9rem; text-align: right; }
+.tarjeta-vence small { display: block; font-family: var(--f-texto); font-size: .65rem; opacity: .75; }
+.tarjeta-banda { height: 38px; background: #111; }
+.tarjeta-firma { display: flex; justify-content: flex-end; margin: .9rem 1rem .3rem; padding: .3rem .5rem; color: #17221C; background: #F2F2EE; border-radius: 3px; }
+.tarjeta-firma span { font-family: ui-monospace, Consolas, monospace; }
+.tarjeta-dorso small { margin: 0 1rem; align-self: flex-end; font-size: .65rem; opacity: .75; }
+
+.tarjeta-campos .campo { margin-bottom: .9rem; }
+.tarjeta-doble { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+.tarjetas-prueba { margin-top: .9rem; font-size: .88rem; }
+.tarjetas-prueba summary { color: var(--selva); cursor: pointer; }
+.tarjetas-prueba .lista-datos { margin-top: .5rem; padding: 0 .9rem; border: 1px solid var(--p-linea); border-radius: 6px; }
+.tarjetas-prueba dd { font-family: ui-monospace, Consolas, monospace; font-weight: 400; }
+
+@media (prefers-reduced-motion: reduce) {
+    .tarjeta-cara { transition: none; }
+}
+
+/* ---------- 3-D Secure ---------- */
+.verificacion-3ds { max-width: 460px; padding: 1.75rem; background: #fff; border: 1px solid var(--p-linea); border-radius: 8px; }
+.verificacion-3ds h1 { margin: .25rem 0 .5rem; font-family: var(--f-texto); font-size: 1.4rem; font-weight: 600; }
+.v3ds-banco { margin: 0; font-size: .85rem; color: var(--p-gris); }
+.v3ds-texto { margin: 0 0 1rem; }
+.verificacion-3ds .aviso-plano { margin: 1rem 0; }
+.v3ds-form .campo { margin-bottom: 1rem; }
+.codigo-sms { font-family: ui-monospace, Consolas, monospace; font-size: 1.4rem !important; letter-spacing: .35em; }
+.v3ds-acciones { display: flex; gap: 1.25rem; }
+.v3ds-acciones form { margin: 0; }
+
+/* ---------- Recepción: transferencias ---------- */
+.pestanas-planas { display: flex; gap: 1.5rem; margin: -.25rem 0 1rem; border-bottom: 1px solid var(--p-linea); }
+.pestanas-planas a { display: inline-flex; align-items: center; gap: .4rem; padding: .5rem 0; color: var(--p-gris); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.pestanas-planas a.activa { color: var(--tinta); font-weight: 600; border-bottom-color: var(--selva); }
+.vacio-plano { margin: .5rem 0; color: var(--p-gris); }
+
+.revision { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 1.25rem; align-items: start; max-width: 1080px; }
+.revision > div > .caja-plana + .caja-plana { margin-top: 1rem; }
+.comprobante-imagen { display: block; max-width: 100%; max-height: 70vh; margin: 0 auto; border: 1px solid var(--p-linea); }
+.comprobante-pdf { width: 100%; height: 70vh; border: 1px solid var(--p-linea); }
+.form-rechazo { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--p-linea); }
+
+@media (max-width: 960px) {
+    .pago-columnas, .revision { grid-template-columns: 1fr; }
+    .pago-resumen { position: static; }
+}
+@media (max-width: 640px) {
+    .tarjeta-zona { grid-template-columns: 1fr; }
+    .tarjeta-vista { width: 100%; max-width: 300px; }
+}

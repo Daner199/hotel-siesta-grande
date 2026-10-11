@@ -50,6 +50,9 @@
                                    @if ($activo) aria-current="page" @endif>
                                     <i data-lucide="{{ $item['icono'] }}"></i>
                                     <span>{{ $item['texto'] }}</span>
+                                    @if (! empty($item['contador']) && ($n = \App\Support\Contadores::valor($item['contador'])))
+                                        <span class="contador-menu" aria-label="{{ $n }} por revisar">{{ $n }}</span>
+                                    @endif
                                 </a>
                             @else
                                 <span class="lateral-enlace deshabilitado" title="Disponible en un próximo módulo">

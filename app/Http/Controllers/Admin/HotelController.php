@@ -75,6 +75,10 @@ class HotelController extends Controller
                 'texto_piscina'     => $datos['texto_piscina'] ?? null,
                 'texto_restaurante' => $datos['texto_restaurante'] ?? null,
                 'texto_salon'       => $datos['texto_salon'] ?? null,
+                'cuenta_banco'      => $datos['cuenta_banco'] ?? null,
+                'cuenta_tipo'       => $datos['cuenta_tipo'] ?? null,
+                'cuenta_numero'     => $datos['cuenta_numero'] ?? null,
+                'cuenta_titular'    => $datos['cuenta_titular'] ?? null,
                 'latitud'    => $datos['latitud'] ?? null,
                 'longitud'   => $datos['longitud'] ?? null,
             ]);
@@ -143,6 +147,10 @@ class HotelController extends Controller
             'texto_piscina'     => $texto('texto_piscina'),
             'texto_restaurante' => $texto('texto_restaurante'),
             'texto_salon'       => $texto('texto_salon'),
+            'cuenta_banco'      => $texto('cuenta_banco'),
+            'cuenta_tipo'       => $texto('cuenta_tipo'),
+            'cuenta_numero'     => $texto('cuenta_numero'),
+            'cuenta_titular'    => $texto('cuenta_titular'),
             // La historia respeta los saltos de párrafo (solo limpia espacios de más)
             'historia'     => trim(preg_replace(['/[ \t]+/', "/\n{3,}/"], [' ', "\n\n"], str_replace("\r", '', (string) $request->input('historia')))) ?: null,
             'telefono'   => preg_replace('/\D/', '', (string) $request->input('telefono')) ?: null,
@@ -174,6 +182,12 @@ class HotelController extends Controller
             'texto_piscina'     => ['nullable', 'string', 'max:300'],
             'texto_restaurante' => ['nullable', 'string', 'max:300'],
             'texto_salon'       => ['nullable', 'string', 'max:300'],
+
+            // Cuenta para transferencias: los 4 datos juntos o ninguno
+            'cuenta_banco'   => ['nullable', 'required_with:cuenta_tipo,cuenta_numero,cuenta_titular', 'string', 'max:100'],
+            'cuenta_tipo'    => ['nullable', 'required_with:cuenta_banco,cuenta_numero,cuenta_titular', 'string', 'max:50'],
+            'cuenta_numero'  => ['nullable', 'required_with:cuenta_banco,cuenta_tipo,cuenta_titular', 'string', 'max:30', 'regex:/^[0-9][0-9-]*[0-9]$/'],
+            'cuenta_titular' => ['nullable', 'required_with:cuenta_banco,cuenta_tipo,cuenta_numero', 'string', 'max:150'],
 
             'telefono_pais' => ['nullable', 'required_with:telefono', $paises],
             'telefono'      => ['nullable', 'digits_between:4,15', 'phone:telefono_pais'],
@@ -223,6 +237,11 @@ class HotelController extends Controller
             'texto_piscina.max'     => 'El texto puede tener como máximo 300 caracteres.',
             'texto_restaurante.max' => 'El texto puede tener como máximo 300 caracteres.',
             'texto_salon.max'       => 'El texto puede tener como máximo 300 caracteres.',
+            'cuenta_banco.required_with'   => 'Completa el banco (o deja vacíos los 4 datos de la cuenta).',
+            'cuenta_tipo.required_with'    => 'Completa el tipo de cuenta (o deja vacíos los 4 datos).',
+            'cuenta_numero.required_with'  => 'Completa el número de cuenta (o deja vacíos los 4 datos).',
+            'cuenta_numero.regex'          => 'El número de cuenta solo puede tener números y guiones.',
+            'cuenta_titular.required_with' => 'Completa el titular de la cuenta (o deja vacíos los 4 datos).',
 
             'telefono_pais.required_with' => 'Elige el país del teléfono.',
             'telefono.digits_between'     => 'El teléfono solo puede tener números (entre 4 y 15).',

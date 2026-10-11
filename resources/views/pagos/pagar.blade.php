@@ -1,9 +1,12 @@
 @extends('layouts.panel')
 
 {{--
-    Pagar una reserva (cliente, agencia y recepción).
-    QR y tarjeta pasan por la pasarela simulada; el efectivo solo aparece en recepción.
-    De la tarjeta solo se usan los 4 últimos dígitos: el número y el CVV nunca se guardan.
+    Pagar una reserva (cliente, agencia y recepción). Diseño plano, como una pasarela de pago real.
+    - QR: genera un cobro con QR dinámico (Banco Siesta).
+    - Tarjeta: vista previa, marca, Luhn y 3-D Secure (el número y el CVV nunca se guardan).
+    - Transferencia: datos de la cuenta del hotel + nro. de operación + comprobante (lo revisa recepción).
+    - Efectivo: solo recepción.
+    public/js/pagos.js maneja los atajos de monto, los paneles y la vista previa de la tarjeta.
 --}}
 @use('App\Models\EstadoReserva')
 @use('App\Models\MetodoPago')
@@ -15,10 +18,21 @@
     $pendiente = $reserva->esEstado(EstadoReserva::PENDIENTE);
     $texto     = fn ($n) => number_format($n, 2, ',', '.');
     $metodoSel = old('metodo', $metodos->first()->nombre);
+    $montoIni  = old('monto', $texto($limites['minimo']));
 
+    $descripciones = [
+        MetodoPago::EFECTIVO      => 'En la recepción del hotel',
+        MetodoPago::QR            => 'Escanea el código con tu celular',
+        MetodoPago::TARJETA       => 'Visa o Mastercard, crédito o débito',
+        MetodoPago::TRANSFERENCIA => 'Desde tu banca por internet; luego subes el comprobante',
+    ];
 @endphp
 
 @section('titulo', "Pagar {$reserva->codigo}")
+
+@push('estilos')
+    <link rel="stylesheet" href="{{ asset('css/pagos.css') }}">
+@endpush
 
 @push('scripts')
     <script src="{{ asset('js/validacion.js') }}"></script>
@@ -38,170 +52,218 @@
             <span>{{ $rol === 'RECEPCIONISTA' ? 'Registrar pago' : 'Pagar' }}</span>
         </nav>
         <h1>{{ $rol === 'RECEPCIONISTA' ? 'Registrar pago' : 'Pagar la reserva' }}</h1>
-        <p>
-            @if ($pendiente)
-                Paga al menos el adelanto ({{ Disponibilidad::ADELANTO }} %) para confirmar la reserva.
-            @else
-                La reserva ya está confirmada: puedes pagar cualquier monto hasta el saldo.
-            @endif
-        </p>
     </div>
 </header>
 
-<form method="POST" action="{{ route($prefijo . '.pagar.store', $reserva) }}" class="reserva-nueva" novalidate
-      data-validar-form data-pago>
+<form method="POST" action="{{ route($prefijo . '.pagar.store', $reserva) }}" enctype="multipart/form-data"
+      class="pago" novalidate data-validar-form data-pago>
     @csrf
 
-    <div class="reserva-columnas">
-        <div class="reserva-pasos">
+    <div class="pago-columnas">
+        <div class="pago-pasos">
 
-            {{-- ===== 1. Monto ===== --}}
-            <section class="bloque">
-                <fieldset class="seccion-form">
-                    <legend>
-                        <span class="seccion-icono"><i data-lucide="coins"></i></span>
-                        Monto
-                    </legend>
+            {{-- ===== Monto ===== --}}
+            <section class="caja-plana">
+                <h2>Monto a pagar</h2>
 
-                    <div class="atajos-monto">
-                        @if ($pendiente && $limites['minimo'] < $limites['maximo'])
-                            <button type="button" class="chip-monto" data-monto="{{ $texto($limites['minimo']) }}">
-                                <span>Adelanto ({{ Disponibilidad::ADELANTO }} %)</span>
-                                <strong>{{ Moneda::formato($limites['minimo']) }}</strong>
-                            </button>
-                        @endif
-                        <button type="button" class="chip-monto" data-monto="{{ $texto($limites['maximo']) }}">
-                            <span>Todo el saldo</span>
-                            <strong>{{ Moneda::formato($limites['maximo']) }}</strong>
-                        </button>
+                <div class="opciones" role="radiogroup" aria-label="Monto a pagar">
+                    @if ($pendiente && $limites['minimo'] < $limites['maximo'])
+                        <label class="opcion">
+                            <input type="radio" name="opcion_monto" value="{{ $texto($limites['minimo']) }}" data-opcion-monto
+                                   @checked($montoIni === $texto($limites['minimo']))>
+                            <span class="opcion-texto">
+                                Adelanto para confirmar ({{ Disponibilidad::ADELANTO }} %)
+                                <small>El saldo se paga hasta el check-out</small>
+                            </span>
+                            <span class="opcion-valor">{{ Moneda::formato($limites['minimo']) }}</span>
+                        </label>
+                    @endif
+                    <label class="opcion">
+                        <input type="radio" name="opcion_monto" value="{{ $texto($limites['maximo']) }}" data-opcion-monto
+                               @checked($montoIni === $texto($limites['maximo']))>
+                        <span class="opcion-texto">Saldo total</span>
+                        <span class="opcion-valor">{{ Moneda::formato($limites['maximo']) }}</span>
+                    </label>
+                    <label class="opcion">
+                        <input type="radio" name="opcion_monto" value="otro" data-opcion-otro
+                               @checked(! in_array($montoIni, [$texto($limites['minimo']), $texto($limites['maximo'])], true))>
+                        <span class="opcion-texto">Otro monto</span>
+                    </label>
+                </div>
+
+                <div class="campo campo-monto">
+                    <label for="monto">Monto (Bs)</label>
+                    <div class="campo-moneda">
+                        <span aria-hidden="true">Bs</span>
+                        <input type="text" id="monto" name="monto" inputmode="decimal" maxlength="12" required
+                               value="{{ $montoIni }}" data-validar="monto"
+                               data-min="{{ $limites['minimo'] }}" data-max="{{ $limites['maximo'] }}" data-vacio="Escribe el monto.">
                     </div>
-
-                    <div class="campo campo-monto">
-                        <label for="monto">Monto a pagar</label>
-                        <div class="campo-moneda">
-                            <span aria-hidden="true">Bs</span>
-                            <input type="text" id="monto" name="monto" inputmode="decimal" maxlength="12" required
-                                   value="{{ old('monto', $texto($limites['minimo'])) }}"
-                                   data-validar="monto" data-min="{{ $limites['minimo'] }}" data-max="{{ $limites['maximo'] }}"
-                                   data-vacio="Escribe el monto.">
-                        </div>
-                        @error('monto') <p class="campo-error">{{ $message }}</p> @enderror
-                        <p class="ayuda-campo">
-                            Entre {{ Moneda::formato($limites['minimo']) }} y {{ Moneda::formato($limites['maximo']) }}.
-                        </p>
-                    </div>
-                </fieldset>
+                    @error('monto') <p class="campo-error">{{ $message }}</p> @enderror
+                    <p class="ayuda-campo">Entre {{ Moneda::formato($limites['minimo']) }} y {{ Moneda::formato($limites['maximo']) }}.</p>
+                </div>
             </section>
 
-            {{-- ===== 2. Método ===== --}}
-            <section class="bloque">
-                <fieldset class="seccion-form">
-                    <legend>
-                        <span class="seccion-icono"><i data-lucide="wallet"></i></span>
-                        Método de pago
-                    </legend>
+            {{-- ===== Forma de pago ===== --}}
+            <section class="caja-plana">
+                <h2>Forma de pago</h2>
+                @error('metodo') <p class="campo-error campo-error-bloque">{{ $message }}</p> @enderror
+                @error('pago') <p class="campo-error campo-error-bloque">{{ $message }}</p> @enderror
 
-                    @error('metodo') <p class="campo-error campo-error-bloque">{{ $message }}</p> @enderror
-                    @error('pago') <p class="campo-error campo-error-bloque">{{ $message }}</p> @enderror
+                <div class="opciones" role="radiogroup" aria-label="Forma de pago">
+                    @foreach ($metodos as $m)
+                        <label class="opcion">
+                            <input type="radio" name="metodo" value="{{ $m->nombre }}" @checked($metodoSel === $m->nombre)>
+                            <i data-lucide="{{ $m->icono() }}" class="opcion-icono"></i>
+                            <span class="opcion-texto">
+                                {{ $m->etiqueta() }}
+                                <small>{{ $descripciones[$m->nombre] ?? '' }}</small>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
 
-                    <div class="metodos-pago" role="radiogroup" aria-label="Método de pago">
-                        @foreach ($metodos as $m)
-                            <label class="metodo-pago">
-                                <input type="radio" name="metodo" value="{{ $m->nombre }}" @checked($metodoSel === $m->nombre)>
-                                <span>
-                                    <i data-lucide="{{ $m->icono() }}"></i>
-                                    {{ $m->etiqueta() }}
-                                </span>
-                            </label>
-                        @endforeach
-                    </div>
+                {{-- QR --}}
+                <div class="panel-metodo nota-metodo" data-panel="{{ MetodoPago::QR }}" @if ($metodoSel !== MetodoPago::QR) hidden @endif>
+                    <p>Se genera un código QR por este monto, válido por {{ config('pagos.qr_minutos') }} minutos.
+                       Lo escaneas con tu celular y confirmas el pago en tu banco; esta pantalla se actualiza sola.</p>
+                </div>
 
-                    {{-- QR dinámico: al continuar se genera el cobro --}}
-                    <div class="panel-metodo panel-efectivo" data-panel="{{ MetodoPago::QR }}" @if ($metodoSel !== MetodoPago::QR) hidden @endif>
-                        <i data-lucide="qr-code"></i>
-                        <p>Al continuar se genera un código QR por este monto, válido por {{ config('pagos.qr_minutos') }} minutos.
-                           Escanéalo con tu celular y confirma el pago en tu banco.</p>
-                    </div>
+                {{-- Tarjeta --}}
+                <fieldset class="panel-metodo" data-panel="{{ MetodoPago::TARJETA }}"
+                          @if ($metodoSel !== MetodoPago::TARJETA) hidden disabled @endif>
+                    <legend class="sr-only">Datos de la tarjeta</legend>
 
-                    {{-- Tarjeta (solo se usan los 4 últimos dígitos) --}}
-                    <fieldset class="panel-metodo" data-panel="{{ MetodoPago::TARJETA }}"
-                              @if ($metodoSel !== MetodoPago::TARJETA) hidden disabled @endif>
-                        <div class="rejilla-form rejilla-tres">
+                    <div class="tarjeta-zona">
+                        <div class="tarjeta-vista" data-tarjeta-vista aria-hidden="true">
+                            <div class="tarjeta-cara tarjeta-frente">
+                                <div class="tarjeta-fila">
+                                    <span class="tarjeta-chip"></span>
+                                    <span class="tarjeta-marca" data-vista-marca></span>
+                                </div>
+                                <div class="tarjeta-numero" data-vista-numero>•••• •••• •••• ••••</div>
+                                <div class="tarjeta-fila">
+                                    <span class="tarjeta-banco">Tarjeta de débito o crédito</span>
+                                    <span class="tarjeta-vence"><small>Vence</small><span data-vista-vence>MM/AA</span></span>
+                                </div>
+                            </div>
+                            <div class="tarjeta-cara tarjeta-dorso">
+                                <div class="tarjeta-banda"></div>
+                                <div class="tarjeta-firma"><span data-vista-cvv>•••</span></div>
+                                <small>Código de seguridad</small>
+                            </div>
+                        </div>
+
+                        <div class="tarjeta-campos">
                             <div class="campo">
                                 <label for="tarjeta_numero">Número de tarjeta</label>
                                 <input type="text" id="tarjeta_numero" name="tarjeta_numero" inputmode="numeric"
-                                       autocomplete="off" maxlength="23" required placeholder="4242 4242 4242 4242"
+                                       autocomplete="cc-number" maxlength="23" required placeholder="0000 0000 0000 0000"
                                        data-validar="tarjeta" data-vacio="Escribe el número de la tarjeta.">
                                 @error('tarjeta_numero') <p class="campo-error">{{ $message }}</p> @enderror
                             </div>
-                            <div class="campo">
-                                <label for="tarjeta_vence">Vence</label>
-                                <input type="text" id="tarjeta_vence" name="tarjeta_vence" inputmode="numeric"
-                                       autocomplete="off" maxlength="5" required placeholder="MM/AA"
-                                       data-validar="vence" data-vacio="Escribe el vencimiento (MM/AA).">
-                                @error('tarjeta_vence') <p class="campo-error">{{ $message }}</p> @enderror
-                            </div>
-                            <div class="campo">
-                                <label for="tarjeta_cvv">Código de seguridad</label>
-                                <input type="password" id="tarjeta_cvv" name="tarjeta_cvv" inputmode="numeric"
-                                       autocomplete="off" maxlength="4" required placeholder="123"
-                                       data-validar="cvv" data-vacio="Escribe el código de seguridad.">
-                                @error('tarjeta_cvv') <p class="campo-error">{{ $message }}</p> @enderror
+                            <div class="tarjeta-doble">
+                                <div class="campo">
+                                    <label for="tarjeta_vence">Vencimiento</label>
+                                    <input type="text" id="tarjeta_vence" name="tarjeta_vence" inputmode="numeric"
+                                           autocomplete="cc-exp" maxlength="5" required placeholder="MM/AA"
+                                           data-validar="vence" data-vacio="Escribe el vencimiento (MM/AA).">
+                                    @error('tarjeta_vence') <p class="campo-error">{{ $message }}</p> @enderror
+                                </div>
+                                <div class="campo">
+                                    <label for="tarjeta_cvv">CVV</label>
+                                    <input type="text" id="tarjeta_cvv" name="tarjeta_cvv" inputmode="numeric"
+                                           autocomplete="cc-csc" maxlength="4" required placeholder="123"
+                                           data-validar="cvv" data-vacio="Escribe el código de seguridad.">
+                                    @error('tarjeta_cvv') <p class="campo-error">{{ $message }}</p> @enderror
+                                </div>
                             </div>
                         </div>
-                        <p class="ayuda-form">
-                            <i data-lucide="shield-check"></i>
-                            Pago simulado: no se guarda el número ni el código, solo los 4 últimos dígitos.
-                            La tarjeta de prueba que termina en {{ config('pagos.tarjeta_rechazada') }} es rechazada por el banco.
-                        </p>
-                    </fieldset>
-
-                    {{-- Efectivo (solo recepción) --}}
-                    <div class="panel-metodo panel-efectivo" data-panel="{{ MetodoPago::EFECTIVO }}" @if ($metodoSel !== MetodoPago::EFECTIVO) hidden @endif>
-                        <i data-lucide="banknote"></i>
-                        <p>Recibe el efectivo en recepción y registra el pago. Se aprueba al instante con una referencia EFE-…</p>
                     </div>
+
+                    <p class="nota-pequena">El número y el código de seguridad no se guardan: del pago solo quedan la marca y los 4 últimos dígitos.</p>
+
+                    <details class="tarjetas-prueba">
+                        <summary>Tarjetas de prueba</summary>
+                        <dl class="lista-datos">
+                            <div><dt>Aprobada (Visa)</dt><dd>4242 4242 4242 4242</dd></div>
+                            <div><dt>Aprobada (Mastercard)</dt><dd>5555 5555 5555 4444</dd></div>
+                            <div><dt>Fondos insuficientes</dt><dd>4000 0000 0000 0002</dd></div>
+                            <div><dt>Pide código por SMS (3-D Secure)</dt><dd>4000 0000 0000 3220</dd></div>
+                        </dl>
+                        <p class="nota-pequena">Cualquier vencimiento futuro y cualquier CVV de 3 dígitos.</p>
+                    </details>
                 </fieldset>
+
+                {{-- Transferencia --}}
+                @if ($cuenta)
+                    <fieldset class="panel-metodo" data-panel="{{ MetodoPago::TRANSFERENCIA }}"
+                              @if ($metodoSel !== MetodoPago::TRANSFERENCIA) hidden disabled @endif>
+                        <legend class="sr-only">Datos de la transferencia</legend>
+
+                        <p class="paso-texto">1. Transfiere el monto a esta cuenta:</p>
+                        <dl class="lista-datos lista-recuadro">
+                            <div><dt>Banco</dt><dd>{{ $cuenta['banco'] }}</dd></div>
+                            <div><dt>Tipo de cuenta</dt><dd>{{ $cuenta['tipo'] }}</dd></div>
+                            <div>
+                                <dt>Nro. de cuenta</dt>
+                                <dd>
+                                    <span data-copiable>{{ $cuenta['numero'] }}</span>
+                                    <button type="button" class="enlace-copiar" data-copiar="{{ $cuenta['numero'] }}">Copiar</button>
+                                </dd>
+                            </div>
+                            <div><dt>Titular</dt><dd>{{ $cuenta['titular'] }}</dd></div>
+                            <div><dt>Glosa</dt><dd>Reserva {{ $reserva->codigo }}</dd></div>
+                            <div><dt>Monto a transferir</dt><dd>Bs <span data-monto-espejo>{{ $montoIni }}</span></dd></div>
+                        </dl>
+
+                        <p class="paso-texto">2. Registra los datos de tu comprobante:</p>
+                        <div class="rejilla-form">
+                            <div class="campo">
+                                <label for="numero_operacion">Nro. de operación</label>
+                                <input type="text" id="numero_operacion" name="numero_operacion" maxlength="30" required
+                                       autocomplete="off" class="mayusculas" placeholder="Ej.: 84720193"
+                                       value="{{ old('numero_operacion') }}"
+                                       data-validar="operacion" data-vacio="Escribe el número de operación del comprobante.">
+                                @error('numero_operacion') <p class="campo-error">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="campo">
+                                <label for="comprobante">Comprobante</label>
+                                <input type="file" id="comprobante" name="comprobante" required
+                                       accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+                                       data-validar="archivo" data-max-kb="2048" data-vacio="Sube la foto o el PDF del comprobante.">
+                                @error('comprobante') <p class="campo-error">{{ $message }}</p> @enderror
+                                <p class="ayuda-campo">Foto o PDF, hasta 2 MB.</p>
+                            </div>
+                        </div>
+                        <p class="nota-pequena">Recepción verifica que el dinero llegó y aprueba el pago. Mientras tanto la reserva no cambia.</p>
+                    </fieldset>
+                @endif
+
+                {{-- Efectivo (solo recepción) --}}
+                <div class="panel-metodo nota-metodo" data-panel="{{ MetodoPago::EFECTIVO }}" @if ($metodoSel !== MetodoPago::EFECTIVO) hidden @endif>
+                    <p>Recibe el efectivo y registra el pago. Se aprueba al momento y se emite el recibo.</p>
+                </div>
             </section>
         </div>
 
-        {{-- ===== Cuenta ===== --}}
-        <aside class="resumen-reserva" aria-labelledby="titulo-cuenta">
-            <div class="resumen-tarjeta">
-                <p class="resumen-titulo" id="titulo-cuenta">Reserva {{ $reserva->codigo }}</p>
+        {{-- ===== Detalle ===== --}}
+        <aside class="caja-plana pago-resumen">
+            <h2>Detalle</h2>
+            <dl class="lista-datos">
+                <div><dt>Reserva</dt><dd>{{ $reserva->codigo }}</dd></div>
+                <div><dt>Estadía</dt><dd>{{ $reserva->fecha_entrada->format('d/m/Y') }} al {{ $reserva->fecha_salida->format('d/m/Y') }}</dd></div>
+                <div><dt>Total de la estadía</dt><dd>{{ Moneda::formato($reserva->total()) }}</dd></div>
+                <div><dt>Pagado</dt><dd>{{ Moneda::formato($pagado) }}</dd></div>
+                @if ($pendiente)
+                    <div><dt>Adelanto que falta</dt><dd>{{ Moneda::formato($limites['minimo']) }}</dd></div>
+                @endif
+                <div><dt>Saldo</dt><dd>{{ Moneda::formato($limites['maximo']) }}</dd></div>
+                <div class="dato-grande"><dt>Monto a pagar</dt><dd>Bs <span data-monto-espejo>{{ $montoIni }}</span></dd></div>
+            </dl>
 
-                <p class="resumen-total">
-                    <strong>{{ Moneda::formato($reserva->total()) }}</strong>
-                    <span>Total de la estadía</span>
-                </p>
-
-                <dl class="resumen-cuenta">
-                    <div>
-                        <dt>Pagado</dt>
-                        <dd>{{ Moneda::formato($pagado) }}</dd>
-                    </div>
-                    @if ($pendiente)
-                        <div>
-                            <dt>Adelanto que falta</dt>
-                            <dd>{{ Moneda::formato($limites['minimo']) }}</dd>
-                        </div>
-                    @endif
-                    <div class="resumen-cuenta-falta">
-                        <dt>Saldo</dt>
-                        <dd>{{ Moneda::formato($limites['maximo']) }}</dd>
-                    </div>
-                </dl>
-
-                <button type="submit" class="btn btn-tajibo btn-bloque">
-                    <i data-lucide="lock"></i>
-                    <span data-texto-pagar>{{ $rol === 'RECEPCIONISTA' ? 'Registrar pago' : 'Pagar' }}</span>
-                </button>
-
-                <p class="resumen-nota">
-                    {{ $reserva->fecha_entrada->format('d/m/Y') }} al {{ $reserva->fecha_salida->format('d/m/Y') }}
-                    · {{ $reserva->nombre_titular }}
-                </p>
-            </div>
+            <button type="submit" class="btn btn-primario btn-bloque" data-boton-pagar>Continuar</button>
+            <a href="{{ route($prefijo . '.show', $reserva) }}" class="enlace-volver">Volver a la reserva</a>
         </aside>
     </div>
 </form>

@@ -56,6 +56,7 @@
         <select name="estado" aria-label="Filtrar por estado">
             <option value="">Todos los estados</option>
             <option value="APROBADO" @selected($estado === 'APROBADO')>Aprobados</option>
+            <option value="PENDIENTE" @selected($estado === 'PENDIENTE')>En revisión</option>
             <option value="RECHAZADO" @selected($estado === 'RECHAZADO')>Rechazados</option>
             <option value="DEVUELTO" @selected($estado === 'DEVUELTO')>Devueltos</option>
         </select>

@@ -225,6 +225,42 @@
         <p class="ayuda-form">Si la recepción dice un número de horas (ej.: "Las 24 horas"), la página lo muestra como cifra grande.</p>
     </fieldset>
 
+    {{-- ===== Cuenta para transferencias ===== --}}
+    <fieldset class="seccion-form">
+        <legend>
+            <span class="seccion-icono"><i data-lucide="landmark"></i></span>
+            Cuenta para transferencias
+        </legend>
+
+        <div class="rejilla-form">
+            <div class="campo">
+                <label for="cuenta_banco">Banco</label>
+                <input type="text" id="cuenta_banco" name="cuenta_banco" maxlength="100"
+                       value="{{ old('cuenta_banco', $hotel->cuenta_banco) }}">
+                @error('cuenta_banco') <p class="campo-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="campo">
+                <label for="cuenta_tipo">Tipo de cuenta</label>
+                <input type="text" id="cuenta_tipo" name="cuenta_tipo" maxlength="50" placeholder="Cuenta corriente en bolivianos"
+                       value="{{ old('cuenta_tipo', $hotel->cuenta_tipo) }}">
+                @error('cuenta_tipo') <p class="campo-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="campo">
+                <label for="cuenta_numero">Nro. de cuenta</label>
+                <input type="text" id="cuenta_numero" name="cuenta_numero" maxlength="30" inputmode="numeric"
+                       value="{{ old('cuenta_numero', $hotel->cuenta_numero) }}">
+                @error('cuenta_numero') <p class="campo-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="campo">
+                <label for="cuenta_titular">Titular</label>
+                <input type="text" id="cuenta_titular" name="cuenta_titular" maxlength="150"
+                       value="{{ old('cuenta_titular', $hotel->cuenta_titular) }}">
+                @error('cuenta_titular') <p class="campo-error">{{ $message }}</p> @enderror
+            </div>
+        </div>
+        <p class="ayuda-form">Datos de ejemplo: cámbialos por la cuenta real del hotel. Si dejas los 4 vacíos, no se ofrece pagar por transferencia.</p>
+    </fieldset>
+
     {{-- ===== Textos de la página pública ===== --}}
     <fieldset class="seccion-form">
         <legend>

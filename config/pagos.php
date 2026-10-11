@@ -42,6 +42,8 @@ return [
         'saldo'  => 12480.50,
     ],
 
-    // Tarjeta de prueba que el "banco" rechaza: la que termina en estos 4 dígitos
+    // Tarjetas de prueba (ver README): la que termina en 0002 se rechaza por fondos insuficientes
+    // y la que termina en 3220 pide verificación 3-D Secure (código por SMS simulado)
     'tarjeta_rechazada' => '0002',
+    'tarjeta_3ds'       => '3220',
 ];

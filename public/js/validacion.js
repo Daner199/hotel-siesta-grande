@@ -7,7 +7,7 @@
  *
  * Tipos: letras, email, telefono, password, confirmar, nit, empresa,
  *        tipo, numero, entero (usa min/max), precio, fecha (usa min),
- *        monto (usa data-min/data-max), tarjeta, vence, cvv
+ *        monto (usa data-min/data-max), tarjeta (con Luhn), vence, cvv, operacion, archivo
  * Los campos deshabilitados (o dentro de un fieldset deshabilitado) no se validan.
  * Son las MISMAS reglas que valida Laravel. Laravel siempre vuelve a validar.
  */
@@ -132,11 +132,28 @@
             return null;
         },
 
-        // Número de tarjeta: 13 a 19 dígitos (los espacios no cuentan)
+        // Número de tarjeta: 13 a 19 dígitos y dígito verificador correcto (algoritmo de Luhn)
         tarjeta(valor, campo) {
             if (!valor) return campo.required ? vacio(campo) : null;
             const d = valor.replace(/\s/g, '');
             if (!/^\d{13,19}$/.test(d)) return 'Debe tener entre 13 y 19 dígitos.';
+            if (!luhn(d)) return 'El número de tarjeta no es válido. Revísalo.';
+            return null;
+        },
+
+        // Nro. de operación de una transferencia: 4 a 30 letras, números o guiones
+        operacion(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            if (!/^[A-Za-z0-9-]{4,30}$/.test(valor.replace(/\s/g, ''))) return 'Tiene de 4 a 30 letras o números.';
+            return null;
+        },
+
+        // Archivo: tipo según el accept del campo y tamaño máximo data-max-kb
+        archivo(valor, campo) {
+            const f = campo.files?.[0];
+            if (!f) return campo.required ? vacio(campo) : null;
+            if (!/\.(jpe?g|png|webp|pdf)$/i.test(f.name)) return 'Debe ser JPG, PNG, WEBP o PDF.';
+            if (campo.dataset.maxKb && f.size > Number(campo.dataset.maxKb) * 1024) return 'Pesa más de 2 MB.';
             return null;
         },
 
@@ -167,6 +184,17 @@
         },
     };
 
+    // Algoritmo de Luhn (igual que App\Support\Tarjetas::luhn en Laravel)
+    function luhn(numero) {
+        let suma = 0;
+        [...numero].reverse().forEach((c, i) => {
+            let d = Number(c);
+            if (i % 2 === 1) { d *= 2; if (d > 9) d -= 9; }
+            suma += d;
+        });
+        return suma % 10 === 0;
+    }
+
     // "1.250,50" → 1250.5 (igual que Moneda::leer de Laravel); null si no es un número
     function numeroBoliviano(valor) {
         let v = valor.replace(/\s+/g, '');
@@ -189,6 +217,7 @@
         // "0828" → "08/28"
         vence:    (v) => v.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2'),
         cvv:      (v) => v.replace(/\D/g, '').slice(0, 4),
+        operacion:(v) => v.replace(/[^0-9A-Za-z-]/g, '').toUpperCase(),
     };
 
     // ----- Mostrar u ocultar el error de un campo -----

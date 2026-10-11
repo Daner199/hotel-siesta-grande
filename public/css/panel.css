@@ -1714,3 +1714,17 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
 @media (max-width: 560px) {
     .panel-qr { flex-direction: column; text-align: center; }
 }
+
+/* Número al lado de un enlace del menú (ej.: transferencias por revisar) */
+.contador-menu {
+    margin-left: auto;
+    min-width: 20px;
+    padding: 0 .4rem;
+    font-size: .72rem;
+    font-weight: 700;
+    line-height: 20px;
+    text-align: center;
+    color: #fff;
+    background: var(--tajibo);
+    border-radius: 10px;
+}

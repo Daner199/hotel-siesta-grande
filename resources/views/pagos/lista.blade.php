@@ -34,6 +34,12 @@
                         @if ($pago->observacion)
                             <span class="dato-secundario">{{ $pago->observacion }}</span>
                         @endif
+                        @if ($pago->transferencia)
+                            <span class="dato-secundario">
+                                Nro. de operación {{ $pago->transferencia->numero_operacion }} ·
+                                <a href="{{ route($rutaComprobante, $pago) }}" target="_blank" rel="noopener">ver comprobante</a>
+                            </span>
+                        @endif
                     </td>
                     <td>
                         <span @class(['precio', 'precio-anulado' => $pago->estado !== 'APROBADO'])>{{ Moneda::formato($pago->monto) }}</span>

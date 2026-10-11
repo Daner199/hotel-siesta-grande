@@ -28,7 +28,7 @@ class PasarelaPagos
     public static function simular(float $monto, string $metodo, ?string $ultimos4 = null): array
     {
         if ($metodo === MetodoPago::TARJETA && $ultimos4 === config('pagos.tarjeta_rechazada')) {
-            return ['estado' => self::RECHAZADO, 'motivo' => 'El banco rechazó la tarjeta.'];
+            return ['estado' => self::RECHAZADO, 'motivo' => 'Fondos insuficientes.'];
         }
 
         return ['estado' => self::APROBADO, 'codigo' => self::codigoNuevo('PAY')];

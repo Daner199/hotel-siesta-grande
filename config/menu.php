@@ -5,6 +5,7 @@
 | 'ruta'   => nombre de la ruta de Laravel, o null si el módulo aún no existe.
 | 'patron' => (opcional) rutas en las que el enlace se marca cohmo activo.
 | 'icono'  => nombre del ícono en https://lucide.dev/icons
+| 'contador' => (opcional) número que se muestra al lado (ver App\Support\Contadores)
 */
 
 return [
@@ -41,6 +42,7 @@ return [
             ['texto' => 'Reservas', 'icono' => 'calendar-check', 'ruta' => 'recepcion.reservas.index', 'patron' => 'recepcion.reservas.*'],
             ['texto' => 'Check-in / Check-out', 'icono' => 'door-open', 'ruta' => null],
             ['texto' => 'Pagos', 'icono' => 'wallet', 'ruta' => 'recepcion.pagos.index'],
+            ['texto' => 'Transferencias', 'icono' => 'landmark', 'ruta' => 'recepcion.transferencias.index', 'patron' => 'recepcion.transferencias.*', 'contador' => 'transferencias'],
             ['texto' => 'Mis comisiones', 'icono' => 'coins', 'ruta' => 'recepcion.comisiones'],
             ['texto' => 'Consumos', 'icono' => 'utensils', 'ruta' => null],
             ['texto' => 'Huéspedes alojados', 'icono' => 'users', 'ruta' => null],

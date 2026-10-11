@@ -241,6 +241,12 @@ class Reservas
                 ]);
             }
 
+            if ($reserva->transferenciaEnRevision()) {
+                throw ValidationException::withMessages([
+                    'reserva' => 'Hay una transferencia en revisión: recepción debe revisarla antes de cancelar la reserva.',
+                ]);
+            }
+
             $devuelve = $reserva->devuelveSiCancela();
 
             $reserva->update(['estado_reserva_id' => EstadoReserva::id(EstadoReserva::CANCELADA)]);

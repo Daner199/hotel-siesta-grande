@@ -114,6 +114,16 @@ class Reserva extends Model
         return round(max(0, $this->total() - $this->totalPagado()), 2);
     }
 
+    // Transferencia que todavía no revisó recepción (bloquea otros pagos y la cancelación)
+    public function transferenciaEnRevision(): ?Pago
+    {
+        return Pago::where('reserva_id', $this->id)
+            ->where('estado', Pago::PENDIENTE)
+            ->whereHas('transferencia')
+            ->with('transferencia')
+            ->first();
+    }
+
     // Se puede pagar mientras la reserva esté activa (pendiente, confirmada o con el huésped alojado)
     public function sePuedePagar(): bool
     {

@@ -21,6 +21,7 @@ use App\Http\Controllers\Agencia\ReservaController as ReservaAgencia;
 use App\Http\Controllers\Cliente\ReservaController as ReservaCliente;
 use App\Http\Controllers\Recepcion\ComisionController as ComisionRecepcion;
 use App\Http\Controllers\Recepcion\ReservaController as ReservaRecepcion;
+use App\Http\Controllers\Recepcion\TransferenciaController as TransferenciaRecepcion;
 
 // Página pública del hotel (landing) y consulta de disponibilidad (máx. 30 consultas por minuto)
 Route::get('/', [LandingController::class, 'index'])->name('inicio');
@@ -157,12 +158,19 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
     Route::get('/recepcion', [PanelController::class, 'recepcion'])->name('recepcion.inicio');
 
     Route::get('/recepcion/pagos', [ReservaRecepcion::class, 'pagos'])->name('recepcion.pagos.index');
+    Route::get('/recepcion/pagos/{pago}/comprobante', [ReservaRecepcion::class, 'comprobante'])->whereNumber('pago')->name('recepcion.pagos.comprobante');
     Route::get('/recepcion/cobros/{cobro}', [ReservaRecepcion::class, 'cobro'])->whereNumber('cobro')->name('recepcion.cobros.show');
     Route::get('/recepcion/cobros/{cobro}/estado', [ReservaRecepcion::class, 'estadoCobro'])->whereNumber('cobro')->name('recepcion.cobros.estado');
     Route::patch('/recepcion/cobros/{cobro}/anular', [ReservaRecepcion::class, 'anularCobro'])->whereNumber('cobro')->name('recepcion.cobros.anular');
     Route::get('/recepcion/recibos/{recibo}', [ReservaRecepcion::class, 'recibo'])->whereNumber('recibo')->name('recepcion.recibos.show');
     Route::get('/recepcion/recibos/{recibo}/pdf', [ReservaRecepcion::class, 'reciboPdf'])->whereNumber('recibo')->name('recepcion.recibos.pdf');
     Route::get('/recepcion/comisiones', [ComisionRecepcion::class, 'index'])->name('recepcion.comisiones');
+
+    // Transferencias por revisar
+    Route::get('/recepcion/transferencias', [TransferenciaRecepcion::class, 'index'])->name('recepcion.transferencias.index');
+    Route::get('/recepcion/transferencias/{pago}', [TransferenciaRecepcion::class, 'show'])->whereNumber('pago')->name('recepcion.transferencias.show');
+    Route::patch('/recepcion/transferencias/{pago}/aprobar', [TransferenciaRecepcion::class, 'aprobar'])->whereNumber('pago')->name('recepcion.transferencias.aprobar');
+    Route::patch('/recepcion/transferencias/{pago}/rechazar', [TransferenciaRecepcion::class, 'rechazar'])->whereNumber('pago')->name('recepcion.transferencias.rechazar');
 
     // Reservas desde recepción (para cualquier persona, habitaciones exactas)
     Route::prefix('recepcion/reservas')->name('recepcion.reservas.')->controller(ReservaRecepcion::class)->group(function () {
@@ -176,6 +184,9 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
         Route::patch('/{reserva}/cancelar', 'cancelar')->whereNumber('reserva')->name('cancelar');
         Route::get('/{reserva}/pagar', 'formularioPago')->whereNumber('reserva')->name('pagar');
         Route::post('/{reserva}/pagar', 'pagar')->whereNumber('reserva')->middleware('throttle:20,1')->name('pagar.store');
+        Route::get('/{reserva}/pagar/verificacion', 'verificacion3ds')->whereNumber('reserva')->name('pagar.3ds');
+        Route::post('/{reserva}/pagar/verificacion', 'confirmar3ds')->whereNumber('reserva')->middleware('throttle:10,1')->name('pagar.3ds.store');
+        Route::post('/{reserva}/pagar/verificacion/reenviar', 'reenviar3ds')->whereNumber('reserva')->middleware('throttle:5,1')->name('pagar.3ds.reenviar');
     });
 });
 
@@ -183,6 +194,7 @@ Route::middleware(['auth', 'rol:AGENCIA'])->group(function () {
     Route::get('/agencia', [PanelController::class, 'agencia'])->name('agencia.inicio');
 
     Route::get('/agencia/pagos', [ReservaAgencia::class, 'pagos'])->name('agencia.pagos.index');
+    Route::get('/agencia/pagos/{pago}/comprobante', [ReservaAgencia::class, 'comprobante'])->whereNumber('pago')->name('agencia.pagos.comprobante');
     Route::get('/agencia/cobros/{cobro}', [ReservaAgencia::class, 'cobro'])->whereNumber('cobro')->name('agencia.cobros.show');
     Route::get('/agencia/cobros/{cobro}/estado', [ReservaAgencia::class, 'estadoCobro'])->whereNumber('cobro')->name('agencia.cobros.estado');
     Route::patch('/agencia/cobros/{cobro}/anular', [ReservaAgencia::class, 'anularCobro'])->whereNumber('cobro')->name('agencia.cobros.anular');
@@ -199,6 +211,9 @@ Route::middleware(['auth', 'rol:AGENCIA'])->group(function () {
         Route::patch('/{reserva}/cancelar', 'cancelar')->whereNumber('reserva')->name('cancelar');
         Route::get('/{reserva}/pagar', 'formularioPago')->whereNumber('reserva')->name('pagar');
         Route::post('/{reserva}/pagar', 'pagar')->whereNumber('reserva')->middleware('throttle:20,1')->name('pagar.store');
+        Route::get('/{reserva}/pagar/verificacion', 'verificacion3ds')->whereNumber('reserva')->name('pagar.3ds');
+        Route::post('/{reserva}/pagar/verificacion', 'confirmar3ds')->whereNumber('reserva')->middleware('throttle:10,1')->name('pagar.3ds.store');
+        Route::post('/{reserva}/pagar/verificacion/reenviar', 'reenviar3ds')->whereNumber('reserva')->middleware('throttle:5,1')->name('pagar.3ds.reenviar');
     });
 });
 
@@ -206,6 +221,7 @@ Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
     Route::get('/cliente', [PanelController::class, 'cliente'])->name('cliente.inicio');
 
     Route::get('/cliente/pagos', [ReservaCliente::class, 'pagos'])->name('cliente.pagos.index');
+    Route::get('/cliente/pagos/{pago}/comprobante', [ReservaCliente::class, 'comprobante'])->whereNumber('pago')->name('cliente.pagos.comprobante');
     Route::get('/cliente/cobros/{cobro}', [ReservaCliente::class, 'cobro'])->whereNumber('cobro')->name('cliente.cobros.show');
     Route::get('/cliente/cobros/{cobro}/estado', [ReservaCliente::class, 'estadoCobro'])->whereNumber('cobro')->name('cliente.cobros.estado');
     Route::patch('/cliente/cobros/{cobro}/anular', [ReservaCliente::class, 'anularCobro'])->whereNumber('cobro')->name('cliente.cobros.anular');
@@ -222,6 +238,9 @@ Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
         Route::patch('/{reserva}/cancelar', 'cancelar')->whereNumber('reserva')->name('cancelar');
         Route::get('/{reserva}/pagar', 'formularioPago')->whereNumber('reserva')->name('pagar');
         Route::post('/{reserva}/pagar', 'pagar')->whereNumber('reserva')->middleware('throttle:20,1')->name('pagar.store');
+        Route::get('/{reserva}/pagar/verificacion', 'verificacion3ds')->whereNumber('reserva')->name('pagar.3ds');
+        Route::post('/{reserva}/pagar/verificacion', 'confirmar3ds')->whereNumber('reserva')->middleware('throttle:10,1')->name('pagar.3ds.store');
+        Route::post('/{reserva}/pagar/verificacion/reenviar', 'reenviar3ds')->whereNumber('reserva')->middleware('throttle:5,1')->name('pagar.3ds.reenviar');
     });
 });
 
