@@ -7,6 +7,7 @@ use App\Models\EstadoReserva;
 use App\Models\Habitacion;
 use App\Models\Reserva;
 use App\Models\ReservaHabitacion;
+use App\Models\TipoHabitacion;
 use App\Models\Usuario;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
@@ -37,14 +38,85 @@ class Reservas
 
         if ($libres->count() < $cantidad) {
             $quedan = $libres->count();
+            $tipo   = TipoHabitacion::find($tipoId)?->nombreVisible() ?? 'de ese tipo';
             throw ValidationException::withMessages([
-                'habitaciones' => $quedan === 0
-                    ? 'No quedan habitaciones de ese tipo libres en esas fechas.'
-                    : "Solo quedan {$quedan} habitaciones de ese tipo libres en esas fechas.",
+                'habitaciones' => match ($quedan) {
+                    0       => "No quedan habitaciones {$tipo} libres en esas fechas.",
+                    1       => "Solo queda 1 habitación {$tipo} libre en esas fechas.",
+                    default => "Solo quedan {$quedan} habitaciones {$tipo} libres en esas fechas.",
+                },
             ]);
         }
 
         return $libres;
+    }
+
+    /**
+     * Datos para el formulario de nueva reserva (resumen en vivo).
+     * Precios ya calculados aquí (el navegador no hace cuentas): misma lógica que al guardar.
+     *
+     * @param array<int, int> $cantidades [tipo_habitacion_id => cuántas habitaciones]
+     * @return array{noches: int, tipos: array, libres: array<int>, resumen: ?array}
+     */
+    public static function cotizar(Carbon $llegada, Carbon $salida, bool $esAgencia, array $cantidades): array
+    {
+        $noches = (int) $llegada->diffInDays($salida);
+        $libres = Disponibilidad::habitacionesLibres($llegada, $salida)->get(['id', 'tipo_habitacion_id']);
+        $porTipo = $libres->countBy('tipo_habitacion_id');
+
+        $tipos = TipoHabitacion::where('activo', true)->orderBy('id')->get();
+
+        $datosTipos = [];
+        $totales = ['habitaciones' => 0, 'capacidad' => 0, 'sin_descuento' => 0.0, 'total' => 0.0];
+
+        foreach ($tipos as $tipo) {
+            $precio = Disponibilidad::precioNoche($tipo, $llegada, $esAgencia);
+            $base   = Disponibilidad::precioNoche($tipo, $llegada);
+
+            $datosTipos[] = [
+                'id'     => $tipo->id,
+                'libres' => $precio === null ? 0 : ($porTipo[$tipo->id] ?? 0),
+                'precio' => $precio === null ? 'Sin tarifa' : Moneda::formato($precio),
+            ];
+
+            $n = (int) ($cantidades[$tipo->id] ?? 0);
+            if ($n > 0 && $precio !== null) {
+                $estadia = Disponibilidad::calcularEstadia($precio, $noches);
+                $totales['habitaciones']  += $n;
+                $totales['capacidad']     += $n * $tipo->capacidad;
+                $totales['sin_descuento'] += $n * $base * $noches;
+                $totales['total']         += $n * $estadia['total'];
+            }
+        }
+
+        $resumen = null;
+        if ($totales['habitaciones'] > 0) {
+            $etiquetas = [];
+            if ($esAgencia) {
+                $etiquetas[] = 'Agencia: ' . Disponibilidad::DESCUENTO_AGENCIA . ' % menos';
+            }
+            if ($noches > Disponibilidad::NOCHES_PRECIO_NORMAL) {
+                $etiquetas[] = 'Estadía larga: ' . Disponibilidad::DESCUENTO_LARGA . ' % menos desde la 8.ª noche';
+            }
+
+            $total = round($totales['total'], 2);
+
+            $resumen = [
+                'habitaciones'  => $totales['habitaciones'],
+                'capacidad'     => $totales['capacidad'],
+                'etiquetas'     => $etiquetas,
+                'sin_descuento' => $etiquetas ? Moneda::formato($totales['sin_descuento']) : null,
+                'total'         => Moneda::formato($total),
+                'adelanto'      => Moneda::formato(Disponibilidad::adelanto($total)),
+            ];
+        }
+
+        return [
+            'noches'  => $noches,
+            'tipos'   => $datosTipos,
+            'libres'  => $libres->pluck('id')->all(),
+            'resumen' => $resumen,
+        ];
     }
 
     /**

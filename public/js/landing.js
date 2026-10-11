@@ -221,7 +221,12 @@
                 precio.append(montos);
 
                 if (r.libres > 0 && config.reservar) {
-                    precio.append(enlace(config.reservar.texto, config.reservar.url, 'boton boton-tajibo'));
+                    // Lleva las mismas fechas y el tipo a "Nueva reserva"
+                    const destino = new URL(config.reservar.url, window.location.origin);
+                    destino.searchParams.set('llegada', llegada.value);
+                    destino.searchParams.set('salida', salida.value);
+                    destino.searchParams.set('tipo', r.tipo_id);
+                    precio.append(enlace(config.reservar.texto, destino.toString(), 'boton boton-tajibo'));
                 }
 
                 cuerpo.append(precio);

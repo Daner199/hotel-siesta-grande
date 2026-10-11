@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\HabitacionController;
 use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\TarifaController;
 use App\Http\Controllers\Admin\TipoHabitacionController;
+use App\Http\Controllers\Cliente\ReservaController as ReservaCliente;
 
 // Página pública del hotel (landing) y consulta de disponibilidad (máx. 30 consultas por minuto)
 Route::get('/', [LandingController::class, 'index'])->name('inicio');
@@ -157,4 +158,18 @@ Route::middleware(['auth', 'rol:AGENCIA'])->group(function () {
 
 Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
     Route::get('/cliente', [PanelController::class, 'cliente'])->name('cliente.inicio');
+
+    // Reservas del cliente (para sí mismo)
+    Route::prefix('cliente/reservas')->name('cliente.reservas.')->controller(ReservaCliente::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/nueva', 'create')->name('create');
+        Route::get('/cotizar', 'cotizar')->middleware('throttle:60,1')->name('cotizar');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{reserva}', 'show')->whereNumber('reserva')->name('show');
+        Route::patch('/{reserva}/cancelar', 'cancelar')->whereNumber('reserva')->name('cancelar');
+    });
 });
+
+// "Reservar" desde la landing: lleva a "Nueva reserva" del panel de cada rol
+// (sin sesión pasa por el login y vuelve aquí con las mismas fechas)
+Route::get('/reservar', [PanelController::class, 'reservar'])->middleware('auth')->name('reservar');

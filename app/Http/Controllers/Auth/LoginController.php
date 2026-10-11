@@ -79,6 +79,12 @@ class LoginController extends Controller
         Auth::login($usuario, $request->boolean('recordar'));
         $request->session()->regenerate();
 
+        // Si venía del botón "Reservar" de la landing, vuelve ahí con sus fechas
+        $destino = $request->session()->pull('url.intended');
+        if ($destino && parse_url($destino, PHP_URL_PATH) === '/reservar') {
+            return redirect()->to($destino);
+        }
+
         return redirect()->to($usuario->rutaInicio());
     }
 

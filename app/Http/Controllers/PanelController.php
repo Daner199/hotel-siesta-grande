@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Agencia;
 use App\Models\Usuario;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class PanelController extends Controller
@@ -85,6 +86,26 @@ class PanelController extends Controller
         ]);
     }
 
+    /**
+     * GET /reservar?llegada=…&salida=…&tipo=… (botón "Reservar" de la landing).
+     * Manda a "Nueva reserva" del rol con las mismas fechas y tipo.
+     */
+    public function reservar(Request $request)
+    {
+        $ruta = match ($request->user()->rol) {
+            Usuario::CLIENTE       => 'cliente.reservas.create',
+            Usuario::AGENCIA       => 'agencia.reservas.create',
+            Usuario::RECEPCIONISTA => 'recepcion.reservas.create',
+            default                => null,
+        };
+
+        if (! $ruta || ! \Illuminate\Support\Facades\Route::has($ruta)) {
+            return redirect()->to($request->user()->rutaInicio());
+        }
+
+        return redirect()->route($ruta, $request->only(['llegada', 'salida', 'tipo']));
+    }
+
     public function cliente()
     {
         return view('panel.inicio', [
@@ -92,8 +113,8 @@ class PanelController extends Controller
             'resumen'      => 'Consulta tus reservas, tus pagos y el estado de tu cuenta.',
             'estadisticas' => [],
             'secciones'    => [
-                ['nombre' => 'Nueva reserva', 'descripcion' => 'Elige fechas, habitación y promoción.', 'icono' => 'calendar-plus', 'paso' => 'Módulo 4'],
-                ['nombre' => 'Mis reservas', 'descripcion' => 'Estado y detalle de tus reservas.', 'icono' => 'calendar-check', 'paso' => 'Módulo 4'],
+                ['nombre' => 'Nueva reserva', 'descripcion' => 'Elige fechas y habitaciones: el total se calcula al instante.', 'icono' => 'calendar-plus', 'paso' => 'Paso 4.4', 'ruta' => 'cliente.reservas.create'],
+                ['nombre' => 'Mis reservas', 'descripcion' => 'Estado y detalle de tus reservas.', 'icono' => 'calendar-check', 'paso' => 'Paso 4.4', 'ruta' => 'cliente.reservas.index'],
                 ['nombre' => 'Mis pagos', 'descripcion' => 'Lo que pagaste y lo que falta pagar.', 'icono' => 'wallet', 'paso' => 'Módulo 5'],
             ],
         ]);

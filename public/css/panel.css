@@ -1332,3 +1332,298 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
 .tabla-compacta { min-width: 560px; }
 .flecha-fechas { width: 14px; height: 14px; margin: 0 .3rem; vertical-align: middle; color: var(--piedra); }
 .etiqueta-bloqueo { display: inline-block; margin-top: .4rem; text-decoration: none; }
+
+/* ============================================================
+   RESERVAS (Módulo 4): lista, nueva reserva y detalle
+   ============================================================ */
+
+/* Estados de una reserva */
+.estado-reserva-pendiente  { background: var(--oro-suave);    color: #8A6418; }
+.estado-reserva-confirmada { background: var(--verde-suave);  color: #2B7A50; }
+.estado-reserva-check_in   { background: var(--azul-suave);   color: var(--azul); }
+.estado-reserva-check_out  { background: #E7ECE9;             color: var(--selva); }
+.estado-reserva-cancelada  { background: #EEEFEB;             color: var(--piedra); }
+.estado-reserva-no_show    { background: var(--tajibo-suave); color: #A63D64; }
+
+.codigo-reserva { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+
+.numeros-habitacion { display: flex; flex-wrap: wrap; gap: .3rem; }
+.numeros-habitacion span {
+    padding: .1rem .5rem;
+    font-weight: 600;
+    font-size: .85rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--selva);
+    background: var(--verde-suave);
+    border-radius: 7px;
+}
+.fila-inactiva .numeros-habitacion span { color: var(--piedra); background: #EEEFEB; }
+
+/* ---------- Nueva reserva: pasos a la izquierda, resumen fijo a la derecha ---------- */
+.reserva-columnas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 1.5rem;
+    align-items: start;
+}
+.reserva-pasos { display: grid; gap: 1.5rem; }
+
+.campo-error-bloque { margin: -.5rem 0 1rem; }
+.etiqueta-campo { display: block; font-weight: 600; font-size: .88rem; margin-bottom: .4rem; }
+.dato-fijo {
+    margin: 0;
+    padding: .75rem .9rem;
+    font-weight: 600;
+    background: var(--fondo);
+    border-radius: 10px;
+}
+.ayuda-campo { margin: .35rem 0 0; font-size: .85rem; color: var(--piedra); }
+
+/* Tarjetas de tipo con contador (cliente y agencia) */
+.tipos-reserva { display: grid; gap: .85rem; }
+.tipo-reserva {
+    display: grid;
+    grid-template-columns: 120px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1.1rem;
+    padding: .75rem;
+    border: 1.5px solid var(--borde);
+    border-radius: 16px;
+    background: #fff;
+    transition: border-color .2s, box-shadow .2s, background-color .2s;
+}
+.tipo-reserva.elegido {
+    border-color: rgba(196, 80, 122, .55);
+    background: linear-gradient(180deg, #fff, #FDF7FA);
+    box-shadow: 0 14px 30px -22px rgba(196, 80, 122, .7);
+}
+.tipo-reserva.sin-libres { opacity: .6; }
+
+.tipo-reserva-foto {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: 12px;
+}
+.tipo-reserva-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tipo-reserva-foto .foto-vacia svg { width: 26px; height: 26px; }
+
+.tipo-reserva-datos h3 { margin: 0; font-family: var(--f-titulo); font-size: 1.25rem; font-weight: 500; }
+.tipo-reserva-datos p { margin: .2rem 0 0; font-size: .9rem; color: var(--piedra); }
+.tipo-reserva-precio strong { color: var(--tinta); font-variant-numeric: tabular-nums; }
+.tipo-reserva-datos .tipo-reserva-libres { font-weight: 600; color: #2B7A50; }
+.tipo-reserva-datos .tipo-reserva-libres.agotado,
+.grupo-habitaciones [data-libres].agotado { color: #A63D64; }
+
+.contador { display: flex; align-items: center; gap: .4rem; }
+.contador input {
+    width: 3.2rem;
+    padding: .45rem .2rem;
+    font: 600 1.05rem var(--f-texto);
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+    color: var(--tinta);
+    background: var(--fondo);
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+.contador input::-webkit-inner-spin-button,
+.contador input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.contador input:focus { outline: none; border-color: var(--selva); background: #fff; }
+
+/* Habitaciones exactas (recepción) */
+.grupo-habitaciones + .grupo-habitaciones { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--borde); }
+.grupo-habitaciones h3 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .25rem .75rem;
+    margin: 0 0 .75rem;
+    font-family: var(--f-titulo);
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+.grupo-habitaciones h3 > span { font-family: var(--f-texto); font-size: .88rem; color: var(--piedra); }
+.grupo-habitaciones [data-libres] { font-weight: 600; color: #2B7A50; }
+
+.habitaciones-reserva { display: flex; flex-wrap: wrap; gap: .5rem; }
+.habitacion-chip { position: relative; cursor: pointer; }
+.habitacion-chip input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.habitacion-chip span {
+    display: grid;
+    place-items: center;
+    min-width: 58px;
+    height: 42px;
+    padding: 0 .6rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: #fff;
+    border: 1.5px solid var(--borde);
+    border-radius: 10px;
+    transition: background-color .15s, border-color .15s, color .15s;
+}
+.habitacion-chip:hover span { border-color: rgba(14, 36, 27, .3); }
+.habitacion-chip input:checked + span { color: #fff; background: var(--tajibo); border-color: var(--tajibo); }
+.habitacion-chip input:focus-visible + span { outline: 3px solid var(--tajibo); outline-offset: 2px; }
+.habitacion-chip.ocupada { cursor: not-allowed; }
+.habitacion-chip.ocupada span { color: #A5ADA8; background: #F3F4F1; text-decoration: line-through; border-style: dashed; }
+
+/* ---------- Tarjeta oscura del resumen (nueva reserva y detalle) ---------- */
+.resumen-reserva { position: sticky; top: 5.5rem; display: grid; gap: 1rem; }
+.resumen-tarjeta {
+    padding: 1.6rem;
+    color: #fff;
+    border-radius: 22px;
+    background:
+        radial-gradient(90% 60% at 100% 0%, rgba(196, 80, 122, .38), transparent 65%),
+        radial-gradient(70% 50% at 0% 100%, rgba(201, 154, 59, .18), transparent 60%),
+        linear-gradient(160deg, var(--selva), var(--noche));
+    box-shadow: 0 24px 48px -26px rgba(14, 36, 27, .8);
+    transition: opacity .15s;
+}
+.resumen-titulo {
+    margin: 0 0 1rem;
+    font-size: .8rem;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: #E2C27A;
+}
+.resumen-vacio, .resumen-error { margin: 0 0 1.25rem; font-size: .95rem; opacity: .8; }
+.resumen-error { color: #F7C6D7; opacity: 1; }
+.resumen-vacio[hidden], .resumen-error[hidden] { display: none; }
+.resumen-estadia { margin: 0 0 .75rem; font-size: .95rem; opacity: .85; }
+
+.resumen-etiquetas { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 1rem; padding: 0; list-style: none; }
+.resumen-etiquetas:empty { display: none; }
+.resumen-etiquetas li {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .25rem .65rem;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #fff;
+    background: rgba(255, 255, 255, .12);
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 999px;
+}
+.resumen-etiquetas svg { width: 14px; height: 14px; color: #E2C27A; }
+.resumen-etiquetas-claras li { color: #8A6418; background: var(--oro-suave); border-color: transparent; }
+.resumen-etiquetas-claras svg { color: #8A6418; }
+
+.resumen-total { display: grid; margin: 0 0 1rem; }
+.resumen-total s { font-size: .95rem; opacity: .6; font-variant-numeric: tabular-nums; }
+.resumen-total s[hidden] { display: none; }
+.resumen-total strong {
+    font-family: var(--f-titulo);
+    font-size: clamp(2.2rem, 4vw, 2.7rem);
+    font-weight: 500;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+}
+.resumen-total span { margin-top: .25rem; font-size: .88rem; opacity: .7; }
+
+.resumen-adelanto {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    margin: 0 0 1.25rem;
+    padding: .85rem 1rem;
+    font-size: .9rem;
+    background: rgba(255, 255, 255, .08);
+    border-radius: 12px;
+}
+.resumen-adelanto strong { font-size: 1.15rem; color: #E2C27A; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.resumen-aviso {
+    display: flex;
+    align-items: flex-start;
+    gap: .5rem;
+    margin: 0 0 1rem;
+    padding: .7rem .85rem;
+    font-size: .88rem;
+    color: #3B2A06;
+    background: #F1D9A3;
+    border-radius: 12px;
+}
+.resumen-aviso[hidden] { display: none; }
+.resumen-aviso svg { width: 16px; height: 16px; flex: none; margin-top: .15rem; }
+.resumen-nota { margin: .9rem 0 0; font-size: .82rem; line-height: 1.5; opacity: .7; }
+
+.btn-tajibo {
+    color: #fff;
+    background: var(--tajibo);
+    box-shadow: 0 14px 26px -14px rgba(196, 80, 122, .9);
+}
+.btn-tajibo:hover:not([disabled]) { background: #B04169; }
+.btn-tajibo[disabled] { opacity: .45; cursor: not-allowed; box-shadow: none; }
+
+/* Cuenta en el detalle */
+.resumen-cuenta { display: grid; gap: .5rem; margin: 0 0 1rem; }
+.resumen-cuenta div { display: flex; justify-content: space-between; gap: 1rem; font-size: .92rem; }
+.resumen-cuenta dt { opacity: .75; }
+.resumen-cuenta dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.resumen-cuenta-falta { padding-top: .6rem; border-top: 1px solid rgba(255, 255, 255, .15); }
+.resumen-cuenta-falta dd { color: #E2C27A; font-size: 1.05rem; }
+
+/* ---------- Detalle ---------- */
+.cabecera-estado { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.cabecera-acciones { display: flex; flex-wrap: wrap; gap: .6rem; }
+.cabecera-acciones form { margin: 0; }
+.boton-cancelar:hover { color: var(--tajibo); border-color: rgba(196, 80, 122, .4); background: var(--tajibo-suave); }
+
+.reserva-detalle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 1.5rem;
+    align-items: start;
+}
+.reserva-detalle-datos { display: grid; gap: 1.5rem; }
+.reserva-detalle .bloque-cabecera { margin-bottom: 1.25rem; }
+
+.datos-reserva {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.1rem 1.5rem;
+    margin: 0;
+}
+.datos-reserva dt { font-size: .8rem; font-weight: 600; color: var(--piedra); }
+.datos-reserva dd { margin: .15rem 0 0; font-weight: 600; }
+.datos-reserva dd span { display: block; font-weight: 400; font-size: .88rem; color: var(--piedra); }
+.datos-reserva .dato-ancho { grid-column: 1 / -1; }
+.datos-reserva .dato-ancho dd { font-weight: 400; }
+
+.politica-cancelacion {
+    display: flex;
+    gap: .75rem;
+    padding: 1rem 1.1rem;
+    font-size: .9rem;
+    background: #fff;
+    border: 1px solid var(--borde);
+    border-left: 4px solid #3C8D63;
+    border-radius: 14px;
+}
+.politica-cancelacion svg { width: 20px; height: 20px; flex: none; color: #3C8D63; }
+.politica-cancelacion p { margin: 0; color: var(--piedra); }
+.politica-cancelacion strong { display: block; color: var(--tinta); }
+.politica-vencida { border-left-color: var(--tajibo); }
+.politica-vencida svg { color: var(--tajibo); }
+
+@media (max-width: 1080px) {
+    .reserva-columnas,
+    .reserva-detalle { grid-template-columns: 1fr; }
+    .resumen-reserva { position: static; }
+}
+@media (max-width: 560px) {
+    .tipo-reserva { grid-template-columns: 84px minmax(0, 1fr); }
+    .tipo-reserva .contador { grid-column: 1 / -1; justify-content: flex-end; }
+    .datos-reserva { grid-template-columns: 1fr; }
+    .resumen-adelanto { flex-direction: column; gap: .2rem; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .tipo-reserva, .habitacion-chip span, .resumen-tarjeta { transition: none; }
+}

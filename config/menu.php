@@ -64,8 +64,8 @@ return [
             ['texto' => 'Inicio', 'icono' => 'layout-dashboard', 'ruta' => 'cliente.inicio'],
         ]],
         ['grupo' => 'Mi estadía', 'items' => [
-            ['texto' => 'Nueva reserva', 'icono' => 'calendar-plus', 'ruta' => null],
-            ['texto' => 'Mis reservas', 'icono' => 'calendar-check', 'ruta' => null],
+            ['texto' => 'Nueva reserva', 'icono' => 'calendar-plus', 'ruta' => 'cliente.reservas.create'],
+            ['texto' => 'Mis reservas', 'icono' => 'calendar-check', 'ruta' => 'cliente.reservas.index', 'patron' => ['cliente.reservas.index', 'cliente.reservas.show']],
             ['texto' => 'Mis pagos', 'icono' => 'wallet', 'ruta' => null],
         ]],
     ],

@@ -18,8 +18,9 @@
             . rawurlencode("Hola, quiero consultar disponibilidad en el {$hotel['nombre']}.")
         : null;
 
-    // "Reservar" en los resultados: sin sesión → login; con sesión → su panel (hasta el Módulo 4)
-    $reservar = ['texto' => 'Reservar', 'url' => $usuario ? $usuario->rutaInicio() : route('login')];
+    // "Reservar" en los resultados: va a "Nueva reserva" con las mismas fechas y tipo
+    // (sin sesión pasa por el login; el admin va a su panel)
+    $reservar = ['texto' => 'Reservar', 'url' => route('reservar')];
 @endphp
 
 @section('titulo', $hotel['eslogan'] ?: 'Bienvenido')
