@@ -27,6 +27,7 @@ class Hotel extends Model
     protected $fillable = [
         'nombre', 'eslogan', 'direccion', 'referencia', 'ciudad', 'departamento', 'pais',
         'historia', 'texto_piscina', 'texto_restaurante', 'texto_salon', 'recepcion',
+        'cuenta_banco', 'cuenta_tipo', 'cuenta_numero', 'cuenta_titular',
         'telefono', 'whatsapp', 'correo', 'facebook', 'instagram', 'tiktok',
         'check_in', 'check_out', 'latitud', 'longitud',
         'logo', 'portada', 'foto_fachada', 'foto_piscina', 'foto_restaurante',
@@ -118,6 +119,17 @@ class Hotel extends Model
                 'restaurante' => $v('texto_restaurante', $c['textos']['restaurante']),
                 'salon'       => $v('texto_salon', $c['textos']['salon']),
             ],
+
+            // Cuenta para transferencias: null si falta algún dato (entonces no se ofrece transferencia)
+            'cuenta' => ($f && filled($f->cuenta_banco) && filled($f->cuenta_tipo)
+                        && filled($f->cuenta_numero) && filled($f->cuenta_titular))
+                ? [
+                    'banco'   => $f->cuenta_banco,
+                    'tipo'    => $f->cuenta_tipo,
+                    'numero'  => $f->cuenta_numero,
+                    'titular' => $f->cuenta_titular,
+                ]
+                : null,
 
             'redes' => [
                 'facebook'  => $v('facebook', $c['redes']['facebook']),

@@ -19,7 +19,7 @@ INSERT INTO estado_reserva (id, nombre) VALUES
     (4, 'NO_SHOW'), (5, 'CHECK_IN'), (6, 'CHECK_OUT');
 
 INSERT INTO metodo_pago (id, nombre) VALUES
-    (1, 'EFECTIVO'), (2, 'QR'), (3, 'TARJETA');
+    (1, 'EFECTIVO'), (2, 'QR'), (3, 'TARJETA'), (4, 'TRANSFERENCIA');
 
 INSERT INTO tipo_consumo (id, nombre) VALUES
     (1, 'RESTAURANTE'), (2, 'FRIGOBAR');
@@ -58,7 +58,8 @@ INSERT INTO tarifa_habitacion (tipo_habitacion_id, fecha_desde, fecha_hasta, pre
 INSERT INTO hotel (id, nombre, eslogan, direccion, referencia, ciudad, departamento, pais,
                    telefono, whatsapp, correo, facebook, instagram, tiktok,
                    check_in, check_out, recepcion, latitud, longitud,
-                   historia, texto_piscina, texto_restaurante, texto_salon)
+                   historia, texto_piscina, texto_restaurante, texto_salon,
+                   cuenta_banco, cuenta_tipo, cuenta_numero, cuenta_titular)
 VALUES (1, 'Hotel Siesta Grande', 'Descanso con alma cruceña', 'Av. Monseñor Rivero N.º 245',
         'Entre 1.er y 2.º anillo, a cuatro cuadras de la Plaza 24 de Septiembre',
         'Santa Cruz de la Sierra', 'Santa Cruz', 'Bolivia',
@@ -68,7 +69,9 @@ VALUES (1, 'Hotel Siesta Grande', 'Descanso con alma cruceña', 'Av. Monseñor R
         'Desde entonces recibimos a quienes llegan por trabajo, de paseo o de paso, con habitaciones cómodas, piscina y restaurante en un mismo lugar.',
         'Un respiro fresco para el calor cruceño, a pocos pasos de tu habitación.',
         'Empieza el día con desayuno y termina con una buena cena sin salir del hotel.',
-        'Para reuniones, celebraciones y eventos de empresa.');
+        'Para reuniones, celebraciones y eventos de empresa.',
+        -- Cuenta de EJEMPLO para transferencias (no es real: cámbiala en "Datos del hotel")
+        'Banco Siesta S.A.', 'Cuenta corriente en bolivianos', '1000-482913-01', 'Hotel Siesta Grande S.R.L.');
 
 -- ---------- Usuarios de prueba (contraseñas con hash bcrypt de Laravel) ----------
 --   admin@siestagrande.com     / Admin12345    ADMINISTRADOR

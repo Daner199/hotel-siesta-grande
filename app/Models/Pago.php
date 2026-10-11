@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * Un pago de una reserva, en bolivianos. Para registrar usar App\Support\Pagos.
@@ -45,13 +46,24 @@ class Pago extends Model
         return $this->belongsTo(Usuario::class, 'registrado_por_usuario_id');
     }
 
+    // Solo los pagos por transferencia
+    public function transferencia(): HasOne
+    {
+        return $this->hasOne(Transferencia::class, 'pago_id');
+    }
+
+    public function recibo(): HasOne
+    {
+        return $this->hasOne(Recibo::class, 'pago_id');
+    }
+
     public function etiquetaEstado(): string
     {
         return match ($this->estado) {
             self::APROBADO  => 'Aprobado',
             self::RECHAZADO => 'Rechazado',
             self::DEVUELTO  => 'Devuelto',
-            default         => 'Pendiente',
+            default         => 'En revisión',
         };
     }
 }
