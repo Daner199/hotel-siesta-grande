@@ -26,8 +26,7 @@
         <h1>Editar {{ $reserva->codigo }}</h1>
         <p>
             {{ $reserva->fecha_entrada->format('d/m/Y') }} al {{ $reserva->fecha_salida->format('d/m/Y') }}
-            · habitaciones {{ $reserva->habitaciones->pluck('habitacion.numero')->join(', ') }}.
-            Para cambiar fechas o habitaciones, cancela esta reserva y crea otra.
+            · habitaciones {{ $reserva->habitaciones->pluck('habitacion.numero')->join(', ') }}
         </p>
     </div>
 </header>
@@ -59,7 +58,7 @@
                        value="{{ old('cantidad_personas', $reserva->cantidad_personas) }}"
                        data-validar="entero" data-vacio="Indica cuántas personas se alojan.">
                 @error('cantidad_personas') <p class="campo-error">{{ $message }}</p> @enderror
-                <p class="ayuda-campo">Sus habitaciones son para {{ $capacidad }} {{ $capacidad === 1 ? 'persona' : 'personas' }} como máximo.</p>
+                <p class="ayuda-campo">Máximo {{ $capacidad }}</p>
             </div>
         </div>
 

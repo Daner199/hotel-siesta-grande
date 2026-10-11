@@ -15,7 +15,6 @@
             <span>Mis comisiones</span>
         </nav>
         <h1>Mis comisiones</h1>
-        <p>Ganas {{ Moneda::formato(ComisionRecepcionista::MONTO) }} por cada reserva que confirmas al registrar su adelanto.</p>
     </div>
 </header>
 
@@ -55,7 +54,6 @@
         <div class="vacio-panel">
             <span class="vacio-icono"><i data-lucide="coins"></i></span>
             <h3>Todavía no tienes comisiones</h3>
-            <p>Cuando registres el adelanto de una reserva pendiente, se confirma y ganas tu comisión.</p>
             <a href="{{ route('recepcion.reservas.index') }}" class="btn btn-secundario">Ver reservas</a>
         </div>
     @else

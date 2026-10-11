@@ -127,7 +127,7 @@
         <section class="bloque">
             <div class="bloque-cabecera">
                 <h2>Habitaciones</h2>
-                <p>El precio por noche se fijó al reservar: no cambia aunque cambie la tarifa.</p>
+                <p>{{ implode(' · ', \App\Support\Reservas::lineasEstadia($reserva)) }}</p>
             </div>
 
             @if ($etiquetas)
@@ -169,7 +169,6 @@
         <section class="bloque" id="pagos">
             <div class="bloque-cabecera">
                 <h2>Pagos</h2>
-                <p>Los rechazados y devueltos no suman a lo pagado.</p>
             </div>
 
             @if ($reserva->pagos->isEmpty())
@@ -222,8 +221,6 @@
                     (nro. de operación {{ $enRevision->transferencia->numero_operacion }}).
                     @if ($rol === 'RECEPCIONISTA')
                         <a href="{{ route('recepcion.transferencias.show', $enRevision) }}">Revisar</a>
-                    @else
-                        Recepción la verificará pronto.
                     @endif
                 </p>
             @endif

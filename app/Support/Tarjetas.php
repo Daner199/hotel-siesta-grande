@@ -17,7 +17,7 @@ class Tarjetas
     // Algoritmo de Luhn (el dígito verificador de las tarjetas)
     public static function luhn(string $numero): bool
     {
-        if (! preg_match('/^\d{13,19}$/', $numero)) {
+        if (! preg_match('/^\d{13,16}$/', $numero)) {
             return false;
         }
 

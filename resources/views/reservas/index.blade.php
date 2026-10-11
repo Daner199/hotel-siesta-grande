@@ -25,7 +25,6 @@
             <span>{{ $titulo }}</span>
         </nav>
         <h1>{{ $titulo }}</h1>
-        <p>{{ $resumen }}</p>
     </div>
 
     <a href="{{ route($prefijo . '.create') }}" class="btn btn-primario">
@@ -63,7 +62,6 @@
                     <a href="{{ route($prefijo . '.index') }}" class="btn btn-secundario">Quitar filtros</a>
                 @else
                     <h3>Todavía no hay reservas</h3>
-                    <p>Elige las fechas y las habitaciones: el total se calcula al instante.</p>
                     <a href="{{ route($prefijo . '.create') }}" class="btn btn-primario">
                         <i data-lucide="calendar-plus"></i> Nueva reserva
                     </a>

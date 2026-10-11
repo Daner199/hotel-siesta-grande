@@ -96,7 +96,6 @@
                             @foreach ($motivos as $m) <option value="{{ $m }}"> @endforeach
                         </datalist>
                         @error('motivo_rechazo') <p class="campo-error">{{ $message }}</p> @enderror
-                        <p class="ayuda-campo">El cliente verá este motivo en su reserva.</p>
                     </div>
                     <button type="submit" class="btn btn-secundario btn-bloque">Rechazar</button>
                 </form>

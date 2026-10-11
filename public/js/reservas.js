@@ -30,9 +30,12 @@
 
         if (!resumen) return;
 
-        const hab = resumen.habitaciones;
-        $('[data-resumen-estadia]').textContent =
-            `${noches} ${noches === 1 ? 'noche' : 'noches'} · ${hab} ${hab === 1 ? 'habitación' : 'habitaciones'}`;
+        // "1 habitación Doble × 3 noches": se cobra por habitación y por noche
+        $('[data-resumen-lineas]').replaceChildren(...resumen.lineas.map((texto) => {
+            const li = document.createElement('li');
+            li.textContent = texto;
+            return li;
+        }));
 
         const lista = $('[data-resumen-etiquetas]');
         lista.replaceChildren(...resumen.etiquetas.map((texto) => {

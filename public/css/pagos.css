@@ -287,3 +287,7 @@
     .tarjeta-zona { grid-template-columns: 1fr; }
     .tarjeta-vista { width: 100%; max-width: 300px; }
 }
+
+.linea-estadia { display: block; }
+.pago-seguro { display: flex; align-items: center; gap: .35rem; margin: .75rem 0 0; font-size: .82rem; color: var(--p-gris); }
+.pago-seguro svg { width: 14px; height: 14px; }

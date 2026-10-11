@@ -32,13 +32,6 @@
             <span>Nueva</span>
         </nav>
         <h1>Nueva reserva</h1>
-        <p>
-            @if ($modo === 'tipos')
-                Elige las fechas y cuántas habitaciones de cada tipo; los números se asignan solos.
-            @else
-                Elige las fechas y las habitaciones exactas. Solo se pueden marcar las que están libres.
-            @endif
-        </p>
     </div>
 </header>
 
@@ -192,7 +185,6 @@
                                        autocomplete="off" placeholder="cliente@gmail.com" value="{{ old('correo_cliente') }}"
                                        data-validar="email">
                                 @error('correo_cliente') <p class="campo-error">{{ $message }}</p> @enderror
-                                <p class="ayuda-campo">Si tiene cuenta, verá la reserva en su panel.</p>
                             </div>
                         @endif
                     </div>
@@ -212,11 +204,11 @@
             <div class="resumen-tarjeta" data-resumen-caja aria-live="polite">
                 <p class="resumen-titulo" id="titulo-resumen">Resumen</p>
 
-                <p class="resumen-vacio" data-resumen-vacio>Elige las fechas y al menos una habitación.</p>
+                <p class="resumen-vacio" data-resumen-vacio>Selecciona fechas y habitaciones.</p>
                 <p class="resumen-error" data-resumen-error hidden></p>
 
                 <div data-resumen hidden>
-                    <p class="resumen-estadia" data-resumen-estadia></p>
+                    <ul class="resumen-lineas" data-resumen-lineas></ul>
                     <ul class="resumen-etiquetas" data-resumen-etiquetas></ul>
 
                     <p class="resumen-total">
@@ -238,10 +230,7 @@
                     Reservar
                 </button>
 
-                <p class="resumen-nota">
-                    Queda pendiente hasta pagar el adelanto. Cancelación con devolución total hasta
-                    {{ \App\Models\Reserva::HORAS_CANCELACION }} h antes del check-in.
-                </p>
+                <p class="resumen-nota">Cancelación sin costo hasta {{ \App\Models\Reserva::HORAS_CANCELACION }} h antes del check-in.</p>
             </div>
         </aside>
     </div>

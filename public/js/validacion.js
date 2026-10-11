@@ -132,11 +132,11 @@
             return null;
         },
 
-        // Número de tarjeta: 13 a 19 dígitos y dígito verificador correcto (algoritmo de Luhn)
+        // Número de tarjeta: hasta 16 dígitos (Visa/Mastercard) y dígito verificador correcto (Luhn)
         tarjeta(valor, campo) {
             if (!valor) return campo.required ? vacio(campo) : null;
             const d = valor.replace(/\s/g, '');
-            if (!/^\d{13,19}$/.test(d)) return 'Debe tener entre 13 y 19 dígitos.';
+            if (!/^\d{13,16}$/.test(d)) return 'El número tiene 16 dígitos.';
             if (!luhn(d)) return 'El número de tarjeta no es válido. Revísalo.';
             return null;
         },
@@ -213,7 +213,7 @@
         numero:   (v) => v.replace(/[^0-9A-Za-z-]/g, ''),
         monto:    (v) => v.replace(/[^\d.,]/g, ''),
         // "4242424242424242" → "4242 4242 4242 4242"
-        tarjeta:  (v) => v.replace(/\D/g, '').slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 '),
+        tarjeta:  (v) => v.replace(/\D/g, '').slice(0, 16).replace(/(\d{4})(?=\d)/g, '$1 '),
         // "0828" → "08/28"
         vence:    (v) => v.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2'),
         cvv:      (v) => v.replace(/\D/g, '').slice(0, 4),

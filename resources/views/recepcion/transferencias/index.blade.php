@@ -19,7 +19,6 @@
             <span>Transferencias</span>
         </nav>
         <h1>Transferencias</h1>
-        <p>Revisa el comprobante y confirma que el dinero llegó a la cuenta del hotel antes de aprobar.</p>
     </div>
 </header>
 

@@ -24,7 +24,6 @@
             <span>{{ $titulo }}</span>
         </nav>
         <h1>{{ $titulo }}</h1>
-        <p>{{ $resumen }}</p>
     </div>
 </header>
 
@@ -81,7 +80,6 @@
                     <a href="{{ route($rutaPagos) }}" class="btn btn-secundario">Quitar filtros</a>
                 @else
                     <h3>Todavía no hay pagos</h3>
-                    <p>Los pagos se hacen desde el detalle de cada reserva.</p>
                     <a href="{{ route($prefijo . '.index') }}" class="btn btn-secundario">Ver reservas</a>
                 @endif
             </div>

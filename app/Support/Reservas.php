@@ -53,6 +53,32 @@ class Reservas
     }
 
     /**
+     * Se cobra por HABITACIÓN y por noche (nunca por persona). Para que se lea claro:
+     * ['Doble' => 1, 'Simple' => 2], 3 → ["1 habitación Doble × 3 noches", "2 habitaciones Simple × 3 noches"]
+     */
+    public static function lineas(array $cantidadesPorTipo, int $noches): array
+    {
+        $lineas = [];
+        foreach ($cantidadesPorTipo as $tipo => $n) {
+            $lineas[] = $n . ($n === 1 ? ' habitación ' : ' habitaciones ') . $tipo
+                . ' × ' . $noches . ($noches === 1 ? ' noche' : ' noches');
+        }
+
+        return $lineas;
+    }
+
+    // Las líneas de una reserva ya hecha
+    public static function lineasEstadia(Reserva $reserva): array
+    {
+        $reserva->loadMissing('habitaciones.habitacion.tipo');
+
+        return self::lineas(
+            $reserva->habitaciones->countBy(fn ($rh) => $rh->habitacion->tipo->nombreVisible())->all(),
+            $reserva->noches(),
+        );
+    }
+
+    /**
      * Datos para el formulario de nueva reserva (resumen en vivo).
      * Precios ya calculados aquí (el navegador no hace cuentas): misma lógica que al guardar.
      *
@@ -68,6 +94,7 @@ class Reservas
         $tipos = TipoHabitacion::where('activo', true)->orderBy('id')->get();
 
         $datosTipos = [];
+        $porTipo = [];
         $totales = ['habitaciones' => 0, 'capacidad' => 0, 'sin_descuento' => 0.0, 'total' => 0.0];
 
         foreach ($tipos as $tipo) {
@@ -83,6 +110,7 @@ class Reservas
             $n = (int) ($cantidades[$tipo->id] ?? 0);
             if ($n > 0 && $precio !== null) {
                 $estadia = Disponibilidad::calcularEstadia($precio, $noches);
+                $porTipo[$tipo->nombreVisible()] = $n;
                 $totales['habitaciones']  += $n;
                 $totales['capacidad']     += $n * $tipo->capacidad;
                 $totales['sin_descuento'] += $n * $base * $noches;
@@ -104,6 +132,7 @@ class Reservas
 
             $resumen = [
                 'habitaciones'  => $totales['habitaciones'],
+                'lineas'        => self::lineas($porTipo, $noches),
                 'capacidad'     => $totales['capacidad'],
                 'etiquetas'     => $etiquetas,
                 'sin_descuento' => $etiquetas ? Moneda::formato($totales['sin_descuento']) : null,

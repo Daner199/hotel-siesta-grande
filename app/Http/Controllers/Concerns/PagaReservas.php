@@ -84,7 +84,7 @@ trait PagaReservas
         $datos = $request->validate([
             'metodo'           => ['required', Rule::in($this->metodosPermitidos())],
             'monto'            => ['bail', 'required', 'numeric', 'decimal:0,2', 'gt:0'],
-            'tarjeta_numero'   => ["required_if:metodo,{$tarjeta}", 'nullable', 'digits_between:13,19'],
+            'tarjeta_numero'   => ["required_if:metodo,{$tarjeta}", 'nullable', 'digits_between:13,16'],
             'tarjeta_vence'    => ["required_if:metodo,{$tarjeta}", 'nullable', 'regex:/^(0[1-9]|1[0-2])\/\d{2}$/'],
             'tarjeta_cvv'      => ["required_if:metodo,{$tarjeta}", 'nullable', 'digits_between:3,4'],
             'numero_operacion' => ["required_if:metodo,{$transf}", 'nullable', 'regex:/^[A-Z0-9-]{4,30}$/',
@@ -100,7 +100,7 @@ trait PagaReservas
             'monto.decimal'                 => 'El monto puede tener como máximo 2 decimales.',
             'monto.gt'                      => 'El monto debe ser mayor que 0.',
             'tarjeta_numero.required_if'    => 'Escribe el número de la tarjeta.',
-            'tarjeta_numero.digits_between' => 'El número de la tarjeta debe tener entre 13 y 19 dígitos.',
+            'tarjeta_numero.digits_between' => 'El número de la tarjeta tiene 16 dígitos.',
             'tarjeta_vence.required_if'     => 'Escribe el vencimiento (MM/AA).',
             'tarjeta_vence.regex'           => 'El vencimiento debe ser MM/AA, por ejemplo 08/28.',
             'tarjeta_cvv.required_if'       => 'Escribe el código de seguridad.',

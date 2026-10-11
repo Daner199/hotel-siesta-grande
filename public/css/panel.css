@@ -1728,3 +1728,7 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
     background: var(--tajibo);
     border-radius: 10px;
 }
+
+/* Líneas del resumen: "1 habitación Doble × 3 noches" */
+.resumen-lineas { margin: 0 0 .75rem; padding: 0; list-style: none; font-size: .95rem; }
+.resumen-lineas li + li { margin-top: .2rem; }

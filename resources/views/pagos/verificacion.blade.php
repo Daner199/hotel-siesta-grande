@@ -25,7 +25,7 @@
         <div><dt>Fecha</dt><dd>{{ now()->format('d/m/Y H:i') }}</dd></div>
     </dl>
 
-    <p class="aviso-plano">Simulación: no se envía un SMS real. Código de prueba: <strong>{{ $datos['codigo'] }}</strong></p>
+    <p class="aviso-plano">Código de prueba: <strong>{{ $datos['codigo'] }}</strong></p>
 
     <form method="POST" action="{{ route($prefijo . '.pagar.3ds.store', $reserva) }}" class="v3ds-form" novalidate>
         @csrf

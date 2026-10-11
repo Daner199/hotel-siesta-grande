@@ -21,10 +21,10 @@
     $montoIni  = old('monto', $texto($limites['minimo']));
 
     $descripciones = [
-        MetodoPago::EFECTIVO      => 'En la recepción del hotel',
-        MetodoPago::QR            => 'Escanea el código con tu celular',
-        MetodoPago::TARJETA       => 'Visa o Mastercard, crédito o débito',
-        MetodoPago::TRANSFERENCIA => 'Desde tu banca por internet; luego subes el comprobante',
+        MetodoPago::EFECTIVO      => 'En caja',
+        MetodoPago::QR            => 'Simple QR desde la app de tu banco',
+        MetodoPago::TARJETA       => 'Visa o Mastercard',
+        MetodoPago::TRANSFERENCIA => 'Transferencia bancaria',
     ];
 @endphp
 
@@ -73,7 +73,6 @@
                                    @checked($montoIni === $texto($limites['minimo']))>
                             <span class="opcion-texto">
                                 Adelanto para confirmar ({{ Disponibilidad::ADELANTO }} %)
-                                <small>El saldo se paga hasta el check-out</small>
                             </span>
                             <span class="opcion-valor">{{ Moneda::formato($limites['minimo']) }}</span>
                         </label>
@@ -125,8 +124,7 @@
 
                 {{-- QR --}}
                 <div class="panel-metodo nota-metodo" data-panel="{{ MetodoPago::QR }}" @if ($metodoSel !== MetodoPago::QR) hidden @endif>
-                    <p>Se genera un código QR por este monto, válido por {{ config('pagos.qr_minutos') }} minutos.
-                       Lo escaneas con tu celular y confirmas el pago en tu banco; esta pantalla se actualiza sola.</p>
+                    <p>QR válido por {{ config('pagos.qr_minutos') }} minutos.</p>
                 </div>
 
                 {{-- Tarjeta --}}
@@ -158,7 +156,7 @@
                             <div class="campo">
                                 <label for="tarjeta_numero">Número de tarjeta</label>
                                 <input type="text" id="tarjeta_numero" name="tarjeta_numero" inputmode="numeric"
-                                       autocomplete="cc-number" maxlength="23" required placeholder="0000 0000 0000 0000"
+                                       autocomplete="off" maxlength="19" required placeholder="0000 0000 0000 0000"
                                        data-validar="tarjeta" data-vacio="Escribe el número de la tarjeta.">
                                 @error('tarjeta_numero') <p class="campo-error">{{ $message }}</p> @enderror
                             </div>
@@ -166,14 +164,14 @@
                                 <div class="campo">
                                     <label for="tarjeta_vence">Vencimiento</label>
                                     <input type="text" id="tarjeta_vence" name="tarjeta_vence" inputmode="numeric"
-                                           autocomplete="cc-exp" maxlength="5" required placeholder="MM/AA"
+                                           autocomplete="off" maxlength="5" required placeholder="MM/AA"
                                            data-validar="vence" data-vacio="Escribe el vencimiento (MM/AA).">
                                     @error('tarjeta_vence') <p class="campo-error">{{ $message }}</p> @enderror
                                 </div>
                                 <div class="campo">
                                     <label for="tarjeta_cvv">CVV</label>
                                     <input type="text" id="tarjeta_cvv" name="tarjeta_cvv" inputmode="numeric"
-                                           autocomplete="cc-csc" maxlength="4" required placeholder="123"
+                                           autocomplete="off" maxlength="4" required placeholder="123"
                                            data-validar="cvv" data-vacio="Escribe el código de seguridad.">
                                     @error('tarjeta_cvv') <p class="campo-error">{{ $message }}</p> @enderror
                                 </div>
@@ -181,18 +179,7 @@
                         </div>
                     </div>
 
-                    <p class="nota-pequena">El número y el código de seguridad no se guardan: del pago solo quedan la marca y los 4 últimos dígitos.</p>
-
-                    <details class="tarjetas-prueba">
-                        <summary>Tarjetas de prueba</summary>
-                        <dl class="lista-datos">
-                            <div><dt>Aprobada (Visa)</dt><dd>4242 4242 4242 4242</dd></div>
-                            <div><dt>Aprobada (Mastercard)</dt><dd>5555 5555 5555 4444</dd></div>
-                            <div><dt>Fondos insuficientes</dt><dd>4000 0000 0000 0002</dd></div>
-                            <div><dt>Pide código por SMS (3-D Secure)</dt><dd>4000 0000 0000 3220</dd></div>
-                        </dl>
-                        <p class="nota-pequena">Cualquier vencimiento futuro y cualquier CVV de 3 dígitos.</p>
-                    </details>
+                    <p class="pago-seguro"><i data-lucide="lock"></i> Pago seguro</p>
                 </fieldset>
 
                 {{-- Transferencia --}}
@@ -201,7 +188,7 @@
                               @if ($metodoSel !== MetodoPago::TRANSFERENCIA) hidden disabled @endif>
                         <legend class="sr-only">Datos de la transferencia</legend>
 
-                        <p class="paso-texto">1. Transfiere el monto a esta cuenta:</p>
+                        <p class="paso-texto">Cuenta de destino</p>
                         <dl class="lista-datos lista-recuadro">
                             <div><dt>Banco</dt><dd>{{ $cuenta['banco'] }}</dd></div>
                             <div><dt>Tipo de cuenta</dt><dd>{{ $cuenta['tipo'] }}</dd></div>
@@ -217,7 +204,7 @@
                             <div><dt>Monto a transferir</dt><dd>Bs <span data-monto-espejo>{{ $montoIni }}</span></dd></div>
                         </dl>
 
-                        <p class="paso-texto">2. Registra los datos de tu comprobante:</p>
+                        <p class="paso-texto">Datos del comprobante</p>
                         <div class="rejilla-form">
                             <div class="campo">
                                 <label for="numero_operacion">Nro. de operación</label>
@@ -233,17 +220,12 @@
                                        accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
                                        data-validar="archivo" data-max-kb="2048" data-vacio="Sube la foto o el PDF del comprobante.">
                                 @error('comprobante') <p class="campo-error">{{ $message }}</p> @enderror
-                                <p class="ayuda-campo">Foto o PDF, hasta 2 MB.</p>
+                                <p class="ayuda-campo">JPG, PNG o PDF · máx. 2 MB</p>
                             </div>
                         </div>
-                        <p class="nota-pequena">Recepción verifica que el dinero llegó y aprueba el pago. Mientras tanto la reserva no cambia.</p>
                     </fieldset>
                 @endif
 
-                {{-- Efectivo (solo recepción) --}}
-                <div class="panel-metodo nota-metodo" data-panel="{{ MetodoPago::EFECTIVO }}" @if ($metodoSel !== MetodoPago::EFECTIVO) hidden @endif>
-                    <p>Recibe el efectivo y registra el pago. Se aprueba al momento y se emite el recibo.</p>
-                </div>
             </section>
         </div>
 
@@ -253,6 +235,14 @@
             <dl class="lista-datos">
                 <div><dt>Reserva</dt><dd>{{ $reserva->codigo }}</dd></div>
                 <div><dt>Estadía</dt><dd>{{ $reserva->fecha_entrada->format('d/m/Y') }} al {{ $reserva->fecha_salida->format('d/m/Y') }}</dd></div>
+                <div>
+                    <dt>Habitaciones</dt>
+                    <dd>
+                        @foreach (\App\Support\Reservas::lineasEstadia($reserva) as $linea)
+                            <span class="linea-estadia">{{ $linea }}</span>
+                        @endforeach
+                    </dd>
+                </div>
                 <div><dt>Total de la estadía</dt><dd>{{ Moneda::formato($reserva->total()) }}</dd></div>
                 <div><dt>Pagado</dt><dd>{{ Moneda::formato($pagado) }}</dd></div>
                 @if ($pendiente)

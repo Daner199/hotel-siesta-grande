@@ -47,16 +47,10 @@
         <div class="cobro-qr-imagen" data-qr-imagen>
             {!! $qr !!}
         </div>
-        <p class="cobro-qr-instruccion">Escanea el código con la cámara de tu celular o desde la app de tu banco.</p>
-        <p class="cobro-qr-url">
-            <span>Dirección del cobro</span>
-            <a href="{{ $urlQr }}" target="_blank" rel="noopener">{{ $urlQr }}</a>
-        </p>
+        <p class="cobro-qr-instruccion">Escanea con la app de tu banco.</p>
         @if ($soloPc)
-            <p class="aviso-plano">
-                Esta dirección solo funciona en esta computadora. Para escanear con el celular (en la misma red WiFi),
-                configura <code>PAGOS_URL_PUBLICA</code> con la IP de esta PC o ábrela con esa IP. Ver el README.
-            </p>
+            {{-- Solo aparece en desarrollo: el QR apunta a 127.0.0.1 y el celular no llega --}}
+            <p class="aviso-plano">El celular no puede abrir 127.0.0.1: configura <code>PAGOS_URL_PUBLICA</code> (ver README).</p>
         @endif
     </section>
 
@@ -73,7 +67,6 @@
             <span class="procesando" aria-hidden="true"></span>
             <div>
                 <strong>Esperando el pago</strong>
-                <p>La pantalla se actualiza sola cuando el banco confirme.</p>
             </div>
         </div>
 
@@ -83,28 +76,26 @@
             </svg>
             <div>
                 <strong>Pago recibido</strong>
-                <p>Nro. de transacción <span data-transaccion>{{ $cobro->pago?->referencia }}</span>. Abriendo el recibo…</p>
+                <p>Nro. de transacción <span data-transaccion>{{ $cobro->pago?->referencia }}</span></p>
             </div>
         </div>
 
         <div class="cobro-estado cobro-error" data-panel-estado="{{ CobroQr::RECHAZADO }}" @if ($cobro->estado !== CobroQr::RECHAZADO) hidden @endif>
             <div>
                 <strong>El banco rechazó el pago</strong>
-                <p>Fondos insuficientes en la cuenta de débito. No se cobró nada.</p>
+                <p>Fondos insuficientes.</p>
             </div>
         </div>
 
         <div class="cobro-estado cobro-error" data-panel-estado="{{ CobroQr::VENCIDO }}" @if ($cobro->estado !== CobroQr::VENCIDO) hidden @endif>
             <div>
                 <strong>El QR venció</strong>
-                <p>Pasaron {{ config('pagos.qr_minutos') }} minutos sin pago. Genera un QR nuevo.</p>
             </div>
         </div>
 
         <div class="cobro-estado cobro-error" data-panel-estado="{{ CobroQr::ANULADO }}" @if ($cobro->estado !== CobroQr::ANULADO) hidden @endif>
             <div>
                 <strong>Este QR fue anulado</strong>
-                <p>Se generó otro QR o la reserva cambió.</p>
             </div>
         </div>
 
