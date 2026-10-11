@@ -11,6 +11,7 @@ use App\Models\SalonEvento;
 use App\Models\TipoHabitacion;
 use App\Support\Disponibilidad;
 use App\Support\Moneda;
+use App\Support\NoShow;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -97,6 +98,7 @@ class LandingController extends Controller
             ], 422);
         }
 
+        NoShow::siCorresponde(); // libera habitaciones de reservas vencidas
         $libres = Disponibilidad::libresPorTipo($llegada, $salida);
 
         $tipos = TipoHabitacion::query()

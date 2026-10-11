@@ -61,6 +61,8 @@ class PanelController extends Controller
 
     public function recepcion()
     {
+        \App\Support\NoShow::siCorresponde();
+
         return view('panel.inicio', [
             'titulo'       => 'Recepción',
             'resumen'      => 'Reservas, llegadas, salidas y cuentas de los huéspedes.',

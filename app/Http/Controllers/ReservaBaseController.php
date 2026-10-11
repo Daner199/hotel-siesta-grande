@@ -9,6 +9,7 @@ use App\Models\Reserva;
 use App\Models\TipoHabitacion;
 use App\Support\Disponibilidad;
 use App\Support\Moneda;
+use App\Support\NoShow;
 use App\Support\Reservas;
 use App\Support\ValidacionUsuario;
 use Carbon\Carbon;
@@ -110,6 +111,8 @@ abstract class ReservaBaseController extends Controller
 
     public function cotizar(Request $request): JsonResponse
     {
+        NoShow::siCorresponde(); // libera habitaciones de reservas vencidas
+
         [$llegada, $salida] = $this->validarFechas($request);
 
         // Recepción manda habitaciones exactas; cliente y agencia, cantidad por tipo
