@@ -90,7 +90,6 @@ class Hotel extends Model
             'nombre'       => $o('nombre', $c['nombre']),
             'eslogan'      => $v('eslogan', $c['eslogan']),
             'desde'        => $c['desde'],
-            'habitaciones' => $c['habitaciones'],
 
             'direccion' => [
                 'calle'        => $o('direccion', $c['direccion']['calle']),

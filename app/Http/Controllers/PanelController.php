@@ -51,7 +51,7 @@ class PanelController extends Controller
                 ['nombre' => 'Clientes', 'descripcion' => 'Consulta los clientes registrados y activa o desactiva sus cuentas.', 'icono' => 'users', 'paso' => 'Paso 1.5', 'ruta' => 'admin.clientes.index'],
                 ['nombre' => 'Datos del hotel', 'descripcion' => 'Fotos, contacto, redes, horarios y ubicación en el mapa.', 'icono' => 'hotel', 'paso' => 'Paso 2.5', 'ruta' => 'admin.hotel.edit'],
                 ['nombre' => 'Tipos y tarifas', 'descripcion' => 'Capacidad de cada tipo y su historial de precios por noche.', 'icono' => 'tags', 'paso' => 'Paso 2.2', 'ruta' => 'admin.tipos.index'],
-                ['nombre' => 'Habitaciones', 'descripcion' => 'Las 60 habitaciones: número, piso, tipo y estado.', 'icono' => 'bed-double', 'paso' => 'Paso 2.3', 'ruta' => 'admin.habitaciones.index'],
+                ['nombre' => 'Habitaciones', 'descripcion' => 'Las ' . DB::table('habitacion')->count() . ' habitaciones: número, piso, tipo y estado.', 'icono' => 'bed-double', 'paso' => 'Paso 2.3', 'ruta' => 'admin.habitaciones.index'],
                 ['nombre' => 'Promociones y beneficios', 'descripcion' => 'Paquetes con beneficios configurables y vigencia.', 'icono' => 'sparkles', 'paso' => 'Módulo 3'],
                 ['nombre' => 'Salón de eventos', 'descripcion' => 'Capacidad, costo por hora y reservas del salón.', 'icono' => 'party-popper', 'paso' => 'Módulo 8'],
                 ['nombre' => 'Reportes', 'descripcion' => 'Ocupación, NO_SHOW y reservas de agencias.', 'icono' => 'chart-column', 'paso' => 'Módulo 9'],
