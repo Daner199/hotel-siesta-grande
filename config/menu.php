@@ -53,8 +53,8 @@ return [
         ]],
         ['grupo' => 'Reservas', 'items' => [
             ['texto' => 'Nueva reserva', 'icono' => 'calendar-plus', 'ruta' => 'agencia.reservas.create'],
-            ['texto' => 'Mis reservas', 'icono' => 'calendar-check', 'ruta' => 'agencia.reservas.index', 'patron' => ['agencia.reservas.index', 'agencia.reservas.show']],
-            ['texto' => 'Pagos', 'icono' => 'wallet', 'ruta' => null],
+            ['texto' => 'Mis reservas', 'icono' => 'calendar-check', 'ruta' => 'agencia.reservas.index', 'patron' => ['agencia.reservas.index', 'agencia.reservas.show', 'agencia.reservas.pagar']],
+            ['texto' => 'Pagos', 'icono' => 'wallet', 'ruta' => 'agencia.pagos.index'],
         ]],
     ],
 
@@ -65,8 +65,8 @@ return [
         ]],
         ['grupo' => 'Mi estadía', 'items' => [
             ['texto' => 'Nueva reserva', 'icono' => 'calendar-plus', 'ruta' => 'cliente.reservas.create'],
-            ['texto' => 'Mis reservas', 'icono' => 'calendar-check', 'ruta' => 'cliente.reservas.index', 'patron' => ['cliente.reservas.index', 'cliente.reservas.show']],
-            ['texto' => 'Mis pagos', 'icono' => 'wallet', 'ruta' => null],
+            ['texto' => 'Mis reservas', 'icono' => 'calendar-check', 'ruta' => 'cliente.reservas.index', 'patron' => ['cliente.reservas.index', 'cliente.reservas.show', 'cliente.reservas.pagar']],
+            ['texto' => 'Mis pagos', 'icono' => 'wallet', 'ruta' => 'cliente.pagos.index'],
         ]],
     ],
 

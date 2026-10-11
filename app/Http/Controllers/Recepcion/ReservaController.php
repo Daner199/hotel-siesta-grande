@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Recepcion;
 
 use App\Http\Controllers\ReservaBaseController;
 use App\Models\EstadoHabitacion;
+use App\Models\MetodoPago;
 use App\Models\Reserva;
 use App\Models\Usuario;
 use App\Support\Reservas;
@@ -32,6 +33,12 @@ class ReservaController extends ReservaBaseController
     protected function misReservas(): Builder
     {
         return Reserva::query();
+    }
+
+    // Recepción también cobra en efectivo
+    protected function metodosPermitidos(): array
+    {
+        return [MetodoPago::EFECTIVO, ...MetodoPago::EN_LINEA];
     }
 
     // La reserva es de un cliente solo si se indica su correo (se resuelve en store)

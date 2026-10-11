@@ -6,7 +6,9 @@
  *     <input name="nombre" data-validar="letras" required data-vacio="Escribe tu nombre.">
  *
  * Tipos: letras, email, telefono, password, confirmar, nit, empresa,
- *        tipo, numero, entero (usa min/max), precio, fecha (usa min)
+ *        tipo, numero, entero (usa min/max), precio, fecha (usa min),
+ *        monto (usa data-min/data-max), tarjeta, vence, cvv
+ * Los campos deshabilitados (o dentro de un fieldset deshabilitado) no se validan.
  * Son las MISMAS reglas que valida Laravel. Laravel siempre vuelve a validar.
  */
 (() => {
@@ -119,6 +121,41 @@
             return null;
         },
 
+        // Monto en Bs (formato boliviano) entre data-min y data-max
+        monto(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            const n = numeroBoliviano(valor);
+            if (n === null) return 'Escribe un monto válido, por ejemplo 716,25.';
+            const bs = (x) => 'Bs ' + Number(x).toLocaleString('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (campo.dataset.min && n < Number(campo.dataset.min)) return `Debe ser al menos ${bs(campo.dataset.min)}.`;
+            if (campo.dataset.max && n > Number(campo.dataset.max)) return `No puede pasar de ${bs(campo.dataset.max)}.`;
+            return null;
+        },
+
+        // Número de tarjeta: 13 a 19 dígitos (los espacios no cuentan)
+        tarjeta(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            const d = valor.replace(/\s/g, '');
+            if (!/^\d{13,19}$/.test(d)) return 'Debe tener entre 13 y 19 dígitos.';
+            return null;
+        },
+
+        // Vencimiento MM/AA que no haya pasado
+        vence(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            const m = /^(0[1-9]|1[0-2])\/(\d{2})$/.exec(valor);
+            if (!m) return 'Escribe MM/AA, por ejemplo 08/28.';
+            const fin = new Date(2000 + Number(m[2]), Number(m[1]), 0, 23, 59, 59);
+            if (fin < new Date()) return 'La tarjeta está vencida.';
+            return null;
+        },
+
+        cvv(valor, campo) {
+            if (!valor) return campo.required ? vacio(campo) : null;
+            if (!/^\d{3,4}$/.test(valor)) return 'Tiene 3 o 4 dígitos.';
+            return null;
+        },
+
         // Fecha (AAAA-MM-DD) que no puede ser anterior al min del campo
         fecha(valor, campo) {
             if (!valor) return campo.required ? vacio(campo) : null;
@@ -130,6 +167,14 @@
         },
     };
 
+    // "1.250,50" → 1250.5 (igual que Moneda::leer de Laravel); null si no es un número
+    function numeroBoliviano(valor) {
+        let v = valor.replace(/\s+/g, '');
+        if (v.includes(',')) v = v.replace(/\./g, '').replace(',', '.');
+        else if (/^\d{1,3}(\.\d{3})+$/.test(v)) v = v.replace(/\./g, '');
+        return /^\d+(\.\d{1,2})?$/.test(v) ? Number(v) : null;
+    }
+
     // ----- Filtros: impiden escribir caracteres no permitidos -----
     const filtros = {
         letras:   (v) => v.replace(/[0-9]/g, ''),
@@ -138,6 +183,12 @@
         tipo:     (v) => v.replace(/[^\p{L}\s]/gu, ''),
         precio:   (v) => v.replace(/[^\d.,]/g, ''),
         numero:   (v) => v.replace(/[^0-9A-Za-z-]/g, ''),
+        monto:    (v) => v.replace(/[^\d.,]/g, ''),
+        // "4242424242424242" → "4242 4242 4242 4242"
+        tarjeta:  (v) => v.replace(/\D/g, '').slice(0, 19).replace(/(\d{4})(?=\d)/g, '$1 '),
+        // "0828" → "08/28"
+        vence:    (v) => v.replace(/\D/g, '').slice(0, 4).replace(/^(\d{2})(\d)/, '$1/$2'),
+        cvv:      (v) => v.replace(/\D/g, '').slice(0, 4),
     };
 
     // ----- Mostrar u ocultar el error de un campo -----
@@ -173,6 +224,12 @@
     }
 
     function validar(campo, form) {
+        // Deshabilitado (ej.: datos de tarjeta cuando se paga con QR): no se valida ni se envía
+        if (campo.matches(':disabled')) {
+            mostrar(campo, null, form);
+            return null;
+        }
+
         const tipo = campo.dataset.validar;
         const esClave = tipo === 'password' || tipo === 'confirmar';
         const valor = esClave ? campo.value : campo.value.trim();

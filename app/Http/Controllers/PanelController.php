@@ -111,7 +111,7 @@ class PanelController extends Controller
             'secciones'    => [
                 ['nombre' => 'Nueva reserva', 'descripcion' => 'Reserva para el titular y sus acompañantes.', 'icono' => 'calendar-plus', 'paso' => 'Paso 4.5', 'ruta' => 'agencia.reservas.create'],
                 ['nombre' => 'Mis reservas', 'descripcion' => 'Estado de todas las reservas de la agencia.', 'icono' => 'calendar-check', 'paso' => 'Paso 4.5', 'ruta' => 'agencia.reservas.index'],
-                ['nombre' => 'Pagos', 'descripcion' => 'Adelantos y saldos de cada reserva.', 'icono' => 'wallet', 'paso' => 'Módulo 5'],
+                ['nombre' => 'Pagos', 'descripcion' => 'Adelantos y saldos de cada reserva.', 'icono' => 'wallet', 'paso' => 'Paso 5.3', 'ruta' => 'agencia.pagos.index'],
             ],
         ]);
     }
@@ -145,7 +145,7 @@ class PanelController extends Controller
             'secciones'    => [
                 ['nombre' => 'Nueva reserva', 'descripcion' => 'Elige fechas y habitaciones: el total se calcula al instante.', 'icono' => 'calendar-plus', 'paso' => 'Paso 4.4', 'ruta' => 'cliente.reservas.create'],
                 ['nombre' => 'Mis reservas', 'descripcion' => 'Estado y detalle de tus reservas.', 'icono' => 'calendar-check', 'paso' => 'Paso 4.4', 'ruta' => 'cliente.reservas.index'],
-                ['nombre' => 'Mis pagos', 'descripcion' => 'Lo que pagaste y lo que falta pagar.', 'icono' => 'wallet', 'paso' => 'Módulo 5'],
+                ['nombre' => 'Mis pagos', 'descripcion' => 'Lo que pagaste y lo que falta pagar.', 'icono' => 'wallet', 'paso' => 'Paso 5.3', 'ruta' => 'cliente.pagos.index'],
             ],
         ]);
     }

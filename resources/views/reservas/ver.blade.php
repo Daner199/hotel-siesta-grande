@@ -18,6 +18,7 @@
     $devuelve  = $reserva->devuelveSiCancela();
     $limite    = $reserva->limiteCancelacion();
     $editable  = $rol === 'RECEPCIONISTA' && $cancelable;
+    $limites   = \App\Support\Pagos::limites($reserva);
 
     $etiquetas = [];
     if ($reserva->agencia_id) {
@@ -162,6 +163,23 @@
                 </table>
             </div>
         </section>
+
+        {{-- ===== Pagos ===== --}}
+        <section class="bloque" id="pagos">
+            <div class="bloque-cabecera">
+                <h2>Pagos</h2>
+                <p>Los rechazados y devueltos no suman a lo pagado.</p>
+            </div>
+
+            @if ($reserva->pagos->isEmpty())
+                <p class="nota-pie">
+                    <i data-lucide="wallet"></i>
+                    Todavía no hay pagos.
+                </p>
+            @else
+                @include('pagos.lista', ['pagos' => $reserva->pagos, 'conReserva' => false])
+            @endif
+        </section>
     </div>
 
     {{-- ===== Cuenta y cancelación ===== --}}
@@ -194,6 +212,17 @@
                     <i data-lucide="hourglass"></i>
                     Para confirmarla falta pagar el adelanto de {{ Moneda::formato(max(0, $adelanto - $pagado)) }}.
                 </p>
+            @endif
+
+            @if ($limites)
+                <a href="{{ route($prefijo . '.pagar', $reserva) }}" class="btn btn-tajibo btn-bloque">
+                    <i data-lucide="{{ $rol === 'RECEPCIONISTA' ? 'hand-coins' : 'credit-card' }}"></i>
+                    @if ($rol === 'RECEPCIONISTA')
+                        Registrar pago
+                    @else
+                        {{ $estado === EstadoReserva::PENDIENTE ? 'Pagar el adelanto' : 'Pagar el saldo' }}
+                    @endif
+                </a>
             @endif
 
             @if ($rol === 'RECEPCIONISTA' && $reserva->comision)

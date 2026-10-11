@@ -123,17 +123,9 @@ class TarifaController extends Controller
         );
     }
 
-    // Formato boliviano a número: "1.250,50" → "1250.50" · "250,5" → "250.5" · "1.250" → "1250"
+    // Formato boliviano a número: "1.250,50" → "1250.50"
     private function preparar(Request $request): void
     {
-        $precio = preg_replace('/\s+/', '', (string) $request->input('precio_noche'));
-
-        if (str_contains($precio, ',')) {
-            $precio = str_replace(['.', ','], ['', '.'], $precio);
-        } elseif (preg_match('/^\d{1,3}(\.\d{3})+$/', $precio)) {
-            $precio = str_replace('.', '', $precio); // el punto era separador de miles
-        }
-
-        $request->merge(['precio_noche' => $precio === '' ? null : $precio]);
+        $request->merge(['precio_noche' => Moneda::leer($request->input('precio_noche'))]);
     }
 }

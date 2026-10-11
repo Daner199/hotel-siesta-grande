@@ -163,11 +163,15 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
         Route::get('/{reserva}/editar', 'edit')->whereNumber('reserva')->name('edit');
         Route::put('/{reserva}', 'update')->whereNumber('reserva')->name('update');
         Route::patch('/{reserva}/cancelar', 'cancelar')->whereNumber('reserva')->name('cancelar');
+        Route::get('/{reserva}/pagar', 'formularioPago')->whereNumber('reserva')->name('pagar');
+        Route::post('/{reserva}/pagar', 'pagar')->whereNumber('reserva')->middleware('throttle:20,1')->name('pagar.store');
     });
 });
 
 Route::middleware(['auth', 'rol:AGENCIA'])->group(function () {
     Route::get('/agencia', [PanelController::class, 'agencia'])->name('agencia.inicio');
+
+    Route::get('/agencia/pagos', [ReservaAgencia::class, 'pagos'])->name('agencia.pagos.index');
 
     // Reservas de la agencia (para un titular, con 10 % de descuento)
     Route::prefix('agencia/reservas')->name('agencia.reservas.')->controller(ReservaAgencia::class)->group(function () {
@@ -177,11 +181,15 @@ Route::middleware(['auth', 'rol:AGENCIA'])->group(function () {
         Route::post('/', 'store')->name('store');
         Route::get('/{reserva}', 'show')->whereNumber('reserva')->name('show');
         Route::patch('/{reserva}/cancelar', 'cancelar')->whereNumber('reserva')->name('cancelar');
+        Route::get('/{reserva}/pagar', 'formularioPago')->whereNumber('reserva')->name('pagar');
+        Route::post('/{reserva}/pagar', 'pagar')->whereNumber('reserva')->middleware('throttle:20,1')->name('pagar.store');
     });
 });
 
 Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
     Route::get('/cliente', [PanelController::class, 'cliente'])->name('cliente.inicio');
+
+    Route::get('/cliente/pagos', [ReservaCliente::class, 'pagos'])->name('cliente.pagos.index');
 
     // Reservas del cliente (para sí mismo)
     Route::prefix('cliente/reservas')->name('cliente.reservas.')->controller(ReservaCliente::class)->group(function () {
@@ -191,6 +199,8 @@ Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
         Route::post('/', 'store')->name('store');
         Route::get('/{reserva}', 'show')->whereNumber('reserva')->name('show');
         Route::patch('/{reserva}/cancelar', 'cancelar')->whereNumber('reserva')->name('cancelar');
+        Route::get('/{reserva}/pagar', 'formularioPago')->whereNumber('reserva')->name('pagar');
+        Route::post('/{reserva}/pagar', 'pagar')->whereNumber('reserva')->middleware('throttle:20,1')->name('pagar.store');
     });
 });
 

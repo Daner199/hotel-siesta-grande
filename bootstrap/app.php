@@ -25,5 +25,6 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(fn (Request $request) => $request->user()->rutaInicio());
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Si un pago no pasa la validación, el número de tarjeta y el CVV NO vuelven al formulario
+        $exceptions->dontFlash(['tarjeta_numero', 'tarjeta_vence', 'tarjeta_cvv']);
     })->create();

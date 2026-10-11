@@ -1627,3 +1627,90 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
 @media (prefers-reduced-motion: reduce) {
     .tipo-reserva, .habitacion-chip span, .resumen-tarjeta { transition: none; }
 }
+
+/* ============================================================
+   PAGOS (Módulo 5)
+   ============================================================ */
+.estado-pago-aprobado  { background: var(--verde-suave);  color: #2B7A50; }
+.estado-pago-rechazado { background: var(--tajibo-suave); color: #A63D64; }
+.estado-pago-devuelto  { background: var(--oro-suave);    color: #8A6418; }
+.estado-pago-pendiente { background: #EEEFEB;             color: var(--piedra); }
+
+.precio-anulado { text-decoration: line-through; color: var(--piedra); font-weight: 600; }
+.referencia { font: 600 .85rem ui-monospace, Consolas, monospace; color: var(--selva); }
+.enlace-reserva { font-weight: 600; color: var(--tinta); }
+.enlace-reserva:hover { color: var(--tajibo); }
+.estadistica-monto { font-size: 1.6rem; font-variant-numeric: tabular-nums; }
+.resumen-tarjeta .btn-bloque + .resumen-nota { margin-top: .9rem; }
+.resumen-tarjeta > a.btn-bloque { margin-top: .25rem; }
+
+/* Atajos de monto */
+.atajos-monto { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: 1.1rem; }
+.chip-monto {
+    display: grid;
+    gap: .1rem;
+    padding: .65rem 1rem;
+    text-align: left;
+    font: inherit;
+    color: var(--tinta);
+    background: #fff;
+    border: 1.5px solid var(--borde);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: border-color .15s, background-color .15s;
+}
+.chip-monto span { font-size: .8rem; color: var(--piedra); }
+.chip-monto strong { font-variant-numeric: tabular-nums; }
+.chip-monto:hover { border-color: rgba(196, 80, 122, .5); background: #FDF7FA; }
+.campo-monto { max-width: 320px; }
+
+/* Métodos como tarjetas elegibles */
+.metodos-pago { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: .7rem; margin-bottom: 1.25rem; }
+.metodo-pago { position: relative; cursor: pointer; }
+.metodo-pago input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.metodo-pago span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    padding: .9rem 1rem;
+    font-weight: 600;
+    background: #fff;
+    border: 1.5px solid var(--borde);
+    border-radius: 14px;
+    transition: border-color .15s, background-color .15s, color .15s;
+}
+.metodo-pago span svg { width: 20px; height: 20px; }
+.metodo-pago:hover span { border-color: rgba(14, 36, 27, .3); }
+.metodo-pago input:checked + span { color: #fff; background: var(--selva); border-color: var(--selva); }
+.metodo-pago input:focus-visible + span { outline: 3px solid var(--tajibo); outline-offset: 2px; }
+
+.panel-metodo { margin: 0; padding: 0; border: 0; min-width: 0; }
+.panel-metodo[hidden] { display: none; }
+.panel-qr, .panel-efectivo {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.1rem;
+    background: var(--fondo);
+    border-radius: 16px;
+}
+.panel-qr p, .panel-efectivo p { margin: .3rem 0 0; font-size: .9rem; color: var(--piedra); }
+.panel-efectivo p { margin: 0; }
+.panel-efectivo svg { width: 28px; height: 28px; flex: none; color: var(--selva); }
+.qr-simulado {
+    width: 132px;
+    height: 132px;
+    flex: none;
+    padding: 8px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--sombra);
+    shape-rendering: crispEdges;
+}
+.panel-metodo .ayuda-form { display: flex; align-items: flex-start; gap: .45rem; }
+.panel-metodo .ayuda-form svg { width: 16px; height: 16px; flex: none; margin-top: .2rem; color: #2B7A50; }
+
+@media (max-width: 560px) {
+    .panel-qr { flex-direction: column; text-align: center; }
+}
