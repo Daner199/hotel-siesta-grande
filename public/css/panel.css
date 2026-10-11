@@ -1325,3 +1325,10 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
     object-fit: cover;
     border-radius: 12px;
 }
+/* ---------- Bloqueos de una habitación (Módulo 4) ---------- */
+.bloqueos .bloque-cabecera { margin-bottom: 1.25rem; }
+.form-bloqueo { margin-bottom: 1.25rem; }
+.form-bloqueo .acciones-form-compactas { padding-top: 0; }
+.tabla-compacta { min-width: 560px; }
+.flecha-fechas { width: 14px; height: 14px; margin: 0 .3rem; vertical-align: middle; color: var(--piedra); }
+.etiqueta-bloqueo { display: inline-block; margin-top: .4rem; text-decoration: none; }

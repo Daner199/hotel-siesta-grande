@@ -220,7 +220,7 @@ class Reservas
     }
 
     // "ERROR:  La habitación 201 ya está reservada... CONTEXT: ..." → solo la frase del trigger
-    private static function mensajeBd(QueryException $e): string
+    public static function mensajeBd(QueryException $e): string
     {
         return preg_match('/ERROR:\s+(.+?)(\n|$)/u', $e->errorInfo[2] ?? '', $m)
             ? trim($m[1])

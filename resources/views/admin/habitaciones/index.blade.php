@@ -165,6 +165,12 @@
                                         </select>
                                         <noscript><button type="submit" class="boton-accion">Cambiar</button></noscript>
                                     </form>
+                                    @if ($bloqueadas[$habitacion->id] ?? null)
+                                        <a href="{{ route('admin.habitaciones.edit', $habitacion) }}#bloqueos"
+                                           class="etiqueta etiqueta-alerta etiqueta-bloqueo">
+                                            Bloqueada hasta el {{ $bloqueadas[$habitacion->id]->format('d/m') }}
+                                        </a>
+                                    @endif
                                 </td>
 
                                 <td>

@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegistroController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\RecepcionistaController;
 use App\Http\Controllers\Admin\AgenciaController;
+use App\Http\Controllers\Admin\BloqueoController;
 use App\Http\Controllers\Admin\ClienteController;
 use App\Http\Controllers\Admin\FotoHabitacionController;
 use App\Http\Controllers\Admin\FotoTipoController;
@@ -124,6 +125,12 @@ Route::middleware(['auth', 'rol:ADMINISTRADOR'])
             ->whereNumber('habitacion')->name('habitaciones.update');
         Route::patch('/habitaciones/{habitacion}/estado', [HabitacionController::class, 'cambiarEstado'])
             ->whereNumber('habitacion')->name('habitaciones.estado');
+
+        // Bloqueos por fechas de una habitación (mantenimiento temporal)
+        Route::post('/habitaciones/{habitacion}/bloqueos', [BloqueoController::class, 'store'])
+            ->whereNumber('habitacion')->name('habitaciones.bloqueos.store');
+        Route::delete('/habitaciones/{habitacion}/bloqueos/{bloqueo}', [BloqueoController::class, 'destroy'])
+            ->whereNumber(['habitacion', 'bloqueo'])->scopeBindings()->name('habitaciones.bloqueos.destroy');
 
         // Datos del hotel (una sola fila)
         Route::get('/hotel', [HotelController::class, 'edit'])->name('hotel.edit');

@@ -104,8 +104,10 @@
     </div>
 </form>
 
-{{-- ===== Fotos propias (opcionales; solo al editar) ===== --}}
+{{-- ===== Bloqueos por fechas y fotos propias (solo al editar) ===== --}}
 @if ($editando)
+    @include('admin.habitaciones.bloqueos')
+
     @php $deTipo = $habitacion->tipo->fotos()->count(); @endphp
 
     @include('admin.fotos.galeria', [

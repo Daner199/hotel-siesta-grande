@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\BloqueoHabitacion;
 use App\Models\EstadoHabitacion;
 use App\Models\Habitacion;
 use App\Models\TipoHabitacion;
@@ -46,6 +47,13 @@ class HabitacionController extends Controller
         $tarifas  = $tipos->mapWithKeys(fn ($t) => [$t->id => $t->tarifaVigente()?->precio_noche]);
         $estados  = EstadoHabitacion::orderBy('id')->get();
 
+        // Habitaciones bloqueadas hoy → [habitacion_id => día en que vuelven a estar libres]
+        $bloqueadas = BloqueoHabitacion::query()
+            ->where('fecha_desde', '<=', today()->toDateString())
+            ->where('fecha_hasta', '>', today()->toDateString())
+            ->pluck('fecha_hasta', 'habitacion_id')
+            ->map(fn ($f) => \Carbon\Carbon::parse($f));
+
         // Resumen por estado para la cabecera
         $resumen = Habitacion::selectRaw('estado_habitacion_id, COUNT(*) AS total')
             ->groupBy('estado_habitacion_id')
@@ -58,6 +66,7 @@ class HabitacionController extends Controller
             'estados'      => $estados,
             'pisos'        => Habitacion::distinct()->orderBy('piso')->pluck('piso'),
             'resumen'      => $resumen,
+            'bloqueadas'   => $bloqueadas,
             'total'        => $resumen->sum(),
             'buscar'       => $buscar,
             'filtros'      => ['tipo' => $tipoId, 'piso' => $piso, 'estado' => $estado],

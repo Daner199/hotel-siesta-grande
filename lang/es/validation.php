@@ -181,6 +181,8 @@ return [
         'descripcion'           => 'descripción',
         'precio_noche'          => 'precio por noche',
         'fecha_desde'           => 'fecha de inicio',
+        'fecha_hasta'           => 'fecha de fin',
+        'motivo'                => 'motivo',
         'numero'                => 'número',
         'piso'                  => 'piso',
         'tipo_habitacion_id'    => 'tipo de habitación',

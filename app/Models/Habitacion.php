@@ -42,6 +42,12 @@ class Habitacion extends Model
             ->orderBy('orden')->orderBy('id');
     }
 
+    // Bloqueos por fechas (mantenimiento temporal), del más próximo al más lejano
+    public function bloqueos(): HasMany
+    {
+        return $this->hasMany(BloqueoHabitacion::class, 'habitacion_id')->orderBy('fecha_desde');
+    }
+
     // Carpeta de sus fotos dentro de storage/app/public
     public function carpetaFotos(): string
     {
