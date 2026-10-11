@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\DB;
 
 /**
  * Reserva de una o varias habitaciones entre [fecha_entrada, fecha_salida).
@@ -64,6 +63,12 @@ class Reserva extends Model
         return $this->hasMany(ReservaHabitacion::class, 'reserva_id')->orderBy('id');
     }
 
+    // Pagos de la reserva, el más reciente primero
+    public function pagos(): HasMany
+    {
+        return $this->hasMany(Pago::class, 'reserva_id')->orderByDesc('fecha_pago')->orderByDesc('id');
+    }
+
     public function comision(): HasOne
     {
         return $this->hasOne(ComisionRecepcionista::class, 'reserva_id');
@@ -95,13 +100,24 @@ class Reserva extends Model
         return Disponibilidad::adelanto($this->total());
     }
 
-    // Pagos aprobados (los registra el Módulo 5)
+    // Pagos aprobados (los devueltos y rechazados no cuentan)
     public function totalPagado(): float
     {
-        return round((float) DB::table('pago')
-            ->where('reserva_id', $this->id)
-            ->where('estado', 'APROBADO')
+        return round((float) Pago::where('reserva_id', $this->id)
+            ->where('estado', Pago::APROBADO)
             ->sum('monto'), 2);
+    }
+
+    // Lo que falta pagar de la estadía (los consumos se suman en el Módulo 7)
+    public function saldo(): float
+    {
+        return round(max(0, $this->total() - $this->totalPagado()), 2);
+    }
+
+    // Se puede pagar mientras la reserva esté activa (pendiente, confirmada o con el huésped alojado)
+    public function sePuedePagar(): bool
+    {
+        return in_array($this->estado->nombre, EstadoReserva::OCUPAN, true);
     }
 
     // Política 4: hasta este momento se puede cancelar con devolución total

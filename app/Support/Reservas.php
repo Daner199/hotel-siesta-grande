@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\ComisionRecepcionista;
 use App\Models\EstadoReserva;
 use App\Models\Habitacion;
+use App\Models\Pago;
 use App\Models\Reserva;
 use App\Models\ReservaHabitacion;
 use App\Models\TipoHabitacion;
@@ -245,10 +246,9 @@ class Reservas
             $reserva->update(['estado_reserva_id' => EstadoReserva::id(EstadoReserva::CANCELADA)]);
 
             if ($devuelve) {
-                DB::table('pago')
-                    ->where('reserva_id', $reserva->id)
-                    ->where('estado', 'APROBADO')
-                    ->update(['estado' => 'DEVUELTO']);
+                Pago::where('reserva_id', $reserva->id)
+                    ->where('estado', Pago::APROBADO)
+                    ->update(['estado' => Pago::DEVUELTO]);
             }
 
             return $devuelve;
