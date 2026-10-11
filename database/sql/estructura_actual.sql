@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dXXRldm0aP39ULTaC98DnsmddRDwzN4UoAzazfbJV158L1PkMSZSbYDOghpicjp
+\restrict thck0VqdK0Zwipfr7zx5AWiGUcP8PZ3clae4xerTVIfOjY03aYjt7zSgudGjkis
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -75,6 +75,33 @@ BEGIN
         RAISE EXCEPTION 'No se puede bloquear la habitación %: tiene la reserva % en esas fechas.',
             v_numero, v_codigo
             USING ERRCODE = 'exclusion_violation';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_consumo_solo_alojado(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_consumo_solo_alojado() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+    v_codigo varchar;
+    v_estado varchar;
+BEGIN
+    SELECT r.codigo, er.nombre INTO v_codigo, v_estado
+    FROM reserva r
+    JOIN estado_reserva er ON er.id = r.estado_reserva_id
+    WHERE r.id = NEW.reserva_id;
+
+    IF v_estado IS DISTINCT FROM 'CHECK_IN' THEN
+        RAISE EXCEPTION 'Solo se cargan consumos a huéspedes alojados (la reserva % está en %).', v_codigo, v_estado
+            USING ERRCODE = 'check_violation';
     END IF;
 
     RETURN NEW;
@@ -803,6 +830,13 @@ CREATE TABLE public.reserva (
     fecha_salida date NOT NULL,
     fecha_creacion timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     observacion text,
+    check_in_en timestamp without time zone,
+    check_in_por_usuario_id bigint,
+    check_out_en timestamp without time zone,
+    check_out_por_usuario_id bigint,
+    CONSTRAINT chk_reserva_check_in CHECK (((check_in_en IS NULL) = (check_in_por_usuario_id IS NULL))),
+    CONSTRAINT chk_reserva_check_orden CHECK (((check_out_en IS NULL) OR (check_out_en >= check_in_en))),
+    CONSTRAINT chk_reserva_check_out CHECK ((((check_out_en IS NULL) = (check_out_por_usuario_id IS NULL)) AND ((check_out_en IS NULL) OR (check_in_en IS NOT NULL)))),
     CONSTRAINT chk_reserva_cliente_o_agencia CHECK ((NOT ((cliente_id IS NOT NULL) AND (agencia_id IS NOT NULL)))),
     CONSTRAINT chk_reserva_fechas CHECK ((fecha_salida > fecha_entrada)),
     CONSTRAINT chk_reserva_personas CHECK ((cantidad_personas > 0))
@@ -1659,6 +1693,13 @@ CREATE INDEX idx_cobro_qr_reserva ON public.cobro_qr USING btree (reserva_id, es
 
 
 --
+-- Name: idx_consumo_reserva; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_consumo_reserva ON public.consumo USING btree (reserva_id);
+
+
+--
 -- Name: idx_foto_habitacion_orden; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1726,6 +1767,13 @@ CREATE UNIQUE INDEX uq_pago_referencia ON public.pago USING btree (referencia) W
 --
 
 CREATE TRIGGER trg_bloqueo_sin_reservas BEFORE INSERT OR UPDATE OF habitacion_id, fecha_desde, fecha_hasta ON public.bloqueo_habitacion FOR EACH ROW EXECUTE FUNCTION public.fn_bloqueo_sin_reservas();
+
+
+--
+-- Name: consumo trg_consumo_solo_alojado; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_consumo_solo_alojado BEFORE INSERT OR UPDATE OF reserva_id ON public.consumo FOR EACH ROW EXECUTE FUNCTION public.fn_consumo_solo_alojado();
 
 
 --
@@ -1959,6 +2007,22 @@ ALTER TABLE ONLY public.reserva
 
 
 --
+-- Name: reserva fk_reserva_check_in_por; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reserva
+    ADD CONSTRAINT fk_reserva_check_in_por FOREIGN KEY (check_in_por_usuario_id) REFERENCES public.usuario(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
+-- Name: reserva fk_reserva_check_out_por; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.reserva
+    ADD CONSTRAINT fk_reserva_check_out_por FOREIGN KEY (check_out_por_usuario_id) REFERENCES public.usuario(id) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+
+--
 -- Name: reserva fk_reserva_cliente; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2034,5 +2098,5 @@ ALTER TABLE ONLY public.transferencia
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dXXRldm0aP39ULTaC98DnsmddRDwzN4UoAzazfbJV158L1PkMSZSbYDOghpicjp
+\unrestrict thck0VqdK0Zwipfr7zx5AWiGUcP8PZ3clae4xerTVIfOjY03aYjt7zSgudGjkis
 

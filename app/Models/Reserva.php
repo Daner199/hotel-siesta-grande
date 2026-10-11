@@ -28,6 +28,7 @@ class Reserva extends Model
     protected $fillable = [
         'codigo', 'cliente_id', 'agencia_id', 'creado_por_usuario_id', 'estado_reserva_id',
         'nombre_titular', 'cantidad_personas', 'fecha_entrada', 'fecha_salida', 'observacion',
+        'check_in_en', 'check_in_por_usuario_id', 'check_out_en', 'check_out_por_usuario_id',
     ];
 
     protected $casts = [
@@ -35,6 +36,8 @@ class Reserva extends Model
         'fecha_entrada'     => 'date',
         'fecha_salida'      => 'date',
         'fecha_creacion'    => 'datetime',
+        'check_in_en'       => 'datetime',
+        'check_out_en'      => 'datetime',
     ];
 
     public function estado(): BelongsTo
@@ -67,6 +70,22 @@ class Reserva extends Model
     public function pagos(): HasMany
     {
         return $this->hasMany(Pago::class, 'reserva_id')->orderByDesc('fecha_pago')->orderByDesc('id');
+    }
+
+    // Restaurante y frigobar cargados a la cuenta (el más reciente primero)
+    public function consumos(): HasMany
+    {
+        return $this->hasMany(Consumo::class, 'reserva_id')->orderByDesc('fecha_consumo')->orderByDesc('id');
+    }
+
+    public function checkInPor(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'check_in_por_usuario_id');
+    }
+
+    public function checkOutPor(): BelongsTo
+    {
+        return $this->belongsTo(Usuario::class, 'check_out_por_usuario_id');
     }
 
     public function comision(): HasOne
