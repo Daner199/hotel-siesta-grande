@@ -124,7 +124,7 @@ class LandingController extends Controller
                 'libres'       => $libres[$tipo->id] ?? 0,
                 'foto'         => $tipo->fotoPrincipal?->url(),
                 // Sin operaciones: solo lo que ve el huésped
-                'estadia_larga' => $estadia['estadia_larga'],
+                'estadia_larga' => $estadia['estadia_larga'] ? Disponibilidad::etiquetaEstadiaLarga() : null,
                 'sin_descuento' => $estadia['estadia_larga'] ? Moneda::formato($estadia['sin_descuento']) : null,
                 'total'         => Moneda::formato($estadia['total']),
                 'promedio'      => Moneda::formato($estadia['promedio']),

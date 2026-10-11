@@ -40,7 +40,9 @@
 
             <p class="buscador-nota">
                 <i data-lucide="badge-percent"></i>
-                Si te quedas más de 7 noches, desde la 8.ª noche tienes 15 % de descuento.
+                Si te quedas más de {{ \App\Support\Disponibilidad::NOCHES_PRECIO_NORMAL }} noches,
+                desde la {{ \App\Support\Disponibilidad::NOCHES_PRECIO_NORMAL + 1 }}.ª noche tienes
+                {{ \App\Support\Disponibilidad::DESCUENTO_LARGA }} % de descuento.
                 Check-in desde las {{ $hotel['check_in'] }} · check-out hasta las {{ $hotel['check_out'] }}.
             </p>
         </div>

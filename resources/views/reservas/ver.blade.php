@@ -24,7 +24,7 @@
         $etiquetas[] = 'Agencia: ' . Disponibilidad::DESCUENTO_AGENCIA . ' % menos';
     }
     if ($noches > Disponibilidad::NOCHES_PRECIO_NORMAL) {
-        $etiquetas[] = 'Estadía larga: ' . Disponibilidad::DESCUENTO_LARGA . ' % menos desde la 8.ª noche';
+        $etiquetas[] = Disponibilidad::etiquetaEstadiaLarga();
     }
 
     $pregunta = $devuelve

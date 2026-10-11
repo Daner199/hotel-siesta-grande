@@ -86,6 +86,13 @@ class Disponibilidad
         return $esAgencia ? round($precio * (100 - self::DESCUENTO_AGENCIA) / 100, 2) : $precio;
     }
 
+    // "Estadía larga: 15 % menos desde la 8.ª noche" (lo usan la landing y las reservas)
+    public static function etiquetaEstadiaLarga(): string
+    {
+        return 'Estadía larga: ' . self::DESCUENTO_LARGA . ' % menos desde la '
+            . (self::NOCHES_PRECIO_NORMAL + 1) . '.ª noche';
+    }
+
     // Política 1: 30 % del total
     public static function adelanto(float $total): float
     {

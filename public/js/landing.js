@@ -200,10 +200,10 @@
                 datosTipo.append(capacidad, libres);
                 cuerpo.append(datosTipo);
 
-                // Solo si son más de 7 noches
+                // Solo si la estadía tiene descuento (el texto llega de Laravel)
                 if (r.estadia_larga) {
                     const etiqueta = el('span', 'etiqueta-larga');
-                    etiqueta.append(icono('badge-percent'), 'Estadía larga: 15 % menos desde la 8.ª noche');
+                    etiqueta.append(icono('badge-percent'), r.estadia_larga);
                     cuerpo.append(etiqueta);
                 }
 
