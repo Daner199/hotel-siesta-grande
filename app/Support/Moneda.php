@@ -22,6 +22,17 @@ class Moneda
         return $valor === '' ? null : $valor;
     }
 
+    // 716.25 → "Setecientos dieciséis 25/100 bolivianos" (para el recibo; usa la extensión intl)
+    public static function enLetras(int|float|string $monto): string
+    {
+        $centavos = (int) round((float) $monto * 100);
+        $enteros  = intdiv($centavos, 100);
+        $letras   = (new \NumberFormatter('es', \NumberFormatter::SPELLOUT))->format($enteros);
+
+        return mb_strtoupper(mb_substr($letras, 0, 1)) . mb_substr($letras, 1)
+            . ' ' . str_pad((string) ($centavos % 100), 2, '0', STR_PAD_LEFT) . '/100 bolivianos';
+    }
+
     // 1250.5 → "Bs 1.250,50"
     public static function formato(int|float|string|null $monto): string
     {

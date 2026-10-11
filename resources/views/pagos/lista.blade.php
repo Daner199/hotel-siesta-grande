@@ -10,7 +10,8 @@
                 <th>Método</th>
                 <th>Monto</th>
                 <th>Estado</th>
-                <th>Referencia</th>
+                <th>Nro. de transacción</th>
+                <th><span class="sr-only">Recibo</span></th>
             </tr>
         </thead>
         <tbody>
@@ -39,6 +40,14 @@
                     </td>
                     <td><span class="estado estado-pago-{{ strtolower($pago->estado) }}">{{ $pago->etiquetaEstado() }}</span></td>
                     <td><code class="referencia">{{ $pago->referencia ?? '—' }}</code></td>
+                    <td>
+                        @if ($pago->recibo)
+                            <a href="{{ route($rutaRecibo . '.show', $pago->recibo) }}" class="boton-accion">
+                                <i data-lucide="file-text"></i>
+                                <span>{{ $pago->recibo->codigo() }}</span>
+                            </a>
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </tbody>

@@ -6,11 +6,14 @@ use App\Models\EstadoReserva;
 use App\Models\Habitacion;
 use App\Models\MetodoPago;
 use App\Models\Pago;
+use App\Models\Recibo;
 use App\Models\Reserva;
 use App\Models\TipoHabitacion;
 use App\Support\Disponibilidad;
 use App\Support\Moneda;
 use App\Support\Pagos;
+use App\Support\Recibos;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Support\Reservas;
 use App\Support\ValidacionUsuario;
 use Carbon\Carbon;
@@ -77,7 +80,7 @@ abstract class ReservaBaseController extends Controller
     {
         $this->autorizar($reserva);
 
-        $reserva->load(['estado', 'habitaciones.habitacion.tipo', 'agencia', 'cliente', 'creador', 'comision', 'pagos.metodo', 'pagos.registradoPor']);
+        $reserva->load(['estado', 'habitaciones.habitacion.tipo', 'agencia', 'cliente', 'creador', 'comision', 'pagos.metodo', 'pagos.registradoPor', 'pagos.recibo', 'pagos.transferencia']);
 
         return view('reservas.ver', ['reserva' => $reserva] + $this->datosVista());
     }
@@ -183,12 +186,32 @@ abstract class ReservaBaseController extends Controller
                 ->with('error', 'Pago rechazado: ' . ($pago->observacion ?? 'el banco no lo aprobó.') . ' No se cobró nada.');
         }
 
-        $mensaje = 'Pago aprobado: ' . Moneda::formato($pago->monto) . " (referencia {$pago->referencia}).";
+        $mensaje = 'Pago aprobado: ' . Moneda::formato($pago->monto) . '.';
         if ($estabaPendiente && $reserva->fresh()->esEstado(EstadoReserva::CONFIRMADA)) {
             $mensaje .= ' La reserva quedó confirmada.';
         }
 
-        return redirect()->route($this->prefijo() . '.show', $reserva)->with('exito', $mensaje);
+        return redirect()->route(str_replace('.reservas', '.recibos', $this->prefijo()) . '.show', $pago->recibo)
+            ->with('exito', $mensaje);
+    }
+
+    // ---------- Recibos ----------
+
+    public function recibo(Recibo $recibo)
+    {
+        $this->autorizar($recibo->pago->reserva);
+
+        return view('recibos.ver', Recibos::datosVista($recibo) + $this->datosVista());
+    }
+
+    public function reciboPdf(Recibo $recibo)
+    {
+        $this->autorizar($recibo->pago->reserva);
+
+        return Pdf::loadView('recibos.pdf', Recibos::datosVista($recibo))
+            ->setPaper('letter')
+            ->setOption('isFontSubsettingEnabled', true) // solo las letras usadas: PDF liviano
+            ->download($recibo->codigo() . '.pdf');
     }
 
     // ---------- Lista de pagos ("Mis pagos" / "Pagos") ----------
@@ -214,7 +237,7 @@ abstract class ReservaBaseController extends Controller
                          COALESCE(SUM(monto) FILTER (WHERE estado = 'DEVUELTO'), 0) AS devuelto")
             ->first();
 
-        $pagos = $consulta->with(['reserva', 'metodo', 'registradoPor'])
+        $pagos = $consulta->with(['reserva', 'metodo', 'registradoPor', 'recibo', 'transferencia'])
             ->orderByDesc('fecha_pago')->orderByDesc('id')
             ->paginate(15)->withQueryString();
 
@@ -307,6 +330,7 @@ abstract class ReservaBaseController extends Controller
         return [
             'prefijo'   => $this->prefijo(),
             'rutaPagos' => str_replace('.reservas', '.pagos', $this->prefijo()) . '.index',
+            'rutaRecibo' => str_replace('.reservas', '.recibos', $this->prefijo()),
             'inicio'    => $this->inicio(),
             'esAgencia' => $this->esAgencia(),
             'rol'       => request()->user()->rol,

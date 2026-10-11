@@ -17,6 +17,10 @@ return [
     'clave'    => env('PAGOS_API_CLAVE', ''),
     'segundos' => 5, // espera máxima en modo http
 
+    // Dirección con la que el CELULAR llega a este sistema (misma red WiFi), por ejemplo
+    // http://192.168.1.50:8000. Vacía = la misma con la que se abrió la página.
+    'url_publica' => rtrim((string) env('PAGOS_URL_PUBLICA', ''), '/'),
+
     // Tarjeta de prueba que el "banco" rechaza: la que termina en estos 4 dígitos
     'tarjeta_rechazada' => '0002',
 ];

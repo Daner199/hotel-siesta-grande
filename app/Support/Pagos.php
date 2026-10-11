@@ -45,9 +45,13 @@ class Pagos
      * Registra un pago. Devuelve el pago guardado: APROBADO o RECHAZADO (el rechazo también queda
      * guardado como historial). Los errores de regla se lanzan como ValidationException.
      *
-     * @param string|null $ultimos4 solo los 4 últimos dígitos de la tarjeta (nunca el número ni el CVV)
+     * Si el pago se aprueba, emite su recibo.
+     *
+     * @param string|null $ultimos4  solo los 4 últimos dígitos de la tarjeta (nunca el número ni el CVV)
+     * @param array|null  $respuesta respuesta del banco ya recibida (webhook del QR): no se vuelve a cobrar
      */
-    public static function registrar(Reserva $reserva, Usuario $quien, string $metodo, float $monto, ?string $ultimos4 = null): Pago
+    public static function registrar(Reserva $reserva, Usuario $quien, string $metodo, float $monto,
+                                     ?string $ultimos4 = null, ?array $respuesta = null): Pago
     {
         $monto = round($monto, 2);
 
@@ -58,7 +62,7 @@ class Pagos
             throw ValidationException::withMessages(['tarjeta_numero' => 'Falta el número de la tarjeta.']);
         }
 
-        return DB::transaction(function () use ($reserva, $quien, $metodo, $monto, $ultimos4) {
+        return DB::transaction(function () use ($reserva, $quien, $metodo, $monto, $ultimos4, $respuesta) {
             // Bloquear la reserva: dos pagos a la vez no pueden pasarse del saldo
             $reserva = Reserva::whereKey($reserva->id)->lockForUpdate()->with('estado', 'habitaciones')->firstOrFail();
 
@@ -82,7 +86,7 @@ class Pagos
             }
 
             // Efectivo: aprobado al instante. QR/tarjeta: lo decide la pasarela simulada.
-            $respuesta = $metodo === MetodoPago::EFECTIVO
+            $respuesta ??= $metodo === MetodoPago::EFECTIVO
                 ? ['estado' => Pago::APROBADO, 'codigo' => PasarelaPagos::codigoNuevo('EFE')]
                 : PasarelaPagos::cobrar($monto, $metodo, $ultimos4);
 
@@ -105,6 +109,10 @@ class Pagos
             if ($aprobado && $reserva->esEstado(EstadoReserva::PENDIENTE)
                 && $reserva->totalPagado() >= $reserva->adelanto()) {
                 Reservas::confirmar($reserva, $quien);
+            }
+
+            if ($aprobado) {
+                Recibos::emitir($pago);
             }
 
             return $pago;

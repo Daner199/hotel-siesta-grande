@@ -35,9 +35,9 @@ class Recibo extends Model
         return 'REC-' . str_pad((string) $this->numero, 6, '0', STR_PAD_LEFT);
     }
 
-    // URL pública del QR de verificación
+    // URL pública del QR de verificación (se abre con el celular)
     public function urlVerificacion(): string
     {
-        return route('recibos.verificar', $this->token_verificacion);
+        return \App\Support\Recibos::urlPublica(route('recibos.verificar', $this->token_verificacion, false));
     }
 }

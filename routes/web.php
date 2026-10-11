@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\PanelController;
+use App\Http\Controllers\ReciboVerificacionController;
 use App\Http\Controllers\Auth\RegistroController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\RecepcionistaController;
@@ -155,6 +156,8 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
     Route::get('/recepcion', [PanelController::class, 'recepcion'])->name('recepcion.inicio');
 
     Route::get('/recepcion/pagos', [ReservaRecepcion::class, 'pagos'])->name('recepcion.pagos.index');
+    Route::get('/recepcion/recibos/{recibo}', [ReservaRecepcion::class, 'recibo'])->whereNumber('recibo')->name('recepcion.recibos.show');
+    Route::get('/recepcion/recibos/{recibo}/pdf', [ReservaRecepcion::class, 'reciboPdf'])->whereNumber('recibo')->name('recepcion.recibos.pdf');
     Route::get('/recepcion/comisiones', [ComisionRecepcion::class, 'index'])->name('recepcion.comisiones');
 
     // Reservas desde recepción (para cualquier persona, habitaciones exactas)
@@ -176,6 +179,8 @@ Route::middleware(['auth', 'rol:AGENCIA'])->group(function () {
     Route::get('/agencia', [PanelController::class, 'agencia'])->name('agencia.inicio');
 
     Route::get('/agencia/pagos', [ReservaAgencia::class, 'pagos'])->name('agencia.pagos.index');
+    Route::get('/agencia/recibos/{recibo}', [ReservaAgencia::class, 'recibo'])->whereNumber('recibo')->name('agencia.recibos.show');
+    Route::get('/agencia/recibos/{recibo}/pdf', [ReservaAgencia::class, 'reciboPdf'])->whereNumber('recibo')->name('agencia.recibos.pdf');
 
     // Reservas de la agencia (para un titular, con 10 % de descuento)
     Route::prefix('agencia/reservas')->name('agencia.reservas.')->controller(ReservaAgencia::class)->group(function () {
@@ -194,6 +199,8 @@ Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
     Route::get('/cliente', [PanelController::class, 'cliente'])->name('cliente.inicio');
 
     Route::get('/cliente/pagos', [ReservaCliente::class, 'pagos'])->name('cliente.pagos.index');
+    Route::get('/cliente/recibos/{recibo}', [ReservaCliente::class, 'recibo'])->whereNumber('recibo')->name('cliente.recibos.show');
+    Route::get('/cliente/recibos/{recibo}/pdf', [ReservaCliente::class, 'reciboPdf'])->whereNumber('recibo')->name('cliente.recibos.pdf');
 
     // Reservas del cliente (para sí mismo)
     Route::prefix('cliente/reservas')->name('cliente.reservas.')->controller(ReservaCliente::class)->group(function () {
@@ -207,6 +214,10 @@ Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
         Route::post('/{reserva}/pagar', 'pagar')->whereNumber('reserva')->middleware('throttle:20,1')->name('pagar.store');
     });
 });
+
+// Verificación pública de un recibo (el QR del recibo lleva aquí)
+Route::get('/recibos/verificar/{token}', [ReciboVerificacionController::class, 'show'])
+    ->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:30,1')->name('recibos.verificar');
 
 // "Reservar" desde la landing: lleva a "Nueva reserva" del panel de cada rol
 // (sin sesión pasa por el login y vuelve aquí con las mismas fechas)

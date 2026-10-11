@@ -1,8 +1,10 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
+use App\Support\Recibos;
 use Illuminate\Support\Facades\Artisan;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Crea los recibos de los pagos aprobados que todavía no tienen (por orden de fecha)
+Artisan::command('recibos:generar', function () {
+    $cantidad = Recibos::generarFaltantes();
+    $this->info($cantidad === 0 ? 'Todos los pagos ya tenían recibo.' : "Se crearon {$cantidad} recibos.");
+})->purpose('Crear los recibos de los pagos aprobados que no tienen');

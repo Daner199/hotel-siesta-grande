@@ -1,0 +1,71 @@
+/* ============================================================
+   PAGOS: recibo, cobro con QR, transferencia, tarjeta y verificación.
+   Estilo plano: fondos lisos, líneas finas, texto a la izquierda, sin sombras ni degradados.
+   ============================================================ */
+
+:root {
+    --p-linea: #E3E6E1;
+    --p-gris: #5D6A63;
+    --p-suave: #F7F8F5;
+    --p-verde: #2B7A50;
+    --p-rojo: #A63D64;
+}
+
+/* ---------- Listas de datos (etiqueta pequeña en gris + valor) ---------- */
+.lista-datos { margin: 0; }
+.lista-datos > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .6rem 0;
+    border-bottom: 1px solid var(--p-linea);
+}
+.lista-datos > div:last-child { border-bottom: 0; }
+.lista-datos dt { font-size: .85rem; color: var(--p-gris); }
+.lista-datos dd { margin: 0; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.lista-datos .dato-grande dd { font-size: 1.35rem; font-weight: 600; }
+
+.caja-plana {
+    padding: 1.25rem 1.4rem;
+    background: #fff;
+    border: 1px solid var(--p-linea);
+    border-radius: 8px;
+}
+.caja-plana h2 { margin: 0 0 .75rem; font-family: var(--f-texto); font-size: 1rem; font-weight: 600; }
+.caja-plana + .caja-plana { margin-top: 1rem; }
+
+/* ---------- Recibo en pantalla ---------- */
+.hoja-recibo {
+    max-width: 780px;
+    padding: 2.25rem 2.5rem;
+    background: #fff;
+    border: 1px solid var(--p-linea);
+    border-radius: 4px;
+}
+@media (max-width: 640px) {
+    .hoja-recibo { padding: 1.25rem 1rem; }
+}
+
+/* ---------- Página pública de verificación ---------- */
+.verificacion {
+    max-width: 460px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 3rem;
+}
+.verificacion-hotel { margin: 0 0 1.5rem; font-weight: 600; color: var(--selva); }
+.verificacion-titulo {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    margin: 0 0 .4rem;
+    font-family: var(--f-texto);
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+.verificacion-texto { margin: 0 0 1.5rem; color: var(--p-gris); }
+.verificacion-nota { margin-top: 1.5rem; font-size: .85rem; color: var(--p-gris); }
+.verificacion-icono { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; }
+.verificacion-icono svg { width: 18px; height: 18px; fill: none; stroke: #fff; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.verificacion-ok { background: var(--p-verde); }
+.verificacion-mal { background: var(--p-rojo); }
+.verificacion .lista-datos { padding: 0 1rem; background: #fff; border: 1px solid var(--p-linea); border-radius: 8px; }
