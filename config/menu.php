@@ -44,7 +44,7 @@ return [
             ['texto' => 'Pagos', 'icono' => 'wallet', 'ruta' => 'recepcion.pagos.index'],
             ['texto' => 'Transferencias', 'icono' => 'landmark', 'ruta' => 'recepcion.transferencias.index', 'patron' => 'recepcion.transferencias.*', 'contador' => 'transferencias'],
             ['texto' => 'Mis comisiones', 'icono' => 'coins', 'ruta' => 'recepcion.comisiones'],
-            ['texto' => 'Consumos', 'icono' => 'utensils', 'ruta' => null],
+            ['texto' => 'Consumos', 'icono' => 'utensils', 'ruta' => 'recepcion.consumos.index', 'patron' => 'recepcion.consumos.*'],
             ['texto' => 'Huéspedes alojados', 'icono' => 'users', 'ruta' => null],
         ]],
     ],

@@ -99,7 +99,7 @@ class PanelController extends Controller
                 ['nombre' => 'Pagos', 'descripcion' => 'Registra adelantos y pagos del saldo.', 'icono' => 'wallet', 'paso' => 'Paso 5.4', 'ruta' => 'recepcion.pagos.index'],
                 ['nombre' => 'Mis comisiones', 'descripcion' => 'Bs 5 por cada reserva que confirmas.', 'icono' => 'coins', 'paso' => 'Paso 5.4', 'ruta' => 'recepcion.comisiones'],
                 ['nombre' => 'Check-in y check-out', 'descripcion' => 'Llegadas, alojados, salidas y cuenta del huésped.', 'icono' => 'door-open', 'paso' => 'Paso 6.3', 'ruta' => 'recepcion.estadias.index'],
-                ['nombre' => 'Consumos', 'descripcion' => 'Restaurante y frigobar cargados a la cuenta.', 'icono' => 'utensils', 'paso' => 'Módulo 7'],
+                ['nombre' => 'Consumos', 'descripcion' => 'Restaurante y frigobar cargados a la cuenta.', 'icono' => 'utensils', 'paso' => 'Paso 7.1', 'ruta' => 'recepcion.consumos.index'],
                 ['nombre' => 'Huéspedes alojados', 'descripcion' => 'Quién está en el hotel ahora mismo.', 'icono' => 'users', 'paso' => 'Módulo 9'],
             ],
         ]);

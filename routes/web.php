@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\TipoHabitacionController;
 use App\Http\Controllers\Agencia\ReservaController as ReservaAgencia;
 use App\Http\Controllers\Cliente\ReservaController as ReservaCliente;
 use App\Http\Controllers\Recepcion\ComisionController as ComisionRecepcion;
+use App\Http\Controllers\Recepcion\ConsumoController as ConsumoRecepcion;
 use App\Http\Controllers\Recepcion\EstadiaController as EstadiaRecepcion;
 use App\Http\Controllers\Recepcion\ReservaController as ReservaRecepcion;
 use App\Http\Controllers\Recepcion\TransferenciaController as TransferenciaRecepcion;
@@ -174,6 +175,11 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
     Route::get('/recepcion/estadias/{reserva}', [EstadiaRecepcion::class, 'cuenta'])->whereNumber('reserva')->name('recepcion.estadias.cuenta');
     Route::patch('/recepcion/estadias/{reserva}/habitaciones/{habitacion}', [EstadiaRecepcion::class, 'cambiarHabitacion'])
         ->whereNumber(['reserva', 'habitacion'])->name('recepcion.estadias.cambiar-habitacion');
+
+    // Consumos (restaurante y frigobar) cargados a huéspedes alojados
+    Route::get('/recepcion/consumos', [ConsumoRecepcion::class, 'index'])->name('recepcion.consumos.index');
+    Route::post('/recepcion/estadias/{reserva}/consumos', [ConsumoRecepcion::class, 'store'])->whereNumber('reserva')->middleware('throttle:60,1')->name('recepcion.consumos.store');
+    Route::delete('/recepcion/consumos/{consumo}', [ConsumoRecepcion::class, 'destroy'])->whereNumber('consumo')->name('recepcion.consumos.destroy');
 
     // Transferencias por revisar
     Route::get('/recepcion/transferencias', [TransferenciaRecepcion::class, 'index'])->name('recepcion.transferencias.index');
