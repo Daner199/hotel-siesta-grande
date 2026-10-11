@@ -23,7 +23,7 @@ use Illuminate\Validation\Rule;
  */
 class LandingController extends Controller
 {
-    public const MAX_NOCHES = 90;
+    public const MAX_NOCHES = Disponibilidad::MAX_NOCHES;
 
     public function index()
     {
