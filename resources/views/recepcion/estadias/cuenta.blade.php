@@ -47,7 +47,7 @@
                 <button type="submit" class="btn btn-primario">Check-in</button>
             </form>
         @endif
-        @if ($alojado && \Illuminate\Support\Facades\Route::has('recepcion.estadias.check-out'))
+        @if ($alojado)
             @if ($saldo > 0)
                 <a href="{{ route('recepcion.reservas.pagar', $reserva) }}" class="btn btn-primario">Cobrar {{ Moneda::formato($saldo) }}</a>
             @else
@@ -99,7 +99,7 @@
         <section class="caja-plana" id="consumos">
             <h2>Consumos</h2>
 
-            @if ($alojado && \Illuminate\Support\Facades\Route::has('recepcion.consumos.store'))
+            @if ($alojado)
                 <form method="POST" action="{{ route('recepcion.consumos.store', $reserva) }}" class="form-consumo" novalidate data-validar-form>
                     @csrf
                     <div class="campo">
@@ -136,7 +136,7 @@
                 </form>
             @endif
 
-            @include('cuenta.consumos', ['consumos' => $cuenta['consumos'], 'anular' => $alojado && \Illuminate\Support\Facades\Route::has('recepcion.consumos.destroy')])
+            @include('cuenta.consumos', ['consumos' => $cuenta['consumos'], 'anular' => $alojado])
         </section>
 
         {{-- Pagos --}}

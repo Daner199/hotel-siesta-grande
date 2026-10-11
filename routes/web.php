@@ -173,6 +173,7 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
     Route::post('/recepcion/estadias/no-show', [EstadiaRecepcion::class, 'procesarNoShow'])->name('recepcion.estadias.no-show');
     Route::patch('/recepcion/estadias/{reserva}/check-in', [EstadiaRecepcion::class, 'checkIn'])->whereNumber('reserva')->name('recepcion.estadias.check-in');
     Route::get('/recepcion/estadias/{reserva}', [EstadiaRecepcion::class, 'cuenta'])->whereNumber('reserva')->name('recepcion.estadias.cuenta');
+    Route::patch('/recepcion/estadias/{reserva}/check-out', [EstadiaRecepcion::class, 'checkOut'])->whereNumber('reserva')->name('recepcion.estadias.check-out');
     Route::patch('/recepcion/estadias/{reserva}/habitaciones/{habitacion}', [EstadiaRecepcion::class, 'cambiarHabitacion'])
         ->whereNumber(['reserva', 'habitacion'])->name('recepcion.estadias.cambiar-habitacion');
 

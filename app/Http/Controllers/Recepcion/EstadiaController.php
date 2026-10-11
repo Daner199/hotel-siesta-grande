@@ -67,6 +67,19 @@ class EstadiaController extends Controller
             . $reserva->habitaciones->map(fn ($rh) => $rh->habitacion->numero)->join(', ') . '.');
     }
 
+    // Check-out: solo con el saldo en 0 (estadía + consumos ya cobrados)
+    public function checkOut(Request $request, Reserva $reserva)
+    {
+        try {
+            Estadias::checkOut($reserva, $request->user());
+        } catch (ValidationException $e) {
+            return back()->with('error', collect($e->errors())->flatten()->first());
+        }
+
+        return redirect()->route('recepcion.estadias.cuenta', $reserva)
+            ->with('exito', "Check-out de {$reserva->nombre_titular} registrado.");
+    }
+
     // Cuenta del huésped: habitaciones, consumos, pagos y saldo
     public function cuenta(Reserva $reserva)
     {

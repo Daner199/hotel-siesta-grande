@@ -28,7 +28,11 @@
     </div>
 
     <div class="cabecera-acciones">
-        <a href="{{ route($prefijo . '.show', $reserva) }}" class="btn btn-secundario">Ver la reserva</a>
+        @if ($rol === 'RECEPCIONISTA' && $reserva->estado?->nombre === 'CHECK_IN')
+            <a href="{{ route('recepcion.estadias.cuenta', $reserva) }}" class="btn btn-secundario">Volver a la cuenta</a>
+        @else
+            <a href="{{ route($prefijo . '.show', $reserva) }}" class="btn btn-secundario">Ver la reserva</a>
+        @endif
         <a href="{{ route($rutaRecibo . '.pdf', $recibo) }}" class="btn btn-primario">
             <i data-lucide="download"></i>
             Descargar PDF
