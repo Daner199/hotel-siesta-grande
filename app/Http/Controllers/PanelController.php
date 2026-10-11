@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Agencia;
+use App\Models\EstadoReserva;
+use App\Models\Reserva;
 use App\Models\Usuario;
 use App\Support\Disponibilidad;
 use Illuminate\Http\Request;
@@ -62,9 +64,36 @@ class PanelController extends Controller
         return view('panel.inicio', [
             'titulo'       => 'Recepción',
             'resumen'      => 'Reservas, llegadas, salidas y cuentas de los huéspedes.',
-            'estadisticas' => [],
+            'estadisticas' => [
+                [
+                    'texto' => 'Reservas pendientes',
+                    'valor' => Reserva::whereHas('estado', fn ($q) => $q->where('nombre', EstadoReserva::PENDIENTE))->count(),
+                    'icono' => 'hourglass',
+                    'color' => 'dorado',
+                ],
+                [
+                    'texto' => 'Reservas confirmadas',
+                    'valor' => Reserva::whereHas('estado', fn ($q) => $q->where('nombre', EstadoReserva::CONFIRMADA))->count(),
+                    'icono' => 'calendar-check',
+                    'color' => 'verde',
+                ],
+                [
+                    'texto' => 'Llegan hoy',
+                    'valor' => Reserva::whereDate('fecha_entrada', today())
+                        ->whereHas('estado', fn ($q) => $q->whereIn('nombre', [EstadoReserva::PENDIENTE, EstadoReserva::CONFIRMADA]))
+                        ->count(),
+                    'icono' => 'plane-landing',
+                    'color' => 'rosa',
+                ],
+                [
+                    'texto' => 'Habitaciones libres hoy',
+                    'valor' => Disponibilidad::habitacionesLibres(today(), today()->addDay())->count(),
+                    'icono' => 'bed-double',
+                    'color' => 'azul',
+                ],
+            ],
             'secciones'    => [
-                ['nombre' => 'Reservas', 'descripcion' => 'Crea y modifica reservas de huéspedes.', 'icono' => 'calendar-check', 'paso' => 'Módulo 4'],
+                ['nombre' => 'Reservas', 'descripcion' => 'Crea, consulta, edita y cancela reservas de huéspedes.', 'icono' => 'calendar-check', 'paso' => 'Paso 4.6', 'ruta' => 'recepcion.reservas.index'],
                 ['nombre' => 'Pagos', 'descripcion' => 'Registra adelantos y pagos del saldo.', 'icono' => 'wallet', 'paso' => 'Módulo 5'],
                 ['nombre' => 'Check-in y check-out', 'descripcion' => 'Llegadas y salidas con cálculo de la cuenta.', 'icono' => 'door-open', 'paso' => 'Módulo 6'],
                 ['nombre' => 'Consumos', 'descripcion' => 'Restaurante y frigobar cargados a la cuenta.', 'icono' => 'utensils', 'paso' => 'Módulo 7'],

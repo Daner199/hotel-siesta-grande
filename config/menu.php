@@ -38,7 +38,7 @@ return [
             ['texto' => 'Inicio', 'icono' => 'layout-dashboard', 'ruta' => 'recepcion.inicio'],
         ]],
         ['grupo' => 'Operación', 'items' => [
-            ['texto' => 'Reservas', 'icono' => 'calendar-check', 'ruta' => null],
+            ['texto' => 'Reservas', 'icono' => 'calendar-check', 'ruta' => 'recepcion.reservas.index', 'patron' => 'recepcion.reservas.*'],
             ['texto' => 'Check-in / Check-out', 'icono' => 'door-open', 'ruta' => null],
             ['texto' => 'Pagos', 'icono' => 'wallet', 'ruta' => null],
             ['texto' => 'Consumos', 'icono' => 'utensils', 'ruta' => null],
