@@ -291,3 +291,34 @@
 .linea-estadia { display: block; }
 .pago-seguro { display: flex; align-items: center; gap: .35rem; margin: .75rem 0 0; font-size: .82rem; color: var(--p-gris); }
 .pago-seguro svg { width: 14px; height: 14px; }
+
+/* ---------- Check-in / Check-out ---------- */
+.pestana-numero { min-width: 20px; padding: 0 .35rem; font-size: .75rem; line-height: 18px; text-align: center; color: var(--p-gris); background: var(--p-suave); border-radius: 9px; }
+.pestanas-planas a.activa .pestana-numero { color: #fff; background: var(--selva); }
+.filtros-compactos { margin-bottom: 1rem; }
+.filtros-compactos .buscador-campo { max-width: 420px; }
+.tabla-recepcion td { vertical-align: middle; }
+.boton-principal { color: #fff; background: var(--selva); border-color: var(--selva); }
+.boton-principal:hover { color: #fff; background: #2E5546; }
+.dato-alerta { color: var(--p-rojo); }
+.numero-chico { display: inline-block; min-width: 2.6rem; margin-right: .35rem; color: var(--selva); }
+.fila-habitacion { align-items: center; }
+.form-linea { display: flex; gap: .4rem; margin: 0; }
+.form-linea select { padding: .35rem .5rem; font: inherit; font-size: .88rem; border: 1px solid var(--p-linea); border-radius: 6px; background: #fff; }
+
+.form-consumo {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr) 80px 120px auto;
+    gap: .6rem;
+    align-items: end;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--p-linea);
+}
+.form-consumo .campo { margin: 0; }
+.form-consumo .btn { height: 44px; }
+.form-consumo select { width: 100%; }
+@media (max-width: 760px) {
+    .form-consumo { grid-template-columns: 1fr 1fr; }
+    .form-consumo .campo-ancho { grid-column: 1 / -1; }
+}

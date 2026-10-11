@@ -7,6 +7,7 @@ use App\Models\BloqueoHabitacion;
 use App\Models\EstadoHabitacion;
 use App\Models\Habitacion;
 use App\Models\TipoHabitacion;
+use App\Support\Estadias;
 use App\Support\ValidacionUsuario;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -104,6 +105,10 @@ class HabitacionController extends Controller
         $this->preparar($request);
         $datos = $request->validate($this->reglas($habitacion), $this->mensajes());
 
+        if ($error = $this->bloqueadaPorReservas($habitacion, (int) $datos['estado_habitacion_id'], (int) $datos['tipo_habitacion_id'])) {
+            return back()->withInput()->with('error', $error);
+        }
+
         $habitacion->update($datos);
 
         return redirect()
@@ -120,6 +125,10 @@ class HabitacionController extends Controller
             'estado_habitacion_id.*' => 'Elige un estado de la lista.',
         ]);
 
+        if ($error = $this->bloqueadaPorReservas($habitacion, (int) $datos['estado_habitacion_id'], $habitacion->tipo_habitacion_id)) {
+            return back()->with('error', $error);
+        }
+
         $habitacion->update($datos);
         $habitacion->load('estado');
 
@@ -130,6 +139,27 @@ class HabitacionController extends Controller
     }
 
     // ---------- Ayudas ----------
+
+    /**
+     * Con reservas activas que todavía no terminan, la habitación no puede salir de servicio
+     * ni cambiar de tipo (recepción primero las cambia de habitación).
+     */
+    private function bloqueadaPorReservas(Habitacion $habitacion, int $nuevoEstado, int $nuevoTipo): ?string
+    {
+        $activa = EstadoHabitacion::where('nombre', EstadoHabitacion::ACTIVA)->value('id');
+        $saleDeServicio = $nuevoEstado !== (int) $activa && $habitacion->estado_habitacion_id === $activa;
+        $cambiaTipo     = $nuevoTipo !== $habitacion->tipo_habitacion_id;
+
+        if (! $saleDeServicio && ! $cambiaTipo) {
+            return null;
+        }
+
+        $codigos = Estadias::reservasActivasDe($habitacion);
+
+        return $codigos->isEmpty() ? null
+            : "La habitación {$habitacion->numero} tiene reservas activas ({$codigos->join(', ')}). "
+              . 'Recepción debe cambiarlas de habitación primero.';
+    }
 
     private function datosFormulario(?Habitacion $habitacion): array
     {

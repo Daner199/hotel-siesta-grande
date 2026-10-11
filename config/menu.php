@@ -40,7 +40,7 @@ return [
         ]],
         ['grupo' => 'Operación', 'items' => [
             ['texto' => 'Reservas', 'icono' => 'calendar-check', 'ruta' => 'recepcion.reservas.index', 'patron' => 'recepcion.reservas.*'],
-            ['texto' => 'Check-in / Check-out', 'icono' => 'door-open', 'ruta' => null],
+            ['texto' => 'Check-in / Check-out', 'icono' => 'door-open', 'ruta' => 'recepcion.estadias.index', 'patron' => 'recepcion.estadias.*'],
             ['texto' => 'Pagos', 'icono' => 'wallet', 'ruta' => 'recepcion.pagos.index'],
             ['texto' => 'Transferencias', 'icono' => 'landmark', 'ruta' => 'recepcion.transferencias.index', 'patron' => 'recepcion.transferencias.*', 'contador' => 'transferencias'],
             ['texto' => 'Mis comisiones', 'icono' => 'coins', 'ruta' => 'recepcion.comisiones'],

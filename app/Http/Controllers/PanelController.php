@@ -96,7 +96,7 @@ class PanelController extends Controller
                 ['nombre' => 'Reservas', 'descripcion' => 'Crea, consulta, edita y cancela reservas de huéspedes.', 'icono' => 'calendar-check', 'paso' => 'Paso 4.6', 'ruta' => 'recepcion.reservas.index'],
                 ['nombre' => 'Pagos', 'descripcion' => 'Registra adelantos y pagos del saldo.', 'icono' => 'wallet', 'paso' => 'Paso 5.4', 'ruta' => 'recepcion.pagos.index'],
                 ['nombre' => 'Mis comisiones', 'descripcion' => 'Bs 5 por cada reserva que confirmas.', 'icono' => 'coins', 'paso' => 'Paso 5.4', 'ruta' => 'recepcion.comisiones'],
-                ['nombre' => 'Check-in y check-out', 'descripcion' => 'Llegadas y salidas con cálculo de la cuenta.', 'icono' => 'door-open', 'paso' => 'Módulo 6'],
+                ['nombre' => 'Check-in y check-out', 'descripcion' => 'Llegadas, alojados, salidas y cuenta del huésped.', 'icono' => 'door-open', 'paso' => 'Paso 6.3', 'ruta' => 'recepcion.estadias.index'],
                 ['nombre' => 'Consumos', 'descripcion' => 'Restaurante y frigobar cargados a la cuenta.', 'icono' => 'utensils', 'paso' => 'Módulo 7'],
                 ['nombre' => 'Huéspedes alojados', 'descripcion' => 'Quién está en el hotel ahora mismo.', 'icono' => 'users', 'paso' => 'Módulo 9'],
             ],

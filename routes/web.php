@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\TipoHabitacionController;
 use App\Http\Controllers\Agencia\ReservaController as ReservaAgencia;
 use App\Http\Controllers\Cliente\ReservaController as ReservaCliente;
 use App\Http\Controllers\Recepcion\ComisionController as ComisionRecepcion;
+use App\Http\Controllers\Recepcion\EstadiaController as EstadiaRecepcion;
 use App\Http\Controllers\Recepcion\ReservaController as ReservaRecepcion;
 use App\Http\Controllers\Recepcion\TransferenciaController as TransferenciaRecepcion;
 
@@ -165,6 +166,14 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
     Route::get('/recepcion/recibos/{recibo}', [ReservaRecepcion::class, 'recibo'])->whereNumber('recibo')->name('recepcion.recibos.show');
     Route::get('/recepcion/recibos/{recibo}/pdf', [ReservaRecepcion::class, 'reciboPdf'])->whereNumber('recibo')->name('recepcion.recibos.pdf');
     Route::get('/recepcion/comisiones', [ComisionRecepcion::class, 'index'])->name('recepcion.comisiones');
+
+    // Check-in / Check-out y cuenta del huésped
+    Route::get('/recepcion/estadias', [EstadiaRecepcion::class, 'index'])->name('recepcion.estadias.index');
+    Route::post('/recepcion/estadias/no-show', [EstadiaRecepcion::class, 'procesarNoShow'])->name('recepcion.estadias.no-show');
+    Route::patch('/recepcion/estadias/{reserva}/check-in', [EstadiaRecepcion::class, 'checkIn'])->whereNumber('reserva')->name('recepcion.estadias.check-in');
+    Route::get('/recepcion/estadias/{reserva}', [EstadiaRecepcion::class, 'cuenta'])->whereNumber('reserva')->name('recepcion.estadias.cuenta');
+    Route::patch('/recepcion/estadias/{reserva}/habitaciones/{habitacion}', [EstadiaRecepcion::class, 'cambiarHabitacion'])
+        ->whereNumber(['reserva', 'habitacion'])->name('recepcion.estadias.cambiar-habitacion');
 
     // Transferencias por revisar
     Route::get('/recepcion/transferencias', [TransferenciaRecepcion::class, 'index'])->name('recepcion.transferencias.index');
