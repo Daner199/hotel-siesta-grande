@@ -21,6 +21,27 @@ return [
     // http://192.168.1.50:8000. Vacía = la misma con la que se abrió la página.
     'url_publica' => rtrim((string) env('PAGOS_URL_PUBLICA', ''), '/'),
 
+    // ---------- Cobro con QR dinámico (Banco Siesta) ----------
+    'qr_minutos' => 15,
+
+    // Dónde abre el celular la app de Banco Siesta. Vacía = PAGOS_URL_PUBLICA.
+    // En modo http el banco es "otro" servidor: http://192.168.1.50:8001
+    'banco_url' => rtrim((string) env('PAGOS_BANCO_URL', ''), '/'),
+
+    // Adónde avisa el banco cuando se paga (webhook). Solo se usa en modo http.
+    'webhook_url' => env('PAGOS_WEBHOOK_URL', 'http://127.0.0.1:8000/api/pagos/webhook'),
+
+    // Clave para firmar el webhook (HMAC-SHA256). Vacía = se usa APP_KEY.
+    'webhook_secreto' => env('PAGOS_WEBHOOK_SECRETO', ''),
+
+    // Cuenta de EJEMPLO del cliente en Banco Siesta (solo para la simulación)
+    'banco' => [
+        'nombre' => 'Banco Siesta',
+        'cuenta' => 'Caja de ahorro',
+        'numero' => '4521',
+        'saldo'  => 12480.50,
+    ],
+
     // Tarjeta de prueba que el "banco" rechaza: la que termina en estos 4 dígitos
     'tarjeta_rechazada' => '0002',
 ];

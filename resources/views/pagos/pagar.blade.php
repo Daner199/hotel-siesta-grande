@@ -16,13 +16,6 @@
     $texto     = fn ($n) => number_format($n, 2, ',', '.');
     $metodoSel = old('metodo', $metodos->first()->nombre);
 
-    // QR decorativo (simulado): cuadrícula de 25 × 25 a partir del código de la reserva
-    $semilla = md5($reserva->codigo . $limites['minimo']) . md5($reserva->codigo);
-    $bits = '';
-    foreach (str_split($semilla) as $c) {
-        $bits .= str_pad(base_convert($c, 16, 2), 4, '0', STR_PAD_LEFT);
-    }
-    $esOjo = fn ($x, $y) => ($x < 7 && $y < 7) || ($x > 17 && $y < 7) || ($x < 7 && $y > 17);
 @endphp
 
 @section('titulo', "Pagar {$reserva->codigo}")
@@ -123,28 +116,11 @@
                         @endforeach
                     </div>
 
-                    {{-- QR simulado --}}
-                    <div class="panel-metodo panel-qr" data-panel="{{ MetodoPago::QR }}" @if ($metodoSel !== MetodoPago::QR) hidden @endif>
-                        <svg viewBox="0 0 25 25" class="qr-simulado" role="img" aria-label="Código QR de prueba">
-                            <rect width="25" height="25" fill="#fff"/>
-                            @for ($y = 0; $y < 25; $y++)
-                                @for ($x = 0; $x < 25; $x++)
-                                    @if (! $esOjo($x, $y) && $bits[($y * 25 + $x) % strlen($bits)] === '1')
-                                        <rect x="{{ $x }}" y="{{ $y }}" width="1" height="1" fill="#0E241B"/>
-                                    @endif
-                                @endfor
-                            @endfor
-                            @foreach ([[0, 0], [18, 0], [0, 18]] as [$ox, $oy])
-                                <rect x="{{ $ox }}" y="{{ $oy }}" width="7" height="7" fill="#0E241B"/>
-                                <rect x="{{ $ox + 1 }}" y="{{ $oy + 1 }}" width="5" height="5" fill="#fff"/>
-                                <rect x="{{ $ox + 2 }}" y="{{ $oy + 2 }}" width="3" height="3" fill="#C4507A"/>
-                            @endforeach
-                        </svg>
-                        <div>
-                            <strong>Pago con QR (simulado)</strong>
-                            <p>En un banco real escanearías este código con tu app. Aquí basta con pulsar "Pagar":
-                               la pasarela simulada aprueba el pago y devuelve su referencia.</p>
-                        </div>
+                    {{-- QR dinámico: al continuar se genera el cobro --}}
+                    <div class="panel-metodo panel-efectivo" data-panel="{{ MetodoPago::QR }}" @if ($metodoSel !== MetodoPago::QR) hidden @endif>
+                        <i data-lucide="qr-code"></i>
+                        <p>Al continuar se genera un código QR por este monto, válido por {{ config('pagos.qr_minutos') }} minutos.
+                           Escanéalo con tu celular y confirma el pago en tu banco.</p>
                     </div>
 
                     {{-- Tarjeta (solo se usan los 4 últimos dígitos) --}}

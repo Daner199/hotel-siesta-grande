@@ -1,0 +1,167 @@
+/* Banco Siesta (banco simulado): app móvil. Fuente del sistema, fondos planos, listas con líneas finas. */
+
+* { box-sizing: border-box; }
+
+:root {
+    --banco: #1D3A2E;
+    --banco-oscuro: #0E241B;
+    --fondo: #F4F5F2;
+    --linea: #E2E5E0;
+    --texto: #17221C;
+    --gris: #66716B;
+    --verde: #2B7A50;
+    --rojo: #B3364F;
+}
+
+html, body { margin: 0; height: 100%; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    color: var(--texto);
+    background: #D9DCD6;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* En la PC se ve como un celular; en el celular ocupa toda la pantalla */
+.app {
+    position: relative;
+    max-width: 420px;
+    min-height: 100%;
+    margin: 0 auto;
+    background: var(--fondo);
+    display: flex;
+    flex-direction: column;
+}
+
+button { font: inherit; color: inherit; }
+button:focus-visible { outline: 2px solid var(--banco); outline-offset: 2px; }
+
+/* ---------- Barra superior ---------- */
+.barra {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    height: 56px;
+    padding: 0 .75rem;
+    padding-top: env(safe-area-inset-top);
+    color: #fff;
+    background: var(--banco);
+}
+.barra-titulo { flex: 1; font-size: 1.05rem; font-weight: 600; }
+.barra-boton {
+    width: 40px; height: 40px;
+    display: grid; place-items: center;
+    padding: 0; border: 0; background: none; cursor: pointer;
+}
+.barra-boton[hidden] { display: none; }
+.barra-boton svg, .teclado svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.barra-marca {
+    width: 30px; height: 30px;
+    display: grid; place-items: center;
+    font-size: .75rem; font-weight: 700;
+    color: var(--banco);
+    background: #fff;
+    border-radius: 6px;
+}
+
+/* ---------- Pantallas ---------- */
+.pantalla { flex: 1; padding: 1rem 1rem 6.5rem; }
+.pantalla[hidden] { display: none; }
+.pantalla-centro { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .75rem; padding-bottom: 4rem; }
+.pantalla-centro p { margin: 0; color: var(--gris); }
+
+.seccion { margin: .25rem 0 .5rem; font-size: .85rem; color: var(--gris); }
+.nota { margin: 1rem 0 0; font-size: .9rem; color: var(--gris); }
+
+/* Lista de datos con separadores finos */
+.lista { margin: 0 0 1rem; padding: 0 1rem; background: #fff; border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea); margin-left: -1rem; margin-right: -1rem; }
+.lista > div { display: flex; justify-content: space-between; gap: 1rem; padding: .8rem 0; border-bottom: 1px solid var(--linea); }
+.lista > div:last-child { border-bottom: 0; }
+.lista dt { font-size: .9rem; color: var(--gris); }
+.lista dd { margin: 0; text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; }
+.lista dd small { display: block; font-size: .8rem; font-weight: 400; color: var(--gris); }
+
+.monto { margin: 0 -1rem 1rem; padding: 1rem; background: #fff; border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea); }
+.monto span { display: block; font-size: .9rem; color: var(--gris); }
+.monto strong { display: block; margin-top: .15rem; font-size: 2rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.prueba { margin: .5rem 0 0; font-size: .82rem; color: var(--gris); }
+.enlace { padding: 0; border: 0; background: none; color: var(--banco); text-decoration: underline; cursor: pointer; }
+
+/* Botón fijo abajo */
+.pie-fijo {
+    position: fixed;
+    left: 50%;
+    bottom: 0;
+    width: 100%;
+    max-width: 420px;
+    transform: translateX(-50%);
+    padding: .75rem 1rem calc(.75rem + env(safe-area-inset-bottom));
+    background: #fff;
+    border-top: 1px solid var(--linea);
+}
+.pie-doble { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.boton {
+    width: 100%;
+    height: 50px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--banco);
+    border: 0;
+    border-radius: 8px;
+    cursor: pointer;
+}
+.boton:active { background: var(--banco-oscuro); }
+.boton[disabled] { opacity: .5; }
+.boton-claro { color: var(--banco); background: #fff; border: 1px solid var(--banco); }
+.boton-claro:active { background: var(--fondo); }
+
+/* ---------- PIN ---------- */
+.pantalla-pin { display: flex; flex-direction: column; padding-bottom: 1rem; }
+.pin-titulo { margin: 1.5rem 0 .25rem; font-size: 1.2rem; font-weight: 600; }
+.pin-sub { margin: 0; font-size: .9rem; color: var(--gris); }
+.pin-puntos { display: flex; gap: 1rem; margin: 1.75rem 0; }
+.pin-puntos span { width: 14px; height: 14px; border: 1.5px solid var(--banco); border-radius: 50%; }
+.pin-puntos span.lleno { background: var(--banco); }
+.teclado { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; margin-top: auto; background: var(--linea); border-top: 1px solid var(--linea); margin-left: -1rem; margin-right: -1rem; }
+.teclado button, .teclado span { height: 64px; background: #fff; border: 0; font-size: 1.5rem; cursor: pointer; }
+.teclado button { display: grid; place-items: center; }
+.teclado button:active { background: var(--fondo); }
+
+/* ---------- Resultado ---------- */
+.resultado { padding: 1.5rem 0 1.25rem; }
+.resultado h1 { margin: .75rem 0 .15rem; font-size: 1.35rem; font-weight: 600; }
+.resultado p { margin: .25rem 0 0; color: var(--gris); }
+.resultado-monto { font-size: 1.6rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Check de éxito (única animación junto con "Procesando") */
+.check, .equis { width: 52px; height: 52px; }
+.check circle { fill: var(--verde); }
+.equis circle { fill: var(--rojo); }
+.check path, .equis path { fill: none; stroke: #fff; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.check path { stroke-dasharray: 36; stroke-dashoffset: 36; animation: trazar .45s .1s ease-out forwards; }
+@keyframes trazar { to { stroke-dashoffset: 0; } }
+
+.girando { width: 36px; height: 36px; border: 3px solid var(--linea); border-top-color: var(--banco); border-radius: 50%; animation: girar .8s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* ---------- Aviso (cobro vencido, pagado o inexistente) ---------- */
+.aviso h1 { margin: 1.5rem 0 .4rem; font-size: 1.2rem; font-weight: 600; }
+.aviso p { margin: 0; color: var(--gris); }
+
+/* Copiado al portapapeles */
+.toast {
+    position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%);
+    padding: .6rem .9rem; font-size: .9rem; color: #fff; background: var(--texto); border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .check path { animation: none; stroke-dashoffset: 0; }
+    .girando { animation-duration: 2.4s; }
+}

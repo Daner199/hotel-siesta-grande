@@ -41,6 +41,35 @@ class Pagos
         return $maximo > 0 ? ['minimo' => min($minimo, $maximo), 'maximo' => $maximo] : null;
     }
 
+    // Lanza ValidationException si el monto no se puede pagar ahora (lo usan el pago y el cobro con QR)
+    public static function validarMonto(Reserva $reserva, float $monto): void
+    {
+        $limites = self::limites($reserva);
+        if (! $limites) {
+            throw ValidationException::withMessages([
+                'monto' => self::motivoSinPago($reserva),
+            ]);
+        }
+        if ($monto < $limites['minimo']) {
+            throw ValidationException::withMessages([
+                'monto' => 'Para confirmar la reserva paga al menos el adelanto: ' . Moneda::formato($limites['minimo']) . '.',
+            ]);
+        }
+        if ($monto > $limites['maximo']) {
+            throw ValidationException::withMessages([
+                'monto' => 'El monto no puede pasar del saldo: ' . Moneda::formato($limites['maximo']) . '.',
+            ]);
+        }
+    }
+
+    // Por qué una reserva no admite pagos ahora
+    public static function motivoSinPago(Reserva $reserva): string
+    {
+        return $reserva->sePuedePagar()
+            ? 'Esta reserva ya está pagada por completo.'
+            : 'Una reserva ' . mb_strtolower($reserva->estado->etiqueta()) . ' no admite pagos.';
+    }
+
     /**
      * Registra un pago. Devuelve el pago guardado: APROBADO o RECHAZADO (el rechazo también queda
      * guardado como historial). Los errores de regla se lanzan como ValidationException.
@@ -66,24 +95,7 @@ class Pagos
             // Bloquear la reserva: dos pagos a la vez no pueden pasarse del saldo
             $reserva = Reserva::whereKey($reserva->id)->lockForUpdate()->with('estado', 'habitaciones')->firstOrFail();
 
-            $limites = self::limites($reserva);
-            if (! $limites) {
-                throw ValidationException::withMessages([
-                    'monto' => $reserva->sePuedePagar()
-                        ? 'Esta reserva ya está pagada por completo.'
-                        : 'Una reserva ' . mb_strtolower($reserva->estado->etiqueta()) . ' no admite pagos.',
-                ]);
-            }
-            if ($monto < $limites['minimo']) {
-                throw ValidationException::withMessages([
-                    'monto' => 'Para confirmar la reserva paga al menos el adelanto: ' . Moneda::formato($limites['minimo']) . '.',
-                ]);
-            }
-            if ($monto > $limites['maximo']) {
-                throw ValidationException::withMessages([
-                    'monto' => 'El monto no puede pasar del saldo: ' . Moneda::formato($limites['maximo']) . '.',
-                ]);
-            }
+            self::validarMonto($reserva, $monto);
 
             // Efectivo: aprobado al instante. QR/tarjeta: lo decide la pasarela simulada.
             $respuesta ??= $metodo === MetodoPago::EFECTIVO

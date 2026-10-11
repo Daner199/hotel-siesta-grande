@@ -69,3 +69,89 @@
 .verificacion-ok { background: var(--p-verde); }
 .verificacion-mal { background: var(--p-rojo); }
 .verificacion .lista-datos { padding: 0 1rem; background: #fff; border: 1px solid var(--p-linea); border-radius: 8px; }
+
+/* ---------- Animaciones permitidas: "procesando" y check de éxito ---------- */
+.procesando {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    border: 2px solid var(--p-linea);
+    border-top-color: var(--selva);
+    border-radius: 50%;
+    animation: girar .8s linear infinite;
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+
+.check-exito { width: 40px; height: 40px; flex: none; }
+.check-exito circle { fill: var(--p-verde); }
+.check-exito path {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 36;
+    stroke-dashoffset: 36;
+    animation: trazar .45s .15s ease-out forwards;
+}
+@keyframes trazar { to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+    .procesando { animation-duration: 2.4s; }
+    .check-exito path { animation: none; stroke-dashoffset: 0; }
+}
+
+/* ---------- Cobro con QR (pantalla de la PC) ---------- */
+.cobro-qr {
+    display: grid;
+    grid-template-columns: 300px minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+    max-width: 880px;
+    padding: 1.75rem;
+    background: #fff;
+    border: 1px solid var(--p-linea);
+    border-radius: 8px;
+}
+.cobro-qr-imagen { width: 100%; aspect-ratio: 1; padding: .5rem; border: 1px solid var(--p-linea); border-radius: 4px; }
+.cobro-qr-imagen svg { display: block; width: 100%; height: 100%; }
+.cobro-qr-imagen svg path { fill: #0E241B; }
+.qr-inactivo { opacity: .15; }
+.cobro-qr-instruccion { margin: .9rem 0 0; font-size: .9rem; }
+.cobro-qr-url { margin: .75rem 0 0; font-size: .8rem; word-break: break-all; }
+.cobro-qr-url span { display: block; color: var(--p-gris); }
+.cobro-qr-url a { color: var(--selva); }
+
+.aviso-plano {
+    margin: .9rem 0 0;
+    padding: .7rem .85rem;
+    font-size: .85rem;
+    background: #FBF4E6;
+    border-left: 3px solid var(--oro);
+}
+.aviso-plano code { font-size: .8rem; }
+
+.cobro-estado {
+    display: flex;
+    align-items: center;
+    gap: .85rem;
+    margin-top: 1.25rem;
+    padding: .9rem 1rem;
+    background: var(--p-suave);
+    border-radius: 6px;
+}
+.cobro-estado[hidden] { display: none; }
+.cobro-estado strong { display: block; }
+.cobro-estado p { margin: .15rem 0 0; font-size: .88rem; color: var(--p-gris); }
+.cobro-exito { background: #EAF4EE; }
+.cobro-error { background: #FBEEF3; }
+.cobro-error strong { color: var(--p-rojo); }
+.cobro-acciones { display: flex; flex-wrap: wrap; gap: .6rem; margin-top: 1.25rem; }
+.cobro-acciones form { margin: 0; }
+.cobro-acciones [hidden] { display: none; }
+.gris { color: var(--p-gris); font-weight: 400; }
+
+@media (max-width: 760px) {
+    .cobro-qr { grid-template-columns: 1fr; padding: 1.1rem; }
+    .cobro-qr-codigo { max-width: 320px; }
+}

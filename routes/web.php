@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LandingController;
+use App\Http\Controllers\Banco\BancoSiestaController;
 use App\Http\Controllers\PanelController;
 use App\Http\Controllers\ReciboVerificacionController;
 use App\Http\Controllers\Auth\RegistroController;
@@ -156,6 +157,9 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
     Route::get('/recepcion', [PanelController::class, 'recepcion'])->name('recepcion.inicio');
 
     Route::get('/recepcion/pagos', [ReservaRecepcion::class, 'pagos'])->name('recepcion.pagos.index');
+    Route::get('/recepcion/cobros/{cobro}', [ReservaRecepcion::class, 'cobro'])->whereNumber('cobro')->name('recepcion.cobros.show');
+    Route::get('/recepcion/cobros/{cobro}/estado', [ReservaRecepcion::class, 'estadoCobro'])->whereNumber('cobro')->name('recepcion.cobros.estado');
+    Route::patch('/recepcion/cobros/{cobro}/anular', [ReservaRecepcion::class, 'anularCobro'])->whereNumber('cobro')->name('recepcion.cobros.anular');
     Route::get('/recepcion/recibos/{recibo}', [ReservaRecepcion::class, 'recibo'])->whereNumber('recibo')->name('recepcion.recibos.show');
     Route::get('/recepcion/recibos/{recibo}/pdf', [ReservaRecepcion::class, 'reciboPdf'])->whereNumber('recibo')->name('recepcion.recibos.pdf');
     Route::get('/recepcion/comisiones', [ComisionRecepcion::class, 'index'])->name('recepcion.comisiones');
@@ -179,6 +183,9 @@ Route::middleware(['auth', 'rol:AGENCIA'])->group(function () {
     Route::get('/agencia', [PanelController::class, 'agencia'])->name('agencia.inicio');
 
     Route::get('/agencia/pagos', [ReservaAgencia::class, 'pagos'])->name('agencia.pagos.index');
+    Route::get('/agencia/cobros/{cobro}', [ReservaAgencia::class, 'cobro'])->whereNumber('cobro')->name('agencia.cobros.show');
+    Route::get('/agencia/cobros/{cobro}/estado', [ReservaAgencia::class, 'estadoCobro'])->whereNumber('cobro')->name('agencia.cobros.estado');
+    Route::patch('/agencia/cobros/{cobro}/anular', [ReservaAgencia::class, 'anularCobro'])->whereNumber('cobro')->name('agencia.cobros.anular');
     Route::get('/agencia/recibos/{recibo}', [ReservaAgencia::class, 'recibo'])->whereNumber('recibo')->name('agencia.recibos.show');
     Route::get('/agencia/recibos/{recibo}/pdf', [ReservaAgencia::class, 'reciboPdf'])->whereNumber('recibo')->name('agencia.recibos.pdf');
 
@@ -199,6 +206,9 @@ Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
     Route::get('/cliente', [PanelController::class, 'cliente'])->name('cliente.inicio');
 
     Route::get('/cliente/pagos', [ReservaCliente::class, 'pagos'])->name('cliente.pagos.index');
+    Route::get('/cliente/cobros/{cobro}', [ReservaCliente::class, 'cobro'])->whereNumber('cobro')->name('cliente.cobros.show');
+    Route::get('/cliente/cobros/{cobro}/estado', [ReservaCliente::class, 'estadoCobro'])->whereNumber('cobro')->name('cliente.cobros.estado');
+    Route::patch('/cliente/cobros/{cobro}/anular', [ReservaCliente::class, 'anularCobro'])->whereNumber('cobro')->name('cliente.cobros.anular');
     Route::get('/cliente/recibos/{recibo}', [ReservaCliente::class, 'recibo'])->whereNumber('recibo')->name('cliente.recibos.show');
     Route::get('/cliente/recibos/{recibo}/pdf', [ReservaCliente::class, 'reciboPdf'])->whereNumber('recibo')->name('cliente.recibos.pdf');
 
@@ -214,6 +224,12 @@ Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
         Route::post('/{reserva}/pagar', 'pagar')->whereNumber('reserva')->middleware('throttle:20,1')->name('pagar.store');
     });
 });
+
+// Banco Siesta (banco simulado): la "app" que se abre en el celular al escanear el QR
+Route::get('/banco/qr/{token}', [BancoSiestaController::class, 'mostrar'])
+    ->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:60,1')->name('banco.qr');
+Route::post('/banco/qr/{token}/pagar', [BancoSiestaController::class, 'pagar'])
+    ->where('token', '[A-Za-z0-9]{40}')->middleware('throttle:20,1')->name('banco.qr.pagar');
 
 // Verificación pública de un recibo (el QR del recibo lleva aquí)
 Route::get('/recibos/verificar/{token}', [ReciboVerificacionController::class, 'show'])

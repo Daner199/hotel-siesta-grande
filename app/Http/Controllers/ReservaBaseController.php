@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\CobroQr;
 use App\Models\EstadoReserva;
+use App\Models\Hotel;
 use App\Models\Habitacion;
 use App\Models\MetodoPago;
 use App\Models\Pago;
@@ -11,7 +13,9 @@ use App\Models\Reserva;
 use App\Models\TipoHabitacion;
 use App\Support\Disponibilidad;
 use App\Support\Moneda;
+use App\Support\CobrosQr;
 use App\Support\Pagos;
+use App\Support\Qr;
 use App\Support\Recibos;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Support\Reservas;
@@ -174,6 +178,13 @@ abstract class ReservaBaseController extends Controller
             throw ValidationException::withMessages(['tarjeta_vence' => 'La tarjeta está vencida.']);
         }
 
+        // QR dinámico: se genera el cobro y se muestra el QR (lo paga Banco Siesta desde el celular)
+        if ($datos['metodo'] === MetodoPago::QR) {
+            $cobro = CobrosQr::crear($reserva, $request->user(), (float) $datos['monto']);
+
+            return redirect()->route($this->rutaCobros() . '.show', $cobro);
+        }
+
         // De la tarjeta solo se usan los 4 últimos dígitos (nunca el número completo ni el CVV)
         $ultimos4 = $datos['metodo'] === $tarjeta ? substr($datos['tarjeta_numero'], -4) : null;
         $estabaPendiente = $reserva->esEstado(EstadoReserva::PENDIENTE);
@@ -193,6 +204,55 @@ abstract class ReservaBaseController extends Controller
 
         return redirect()->route(str_replace('.reservas', '.recibos', $this->prefijo()) . '.show', $pago->recibo)
             ->with('exito', $mensaje);
+    }
+
+    // ---------- Cobro con QR dinámico ----------
+
+    public function cobro(CobroQr $cobro)
+    {
+        $this->autorizar($cobro->reserva);
+        CobrosQr::actualizar($cobro);
+
+        $url = CobrosQr::urlBanco($cobro);
+
+        return view('pagos.qr', [
+            'cobro'   => $cobro->load('reserva'),
+            'urlQr'   => $url,
+            'qr'      => Qr::svg($url),
+            // El celular no llega a 127.0.0.1 ni a localhost: avisar
+            'soloPc'  => (bool) preg_match('#^https?://(127\.0\.0\.1|localhost)(:|/|$)#', $url),
+            'hotel'   => Hotel::datos(),
+        ] + $this->datosVista());
+    }
+
+    // JSON para public/js/cobro-qr.js (se consulta cada 2 segundos)
+    public function estadoCobro(CobroQr $cobro): JsonResponse
+    {
+        $this->autorizar($cobro->reserva);
+        CobrosQr::actualizar($cobro);
+
+        $recibo = $cobro->estado === CobroQr::PAGADO ? $cobro->pago?->recibo : null;
+
+        return response()->json([
+            'estado'      => $cobro->estado,
+            'segundos'    => max(0, (int) now()->diffInSeconds($cobro->vence_en, false)),
+            'transaccion' => $cobro->pago?->referencia,
+            'recibo'      => $recibo ? route(str_replace('.reservas', '.recibos', $this->prefijo()) . '.show', $recibo) : null,
+        ]);
+    }
+
+    public function anularCobro(CobroQr $cobro)
+    {
+        $this->autorizar($cobro->reserva);
+        CobrosQr::anular($cobro);
+
+        return redirect()->route($this->prefijo() . '.pagar', $cobro->reserva_id)
+            ->with('exito', 'El QR quedó anulado.');
+    }
+
+    protected function rutaCobros(): string
+    {
+        return str_replace('.reservas', '.cobros', $this->prefijo());
     }
 
     // ---------- Recibos ----------
@@ -331,6 +391,7 @@ abstract class ReservaBaseController extends Controller
             'prefijo'   => $this->prefijo(),
             'rutaPagos' => str_replace('.reservas', '.pagos', $this->prefijo()) . '.index',
             'rutaRecibo' => str_replace('.reservas', '.recibos', $this->prefijo()),
+            'rutaCobros' => $this->rutaCobros(),
             'inicio'    => $this->inicio(),
             'esAgencia' => $this->esAgencia(),
             'rol'       => request()->user()->rol,
