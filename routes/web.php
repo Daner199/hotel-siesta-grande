@@ -17,6 +17,7 @@ use App\Http\Controllers\Admin\TarifaController;
 use App\Http\Controllers\Admin\TipoHabitacionController;
 use App\Http\Controllers\Agencia\ReservaController as ReservaAgencia;
 use App\Http\Controllers\Cliente\ReservaController as ReservaCliente;
+use App\Http\Controllers\Recepcion\ComisionController as ComisionRecepcion;
 use App\Http\Controllers\Recepcion\ReservaController as ReservaRecepcion;
 
 // Página pública del hotel (landing) y consulta de disponibilidad (máx. 30 consultas por minuto)
@@ -152,6 +153,9 @@ Route::middleware(['auth', 'rol:ADMINISTRADOR'])
 
 Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
     Route::get('/recepcion', [PanelController::class, 'recepcion'])->name('recepcion.inicio');
+
+    Route::get('/recepcion/pagos', [ReservaRecepcion::class, 'pagos'])->name('recepcion.pagos.index');
+    Route::get('/recepcion/comisiones', [ComisionRecepcion::class, 'index'])->name('recepcion.comisiones');
 
     // Reservas desde recepción (para cualquier persona, habitaciones exactas)
     Route::prefix('recepcion/reservas')->name('recepcion.reservas.')->controller(ReservaRecepcion::class)->group(function () {

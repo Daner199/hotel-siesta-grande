@@ -99,7 +99,7 @@ abstract class ReservaBaseController extends Controller
         $mensaje = "La reserva {$reserva->codigo} quedó cancelada.";
         if ($pagado > 0) {
             $mensaje .= $devuelve
-                ? ' Se devuelve el adelanto completo (' . Moneda::formato($pagado) . ').'
+                ? ' Se devuelve todo lo pagado (' . Moneda::formato($pagado) . ').'
                 : ' Faltaban menos de ' . Reserva::HORAS_CANCELACION . ' h para el check-in: el adelanto no se devuelve.';
         }
 

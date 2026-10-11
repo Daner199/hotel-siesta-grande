@@ -40,7 +40,8 @@ return [
         ['grupo' => 'Operación', 'items' => [
             ['texto' => 'Reservas', 'icono' => 'calendar-check', 'ruta' => 'recepcion.reservas.index', 'patron' => 'recepcion.reservas.*'],
             ['texto' => 'Check-in / Check-out', 'icono' => 'door-open', 'ruta' => null],
-            ['texto' => 'Pagos', 'icono' => 'wallet', 'ruta' => null],
+            ['texto' => 'Pagos', 'icono' => 'wallet', 'ruta' => 'recepcion.pagos.index'],
+            ['texto' => 'Mis comisiones', 'icono' => 'coins', 'ruta' => 'recepcion.comisiones'],
             ['texto' => 'Consumos', 'icono' => 'utensils', 'ruta' => null],
             ['texto' => 'Huéspedes alojados', 'icono' => 'users', 'ruta' => null],
         ]],
