@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Agencia;
 use App\Models\Usuario;
+use App\Support\Disponibilidad;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -76,11 +77,11 @@ class PanelController extends Controller
     {
         return view('panel.inicio', [
             'titulo'       => 'Agencia',
-            'resumen'      => 'Reserva habitaciones para tus clientes con 10% de descuento.',
+            'resumen'      => 'Reserva habitaciones para tus clientes con ' . Disponibilidad::DESCUENTO_AGENCIA . ' % de descuento.',
             'estadisticas' => [],
             'secciones'    => [
-                ['nombre' => 'Nueva reserva', 'descripcion' => 'Reserva para el titular y sus acompañantes.', 'icono' => 'calendar-plus', 'paso' => 'Módulo 4'],
-                ['nombre' => 'Mis reservas', 'descripcion' => 'Estado de todas las reservas de la agencia.', 'icono' => 'calendar-check', 'paso' => 'Módulo 4'],
+                ['nombre' => 'Nueva reserva', 'descripcion' => 'Reserva para el titular y sus acompañantes.', 'icono' => 'calendar-plus', 'paso' => 'Paso 4.5', 'ruta' => 'agencia.reservas.create'],
+                ['nombre' => 'Mis reservas', 'descripcion' => 'Estado de todas las reservas de la agencia.', 'icono' => 'calendar-check', 'paso' => 'Paso 4.5', 'ruta' => 'agencia.reservas.index'],
                 ['nombre' => 'Pagos', 'descripcion' => 'Adelantos y saldos de cada reserva.', 'icono' => 'wallet', 'paso' => 'Módulo 5'],
             ],
         ]);

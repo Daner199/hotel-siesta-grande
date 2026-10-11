@@ -52,8 +52,8 @@ return [
             ['texto' => 'Inicio', 'icono' => 'layout-dashboard', 'ruta' => 'agencia.inicio'],
         ]],
         ['grupo' => 'Reservas', 'items' => [
-            ['texto' => 'Nueva reserva', 'icono' => 'calendar-plus', 'ruta' => null],
-            ['texto' => 'Mis reservas', 'icono' => 'calendar-check', 'ruta' => null],
+            ['texto' => 'Nueva reserva', 'icono' => 'calendar-plus', 'ruta' => 'agencia.reservas.create'],
+            ['texto' => 'Mis reservas', 'icono' => 'calendar-check', 'ruta' => 'agencia.reservas.index', 'patron' => ['agencia.reservas.index', 'agencia.reservas.show']],
             ['texto' => 'Pagos', 'icono' => 'wallet', 'ruta' => null],
         ]],
     ],

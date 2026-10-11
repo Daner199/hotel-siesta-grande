@@ -15,6 +15,7 @@ use App\Http\Controllers\Admin\HabitacionController;
 use App\Http\Controllers\Admin\HotelController;
 use App\Http\Controllers\Admin\TarifaController;
 use App\Http\Controllers\Admin\TipoHabitacionController;
+use App\Http\Controllers\Agencia\ReservaController as ReservaAgencia;
 use App\Http\Controllers\Cliente\ReservaController as ReservaCliente;
 
 // Página pública del hotel (landing) y consulta de disponibilidad (máx. 30 consultas por minuto)
@@ -154,6 +155,16 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
 
 Route::middleware(['auth', 'rol:AGENCIA'])->group(function () {
     Route::get('/agencia', [PanelController::class, 'agencia'])->name('agencia.inicio');
+
+    // Reservas de la agencia (para un titular, con 10 % de descuento)
+    Route::prefix('agencia/reservas')->name('agencia.reservas.')->controller(ReservaAgencia::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/nueva', 'create')->name('create');
+        Route::get('/cotizar', 'cotizar')->middleware('throttle:60,1')->name('cotizar');
+        Route::post('/', 'store')->name('store');
+        Route::get('/{reserva}', 'show')->whereNumber('reserva')->name('show');
+        Route::patch('/{reserva}/cancelar', 'cancelar')->whereNumber('reserva')->name('cancelar');
+    });
 });
 
 Route::middleware(['auth', 'rol:CLIENTE'])->group(function () {
