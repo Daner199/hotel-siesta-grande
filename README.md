@@ -51,6 +51,9 @@ DB_PASSWORD=tu_contraseña
 El resto ya viene listo: PostgreSQL en `127.0.0.1:5432`, base `hotel_siesta_grande`,
 y sesión, caché y colas en archivos.
 
+Cambia también `PAGOS_API_CLAVE` por una clave larga cualquiera (la usa la API simulada de pagos,
+ver más abajo **"Pagos: la API simulada"**).
+
 ### 3. Crear la base de datos
 
 > ⚠️ **NUNCA ejecutes `php artisan migrate`.** Este proyecto **no usa migraciones**: la base se crea
@@ -96,6 +99,45 @@ php artisan serve
 
 Abre **http://127.0.0.1:8000**
 
+### 6. Pagos: la API simulada
+
+No hay banco real: los pagos con **QR** y **tarjeta** pasan por una API simulada,
+`POST /api/pagos/simular`, que responde `APROBADO` (con un código `PAY-123456`) o `RECHAZADO`.
+Aprueba siempre, **salvo la tarjeta de prueba que termina en `0002`** (ej. `4000 0000 0000 0002`).
+El efectivo solo lo registra recepción y no pasa por la API (referencia `EFE-123456`).
+
+En el `.env` se elige cómo la llama Laravel:
+
+| `PAGOS_API_MODO` | Qué hace | Cuándo usarlo |
+|---|---|---|
+| `interno` (por defecto) | Laravel usa la lógica de la API **por dentro**. Nunca se cuelga. | Siempre que trabajes normal |
+| `http` | Laravel hace una **petición HTTP real** a `PAGOS_API_URL`. | Para mostrar la API en la defensa |
+
+**Modo `http` paso a paso** (en Windows `php artisan serve` atiende una petición a la vez y no se
+puede llamar a sí mismo, por eso la API corre en un segundo servidor):
+
+1. En `.env`: `PAGOS_API_MODO=http` y `PAGOS_API_URL=http://127.0.0.1:8001/api/pagos/simular`
+2. `php artisan optimize:clear`
+3. Terminal 1: `php artisan serve` (la página, puerto 8000)
+4. Terminal 2: `php artisan serve --port=8001` (la API)
+5. Paga una reserva: en la terminal 2 se ve llegar `POST /api/pagos/simular`.
+
+Si el servidor 8001 no está encendido, el sistema avisa *"No se pudo conectar con la pasarela de pagos"*
+y no cobra nada.
+
+**Probar la API con Postman** (funciona en los dos modos):
+
+```
+POST http://127.0.0.1:8000/api/pagos/simular
+Cabeceras:  X-Api-Clave: <tu PAGOS_API_CLAVE>
+            Accept: application/json
+Cuerpo (JSON):  {"monto": 300, "metodo": "QR"}
+            o   {"monto": 300, "metodo": "TARJETA", "ultimos4": "0002"}
+```
+
+Respuestas: `{"estado":"APROBADO","codigo":"PAY-123456"}` · `{"estado":"RECHAZADO","motivo":"..."}` ·
+`401` si la clave no coincide · `422` si faltan datos · `429` si pasas de 30 pedidos por minuto.
+
 ---
 
 ## Primeros pasos
@@ -119,10 +161,10 @@ Después de registrarte entras directo a tu panel de cliente (`/cliente`).
 
 | Rol | Qué revisar |
 |---|---|
-| **Administrador** | **Recepcionistas** y **Agencias**: crear, editar, activar y desactivar · **Clientes**: lista, buscador y activar o desactivar · **Tipos y tarifas**: crear tipos, programar precios (línea de tiempo) y pestaña **Fotos** · **Habitaciones**: las 60, filtros, cambiar estado y fotos propias · **Datos del hotel**: fotos, contacto, redes, horarios y pin en el mapa |
-| **Recepcionista** | Por ahora solo su panel (las reservas, check-in y pagos llegan en los próximos módulos) |
-| **Agencia** | Por ahora solo su panel |
-| **Cliente** | Su panel (las reservas llegan en el Módulo 4) |
+| **Administrador** | **Recepcionistas** y **Agencias**: crear, editar, activar y desactivar · **Clientes**: lista, buscador y activar o desactivar · **Tipos y tarifas**: crear tipos, programar precios (línea de tiempo) y pestaña **Fotos** · **Habitaciones**: filtros, cambiar estado, fotos propias y **bloqueos por fechas** · **Datos del hotel**: fotos, contacto, redes, horarios, textos de la página y pin en el mapa |
+| **Recepcionista** | **Reservas**: crear eligiendo habitaciones exactas, editar titular, cancelar · **Registrar pago** (efectivo, QR o tarjeta) · **Pagos** · **Mis comisiones** (Bs 5 por reserva que confirma) |
+| **Agencia** | **Nueva reserva** para un titular con 10 % de descuento · **Mis reservas** · pagar el adelanto (QR o tarjeta) · **Pagos** |
+| **Cliente** | **Nueva reserva** con resumen en vivo · **Mis reservas** · pagar el adelanto o el saldo · cancelar · **Mis pagos** |
 | **Página pública** (http://127.0.0.1:8000) | Portada 3D, buscador de disponibilidad con precio total en Bs, habitaciones, servicios, beneficios, promociones vigentes, mapa y contacto |
 
 ### 4. Las fotos no vienen en el repositorio
@@ -156,6 +198,8 @@ muestra fondos elegantes en su lugar. Si las fotos se ven rotas, falta `php arti
 | `No application encryption key has been specified` | Falta `php artisan key:generate` (paso 2). |
 | Cambié algo y no se ve | `php artisan optimize:clear` y recarga con Ctrl+F5. |
 | *Demasiados intentos* al iniciar sesión | Es la protección del login (5 intentos fallidos): espera 60 segundos. |
+| *No se pudo conectar con la pasarela de pagos* | Estás en `PAGOS_API_MODO=http` sin el segundo servidor: abre otra terminal con `php artisan serve --port=8001`, o vuelve a `PAGOS_API_MODO=interno` y `php artisan optimize:clear`. |
+| La API responde `401` | La cabecera `X-Api-Clave` no es igual a `PAGOS_API_CLAVE` del `.env` (o está vacía). |
 
 ---
 
