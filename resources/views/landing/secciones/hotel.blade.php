@@ -19,12 +19,15 @@
 
         <div class="hotel-texto revelar">
             <p class="antetitulo antetitulo-oscuro">El hotel</p>
-            <h2 id="titulo-hotel" class="titulo-seccion">Hospitalidad cruceña desde {{ $desde->year }}</h2>
+            <h2 id="titulo-hotel" class="titulo-seccion">Recibiendo huéspedes desde {{ $desde->year }}</h2>
             <p>
                 Abrimos nuestras puertas el {{ $desde->isoFormat('D [de] MMMM [de] YYYY') }} en
-                {{ $hotel['direccion']['ciudad'] }}. Desde entonces recibimos a quienes llegan por trabajo,
-                de paseo o de paso, con habitaciones cómodas, piscina y restaurante en un mismo lugar.
+                {{ $hotel['direccion']['ciudad'] }}.
             </p>
+            {{-- Historia escrita por el admin en "Datos del hotel" (una línea en blanco = otro párrafo) --}}
+            @foreach (preg_split('/\n\s*\n/', (string) $hotel['textos']['historia'], -1, PREG_SPLIT_NO_EMPTY) as $parrafo)
+                <p>{!! nl2br(e(trim($parrafo))) !!}</p>
+            @endforeach
             <p>
                 Tenemos <strong>{{ $habitaciones }} habitaciones</strong>
                 @if ($pisos > 1) en {{ $pisos }} pisos @endif

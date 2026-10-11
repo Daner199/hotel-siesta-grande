@@ -7,9 +7,9 @@
 @php
     $servicios = [
         ['titulo' => 'Piscina', 'foto' => $hotel['fotos']['piscina'], 'icono' => 'waves',
-         'texto' => 'Un respiro fresco para el calor cruceño, a pocos pasos de tu habitación.'],
+         'texto' => $hotel['textos']['piscina']],
         ['titulo' => 'Restaurante', 'foto' => $hotel['fotos']['restaurante'], 'icono' => 'utensils',
-         'texto' => 'Empieza el día con desayuno y termina con una buena cena sin salir del hotel.'],
+         'texto' => $hotel['textos']['restaurante']],
     ];
 @endphp
 
@@ -28,7 +28,9 @@
             <div class="contenedor servicio-pantalla-texto revelar">
                 <p class="antetitulo"><i data-lucide="{{ $s['icono'] }}"></i> Servicios del hotel</p>
                 <h2 id="servicio-{{ $loop->index }}">{{ $s['titulo'] }}</h2>
-                <p>{{ $s['texto'] }}</p>
+                @if ($s['texto'])
+                    <p>{{ $s['texto'] }}</p>
+                @endif
             </div>
         </section>
     @endforeach
@@ -42,7 +44,9 @@
                     <h2 id="titulo-salones" class="titulo-seccion">
                         {{ $salones->count() === 1 ? 'Salón de eventos' : 'Salones de eventos' }}
                     </h2>
-                    <p>Para reuniones, celebraciones y eventos de empresa.</p>
+                    @if ($hotel['textos']['salon'])
+                        <p>{{ $hotel['textos']['salon'] }}</p>
+                    @endif
                 </header>
             </div>
 

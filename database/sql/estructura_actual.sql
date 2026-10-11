@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict dFiAFdyYJUlECH8F1gsyF6KP3fBkQ2ZdVbxfgzth8pxjPMcKL13K1gJSMI9GJIs
+\restrict WQfFEJWRQjrxIVgcfzgV13xi3xYkqXcUpbmLoTgTAl06cwBzpUNpBf5WQxfSPDl
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -575,6 +575,13 @@ CREATE TABLE public.hotel (
     foto_restaurante character varying(255),
     foto_fachada character varying(255),
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    historia character varying(1500),
+    texto_piscina character varying(300),
+    texto_restaurante character varying(300),
+    texto_salon character varying(300),
+    recepcion character varying(50) NOT NULL,
+    departamento character varying(100) NOT NULL,
+    pais character varying(100) NOT NULL,
     CONSTRAINT chk_hotel_latitud CHECK (((latitud IS NULL) OR ((latitud >= ('-90'::integer)::numeric) AND (latitud <= (90)::numeric)))),
     CONSTRAINT chk_hotel_longitud CHECK (((longitud IS NULL) OR ((longitud >= ('-180'::integer)::numeric) AND (longitud <= (180)::numeric)))),
     CONSTRAINT chk_hotel_telefono CHECK (((telefono IS NULL) OR ((telefono)::text ~ '^\+[1-9][0-9]{6,14}$'::text))),
@@ -1802,5 +1809,5 @@ ALTER TABLE ONLY public.tarifa_habitacion
 -- PostgreSQL database dump complete
 --
 
-\unrestrict dFiAFdyYJUlECH8F1gsyF6KP3fBkQ2ZdVbxfgzth8pxjPMcKL13K1gJSMI9GJIs
+\unrestrict WQfFEJWRQjrxIVgcfzgV13xi3xYkqXcUpbmLoTgTAl06cwBzpUNpBf5WQxfSPDl
 

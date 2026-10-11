@@ -587,6 +587,13 @@ CREATE TABLE public.hotel (
     foto_restaurante character varying(255),
     foto_fachada character varying(255),
     updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    historia character varying(1500),
+    texto_piscina character varying(300),
+    texto_restaurante character varying(300),
+    texto_salon character varying(300),
+    recepcion character varying(50) NOT NULL,
+    departamento character varying(100) NOT NULL,
+    pais character varying(100) NOT NULL,
     CONSTRAINT chk_hotel_latitud CHECK (((latitud IS NULL) OR ((latitud >= ('-90'::integer)::numeric) AND (latitud <= (90)::numeric)))),
     CONSTRAINT chk_hotel_longitud CHECK (((longitud IS NULL) OR ((longitud >= ('-180'::integer)::numeric) AND (longitud <= (180)::numeric)))),
     CONSTRAINT chk_hotel_telefono CHECK (((telefono IS NULL) OR ((telefono)::text ~ '^\+[1-9][0-9]{6,14}$'::text))),
@@ -1874,13 +1881,20 @@ INSERT INTO tarifa_habitacion (tipo_habitacion_id, fecha_desde, fecha_hasta, pre
     (4, DATE '2026-10-07', NULL, 450.00);
 
 -- ---------- Datos del hotel (una fila; el admin los edita en "Datos del hotel") ----------
-INSERT INTO hotel (id, nombre, eslogan, direccion, referencia, ciudad, telefono, whatsapp, correo,
-                   facebook, instagram, tiktok, check_in, check_out, latitud, longitud)
+INSERT INTO hotel (id, nombre, eslogan, direccion, referencia, ciudad, departamento, pais,
+                   telefono, whatsapp, correo, facebook, instagram, tiktok,
+                   check_in, check_out, recepcion, latitud, longitud,
+                   historia, texto_piscina, texto_restaurante, texto_salon)
 VALUES (1, 'Hotel Siesta Grande', 'Descanso con alma cruceña', 'Av. Monseñor Rivero N.º 245',
         'Entre 1.er y 2.º anillo, a cuatro cuadras de la Plaza 24 de Septiembre',
-        'Santa Cruz de la Sierra', '+59133345678', '+59177012345', 'reservas@siestagrande.com',
+        'Santa Cruz de la Sierra', 'Santa Cruz', 'Bolivia',
+        '+59133345678', '+59177012345', 'reservas@siestagrande.com',
         'https://www.facebook.com/hotelsiestagrande', 'https://www.instagram.com/hotelsiestagrande',
-        'https://www.tiktok.com/@hotelsiestagrande', '14:00', '12:00', -17.775600, -63.186800);
+        'https://www.tiktok.com/@hotelsiestagrande', '14:00', '12:00', 'Las 24 horas', -17.775600, -63.186800,
+        'Desde entonces recibimos a quienes llegan por trabajo, de paseo o de paso, con habitaciones cómodas, piscina y restaurante en un mismo lugar.',
+        'Un respiro fresco para el calor cruceño, a pocos pasos de tu habitación.',
+        'Empieza el día con desayuno y termina con una buena cena sin salir del hotel.',
+        'Para reuniones, celebraciones y eventos de empresa.');
 
 -- ---------- Usuarios de prueba (contraseñas con hash bcrypt de Laravel) ----------
 --   admin@siestagrande.com     / Admin12345    ADMINISTRADOR

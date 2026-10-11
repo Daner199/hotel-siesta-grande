@@ -1,7 +1,7 @@
 {{-- Cifras grandes animadas: habitaciones (contadas en la BD), años abiertos y horas de recepción --}}
 @php
-    // "Las 24 horas" → 24 (si el texto no trae un número, se muestra tal cual)
-    $horas = preg_match('/\d+/', $hotel['recepcion'], $m) ? (int) $m[0] : null;
+    // "Las 24 horas" → 24; cualquier otro texto ("De 7 a 23") se muestra tal cual
+    $horas = preg_match('/^\D*(\d+)\s*horas?$/iu', trim($hotel['recepcion']), $m) ? (int) $m[1] : null;
 @endphp
 
 <section class="cifras-franja" aria-label="El hotel en cifras">

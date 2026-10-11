@@ -5,7 +5,7 @@
 | Los datos reales los edita el admin en "Datos del hotel" (tabla `hotel`).
 | Las vistas NO leen este archivo directo: usan App\Models\Hotel::datos(), que toma la BD
 | y solo usa estos valores si la tabla `hotel` no existe o está vacía.
-| "desde", "habitaciones", "departamento", "pais" y "recepcion" salen siempre de aquí.
+| "desde" y "habitaciones" salen siempre de aquí (lo demás se edita en la BD, script 08).
 |
 | Teléfonos en E.164 (igual que en la BD). Para mostrarlos: App\Support\Paises::formatearTelefono()
 */
@@ -47,6 +47,14 @@ return [
         'facebook'  => 'https://www.facebook.com/hotelsiestagrande',
         'instagram' => 'https://www.instagram.com/hotelsiestagrande',
         'tiktok'    => 'https://www.tiktok.com/@hotelsiestagrande',
+    ],
+
+    // ---------- Textos de la página pública ----------
+    'textos' => [
+        'historia'    => 'Desde entonces recibimos a quienes llegan por trabajo, de paseo o de paso, con habitaciones cómodas, piscina y restaurante en un mismo lugar.',
+        'piscina'     => 'Un respiro fresco para el calor cruceño, a pocos pasos de tu habitación.',
+        'restaurante' => 'Empieza el día con desayuno y termina con una buena cena sin salir del hotel.',
+        'salon'       => 'Para reuniones, celebraciones y eventos de empresa.',
     ],
 
     // Las fotos (logo, portada, piscina...) NO van aquí: las sube el admin en "Datos del hotel"

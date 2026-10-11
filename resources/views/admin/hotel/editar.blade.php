@@ -214,7 +214,53 @@
                        value="{{ old('check_out', $hora($hotel->check_out)) }}">
                 @error('check_out') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
+            <div class="campo">
+                <label for="recepcion">Recepción</label>
+                <input type="text" id="recepcion" name="recepcion" maxlength="50" required
+                       placeholder="Las 24 horas" value="{{ old('recepcion', $hotel->recepcion) }}"
+                       data-vacio="Indica el horario de recepción (ej.: Las 24 horas).">
+                @error('recepcion') <p class="campo-error">{{ $message }}</p> @enderror
+            </div>
         </div>
+        <p class="ayuda-form">Si la recepción dice un número de horas (ej.: "Las 24 horas"), la página lo muestra como cifra grande.</p>
+    </fieldset>
+
+    {{-- ===== Textos de la página pública ===== --}}
+    <fieldset class="seccion-form">
+        <legend>
+            <span class="seccion-icono"><i data-lucide="text"></i></span>
+            Textos de la página
+        </legend>
+
+        <div class="campo">
+            <label for="historia">Historia del hotel <span class="opcional">(opcional)</span></label>
+            <textarea id="historia" name="historia" rows="4" maxlength="1500"
+                      placeholder="Quiénes somos y qué ofrecemos.">{{ old('historia', $hotel->historia) }}</textarea>
+            @error('historia') <p class="campo-error">{{ $message }}</p> @enderror
+            <p class="ayuda-campo">Va después de "Abrimos nuestras puertas el …". Deja una línea en blanco para empezar otro párrafo.</p>
+        </div>
+
+        <div class="rejilla-form">
+            <div class="campo">
+                <label for="texto_piscina">Piscina <span class="opcional">(opcional)</span></label>
+                <textarea id="texto_piscina" name="texto_piscina" rows="2" maxlength="300">{{ old('texto_piscina', $hotel->texto_piscina) }}</textarea>
+                @error('texto_piscina') <p class="campo-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="campo">
+                <label for="texto_restaurante">Restaurante <span class="opcional">(opcional)</span></label>
+                <textarea id="texto_restaurante" name="texto_restaurante" rows="2" maxlength="300">{{ old('texto_restaurante', $hotel->texto_restaurante) }}</textarea>
+                @error('texto_restaurante') <p class="campo-error">{{ $message }}</p> @enderror
+            </div>
+        </div>
+
+        <div class="campo">
+            <label for="texto_salon">Salón de eventos <span class="opcional">(opcional)</span></label>
+            <input type="text" id="texto_salon" name="texto_salon" maxlength="300"
+                   value="{{ old('texto_salon', $hotel->texto_salon) }}">
+            @error('texto_salon') <p class="campo-error">{{ $message }}</p> @enderror
+            <p class="ayuda-campo">Se muestra cuando haya salones registrados.</p>
+        </div>
+        <p class="ayuda-form">Si dejas un texto vacío, la página no lo muestra.</p>
     </fieldset>
 
     {{-- ===== Ubicación ===== --}}
@@ -236,6 +282,18 @@
                 <input type="text" id="ciudad" name="ciudad" maxlength="100" required
                        value="{{ old('ciudad', $hotel->ciudad) }}">
                 @error('ciudad') <p class="campo-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="campo">
+                <label for="departamento">Departamento</label>
+                <input type="text" id="departamento" name="departamento" maxlength="100" required
+                       value="{{ old('departamento', $hotel->departamento) }}" data-vacio="Escribe el departamento.">
+                @error('departamento') <p class="campo-error">{{ $message }}</p> @enderror
+            </div>
+            <div class="campo">
+                <label for="pais">País</label>
+                <input type="text" id="pais" name="pais" maxlength="100" required
+                       value="{{ old('pais', $hotel->pais) }}" data-vacio="Escribe el país.">
+                @error('pais') <p class="campo-error">{{ $message }}</p> @enderror
             </div>
         </div>
 

@@ -25,7 +25,8 @@ class Hotel extends Model
     public const FOTOS = ['logo', 'portada', 'foto_fachada', 'foto_piscina', 'foto_restaurante'];
 
     protected $fillable = [
-        'nombre', 'eslogan', 'direccion', 'referencia', 'ciudad',
+        'nombre', 'eslogan', 'direccion', 'referencia', 'ciudad', 'departamento', 'pais',
+        'historia', 'texto_piscina', 'texto_restaurante', 'texto_salon', 'recepcion',
         'telefono', 'whatsapp', 'correo', 'facebook', 'instagram', 'tiktok',
         'check_in', 'check_out', 'latitud', 'longitud',
         'logo', 'portada', 'foto_fachada', 'foto_piscina', 'foto_restaurante',
@@ -95,8 +96,8 @@ class Hotel extends Model
                 'calle'        => $o('direccion', $c['direccion']['calle']),
                 'referencia'   => $v('referencia', $c['direccion']['referencia']),
                 'ciudad'       => $o('ciudad', $c['direccion']['ciudad']),
-                'departamento' => $c['direccion']['departamento'],
-                'pais'         => $c['direccion']['pais'],
+                'departamento' => $o('departamento', $c['direccion']['departamento']),
+                'pais'         => $o('pais', $c['direccion']['pais']),
             ],
 
             'mapa' => $lat !== null && $lng !== null
@@ -109,7 +110,15 @@ class Hotel extends Model
 
             'check_in'  => substr((string) $o('check_in', $c['check_in']), 0, 5),
             'check_out' => substr((string) $o('check_out', $c['check_out']), 0, 5),
-            'recepcion' => $c['recepcion'],
+            'recepcion' => $o('recepcion', $c['recepcion']),
+
+            // Textos de la página pública (vacío = no se muestra)
+            'textos' => [
+                'historia'    => $v('historia', $c['textos']['historia']),
+                'piscina'     => $v('texto_piscina', $c['textos']['piscina']),
+                'restaurante' => $v('texto_restaurante', $c['textos']['restaurante']),
+                'salon'       => $v('texto_salon', $c['textos']['salon']),
+            ],
 
             'redes' => [
                 'facebook'  => $v('facebook', $c['redes']['facebook']),
