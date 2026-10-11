@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict WQfFEJWRQjrxIVgcfzgV13xi3xYkqXcUpbmLoTgTAl06cwBzpUNpBf5WQxfSPDl
+\restrict JW23dVsGpTVFyFZjjjY0jJJZ7FS7UBHSw1jR9O9j2WNQ7mruV1iqT3fjnu2whn5
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -636,7 +636,8 @@ CREATE TABLE public.pago (
     observacion text,
     registrado_por_usuario_id bigint,
     CONSTRAINT chk_pago_estado CHECK (((estado)::text = ANY ((ARRAY['PENDIENTE'::character varying, 'APROBADO'::character varying, 'RECHAZADO'::character varying, 'DEVUELTO'::character varying])::text[]))),
-    CONSTRAINT chk_pago_monto CHECK ((monto > (0)::numeric))
+    CONSTRAINT chk_pago_monto CHECK ((monto > (0)::numeric)),
+    CONSTRAINT chk_pago_referencia CHECK ((((estado)::text <> ALL ((ARRAY['APROBADO'::character varying, 'DEVUELTO'::character varying])::text[])) OR (referencia IS NOT NULL)))
 );
 
 
@@ -1517,6 +1518,13 @@ CREATE INDEX idx_foto_tipo_orden ON public.foto_tipo_habitacion USING btree (tip
 
 
 --
+-- Name: idx_pago_reserva; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_pago_reserva ON public.pago USING btree (reserva_id);
+
+
+--
 -- Name: idx_reserva_habitacion_habitacion; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1542,6 +1550,13 @@ CREATE UNIQUE INDEX uq_foto_salon_principal ON public.foto_salon_evento USING bt
 --
 
 CREATE UNIQUE INDEX uq_foto_tipo_principal ON public.foto_tipo_habitacion USING btree (tipo_habitacion_id) WHERE es_principal;
+
+
+--
+-- Name: uq_pago_referencia; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE UNIQUE INDEX uq_pago_referencia ON public.pago USING btree (referencia) WHERE (referencia IS NOT NULL);
 
 
 --
@@ -1809,5 +1824,5 @@ ALTER TABLE ONLY public.tarifa_habitacion
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WQfFEJWRQjrxIVgcfzgV13xi3xYkqXcUpbmLoTgTAl06cwBzpUNpBf5WQxfSPDl
+\unrestrict JW23dVsGpTVFyFZjjjY0jJJZ7FS7UBHSw1jR9O9j2WNQ7mruV1iqT3fjnu2whn5
 
