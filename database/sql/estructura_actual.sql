@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 8aOojEsObFIjpF6bMwFncFU2CXoo3ZgA6bEHuXfIS9lubLDpH2q2czn674NP0ks
+\restrict dFiAFdyYJUlECH8F1gsyF6KP3fBkQ2ZdVbxfgzth8pxjPMcKL13K1gJSMI9GJIs
 
 -- Dumped from database version 18.4
 -- Dumped by pg_dump version 18.4
@@ -45,6 +45,152 @@ CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA public;
 --
 
 COMMENT ON EXTENSION unaccent IS 'text search dictionary that removes accents';
+
+
+--
+-- Name: fn_bloqueo_sin_reservas(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_bloqueo_sin_reservas() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+    v_numero varchar;
+    v_codigo varchar;
+BEGIN
+    SELECT numero INTO v_numero FROM habitacion WHERE id = NEW.habitacion_id FOR UPDATE;
+
+    SELECT r.codigo INTO v_codigo
+    FROM reserva_habitacion rh
+    JOIN reserva r         ON r.id = rh.reserva_id
+    JOIN estado_reserva er ON er.id = r.estado_reserva_id
+    WHERE rh.habitacion_id = NEW.habitacion_id
+      AND er.nombre IN ('PENDIENTE', 'CONFIRMADA', 'CHECK_IN')
+      AND r.fecha_entrada < NEW.fecha_hasta
+      AND r.fecha_salida  > NEW.fecha_desde
+    LIMIT 1;
+
+    IF FOUND THEN
+        RAISE EXCEPTION 'No se puede bloquear la habitación %: tiene la reserva % en esas fechas.',
+            v_numero, v_codigo
+            USING ERRCODE = 'exclusion_violation';
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_reserva_habitacion_sin_solape(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_reserva_habitacion_sin_solape() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+    v_entrada date;
+    v_salida  date;
+    v_estado  varchar;
+BEGIN
+    SELECT r.fecha_entrada, r.fecha_salida, er.nombre INTO v_entrada, v_salida, v_estado
+    FROM reserva r
+    JOIN estado_reserva er ON er.id = r.estado_reserva_id
+    WHERE r.id = NEW.reserva_id;
+
+    IF v_estado IN ('PENDIENTE', 'CONFIRMADA', 'CHECK_IN') THEN
+        PERFORM fn_verificar_habitacion_libre(NEW.habitacion_id, v_entrada, v_salida, NEW.reserva_id);
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_reserva_sin_solape(); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_reserva_sin_solape() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+    v_activos   text[] := ARRAY['PENDIENTE', 'CONFIRMADA', 'CHECK_IN'];
+    v_nuevo     varchar;
+    v_anterior  varchar;
+    v_habitacion bigint;
+BEGIN
+    SELECT nombre INTO v_nuevo    FROM estado_reserva WHERE id = NEW.estado_reserva_id;
+    SELECT nombre INTO v_anterior FROM estado_reserva WHERE id = OLD.estado_reserva_id;
+
+    -- Solo revisa si queda activa y antes no lo estaba, o si cambiaron sus fechas
+    IF v_nuevo = ANY (v_activos)
+       AND (NOT (v_anterior = ANY (v_activos))
+            OR NEW.fecha_entrada <> OLD.fecha_entrada
+            OR NEW.fecha_salida  <> OLD.fecha_salida) THEN
+        FOR v_habitacion IN
+            SELECT habitacion_id FROM reserva_habitacion WHERE reserva_id = NEW.id
+        LOOP
+            PERFORM fn_verificar_habitacion_libre(v_habitacion, NEW.fecha_entrada, NEW.fecha_salida, NEW.id);
+        END LOOP;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+
+--
+-- Name: fn_verificar_habitacion_libre(bigint, date, date, bigint); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE FUNCTION public.fn_verificar_habitacion_libre(p_habitacion_id bigint, p_entrada date, p_salida date, p_reserva_id bigint) RETURNS void
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
+DECLARE
+    v_numero varchar;
+    v_codigo varchar;
+    v_desde  date;
+    v_hasta  date;
+BEGIN
+    -- Bloquea la habitación hasta el final de la transacción (evita reservas simultáneas)
+    SELECT numero INTO v_numero FROM habitacion WHERE id = p_habitacion_id FOR UPDATE;
+
+    SELECT r.codigo, r.fecha_entrada, r.fecha_salida INTO v_codigo, v_desde, v_hasta
+    FROM reserva_habitacion rh
+    JOIN reserva r         ON r.id = rh.reserva_id
+    JOIN estado_reserva er ON er.id = r.estado_reserva_id
+    WHERE rh.habitacion_id = p_habitacion_id
+      AND r.id <> p_reserva_id
+      AND er.nombre IN ('PENDIENTE', 'CONFIRMADA', 'CHECK_IN')
+      AND r.fecha_entrada < p_salida
+      AND r.fecha_salida  > p_entrada
+    LIMIT 1;
+
+    IF FOUND THEN
+        RAISE EXCEPTION 'La habitación % ya está reservada del % al % (reserva %).',
+            v_numero, to_char(v_desde, 'DD/MM/YYYY'), to_char(v_hasta, 'DD/MM/YYYY'), v_codigo
+            USING ERRCODE = 'exclusion_violation';
+    END IF;
+
+    SELECT b.fecha_desde, b.fecha_hasta INTO v_desde, v_hasta
+    FROM bloqueo_habitacion b
+    WHERE b.habitacion_id = p_habitacion_id
+      AND b.fecha_desde < p_salida
+      AND b.fecha_hasta > p_entrada
+    LIMIT 1;
+
+    IF FOUND THEN
+        RAISE EXCEPTION 'La habitación % está bloqueada del % al %.',
+            v_numero, to_char(v_desde, 'DD/MM/YYYY'), to_char(v_hasta, 'DD/MM/YYYY')
+            USING ERRCODE = 'exclusion_violation';
+    END IF;
+END;
+$$;
 
 
 SET default_tablespace = '';
@@ -581,6 +727,7 @@ CREATE TABLE public.reserva (
     fecha_salida date NOT NULL,
     fecha_creacion timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
     observacion text,
+    CONSTRAINT chk_reserva_cliente_o_agencia CHECK ((NOT ((cliente_id IS NOT NULL) AND (agencia_id IS NOT NULL)))),
     CONSTRAINT chk_reserva_fechas CHECK ((fecha_salida > fecha_entrada)),
     CONSTRAINT chk_reserva_personas CHECK ((cantidad_personas > 0))
 );
@@ -1335,6 +1482,13 @@ ALTER TABLE ONLY public.usuario
 
 
 --
+-- Name: idx_bloqueo_habitacion_fechas; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_bloqueo_habitacion_fechas ON public.bloqueo_habitacion USING btree (habitacion_id, fecha_desde, fecha_hasta);
+
+
+--
 -- Name: idx_foto_habitacion_orden; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1356,6 +1510,13 @@ CREATE INDEX idx_foto_tipo_orden ON public.foto_tipo_habitacion USING btree (tip
 
 
 --
+-- Name: idx_reserva_habitacion_habitacion; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX idx_reserva_habitacion_habitacion ON public.reserva_habitacion USING btree (habitacion_id);
+
+
+--
 -- Name: uq_foto_habitacion_principal; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -1374,6 +1535,27 @@ CREATE UNIQUE INDEX uq_foto_salon_principal ON public.foto_salon_evento USING bt
 --
 
 CREATE UNIQUE INDEX uq_foto_tipo_principal ON public.foto_tipo_habitacion USING btree (tipo_habitacion_id) WHERE es_principal;
+
+
+--
+-- Name: bloqueo_habitacion trg_bloqueo_sin_reservas; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_bloqueo_sin_reservas BEFORE INSERT OR UPDATE OF habitacion_id, fecha_desde, fecha_hasta ON public.bloqueo_habitacion FOR EACH ROW EXECUTE FUNCTION public.fn_bloqueo_sin_reservas();
+
+
+--
+-- Name: reserva_habitacion trg_reserva_habitacion_sin_solape; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_reserva_habitacion_sin_solape BEFORE INSERT OR UPDATE OF reserva_id, habitacion_id ON public.reserva_habitacion FOR EACH ROW EXECUTE FUNCTION public.fn_reserva_habitacion_sin_solape();
+
+
+--
+-- Name: reserva trg_reserva_sin_solape; Type: TRIGGER; Schema: public; Owner: -
+--
+
+CREATE TRIGGER trg_reserva_sin_solape BEFORE UPDATE OF fecha_entrada, fecha_salida, estado_reserva_id ON public.reserva FOR EACH ROW EXECUTE FUNCTION public.fn_reserva_sin_solape();
 
 
 --
@@ -1620,5 +1802,5 @@ ALTER TABLE ONLY public.tarifa_habitacion
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 8aOojEsObFIjpF6bMwFncFU2CXoo3ZgA6bEHuXfIS9lubLDpH2q2czn674NP0ks
+\unrestrict dFiAFdyYJUlECH8F1gsyF6KP3fBkQ2ZdVbxfgzth8pxjPMcKL13K1gJSMI9GJIs
 
