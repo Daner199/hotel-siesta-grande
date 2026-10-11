@@ -13,13 +13,14 @@ Proyecto universitario hecho con **Laravel 12 + PostgreSQL + Blade**.
 
 | Programa | Versión | Nota |
 |---|---|---|
-| PHP | 8.2 o superior | Con las extensiones `pdo_pgsql`, `pgsql`, `intl` y `fileinfo` activas |
+| PHP | 8.2 o superior | Con las extensiones `pdo_pgsql`, `pgsql`, `intl`, `fileinfo` y `gd` activas |
 | Composer | 2 | |
 | PostgreSQL | 13 o superior | Probado con la 18 |
 | Git | cualquiera | |
 
 En Windows con XAMPP, las extensiones se activan en `C:\xampp\php\php.ini` quitando el `;`
-del inicio de `extension=pdo_pgsql`, `extension=pgsql`, `extension=intl` y `extension=fileinfo`.
+del inicio de `extension=pdo_pgsql`, `extension=pgsql`, `extension=intl`, `extension=fileinfo`
+y `extension=gd` (GD pone el logo del hotel en el PDF de los recibos). Después reinicia `php artisan serve`.
 
 ---
 
@@ -51,8 +52,11 @@ DB_PASSWORD=tu_contraseña
 El resto ya viene listo: PostgreSQL en `127.0.0.1:5432`, base `hotel_siesta_grande`,
 y sesión, caché y colas en archivos.
 
-Cambia también `PAGOS_API_CLAVE` por una clave larga cualquiera (la usa la API simulada de pagos,
-ver más abajo **"Pagos: la API simulada"**).
+Cambia también `PAGOS_API_CLAVE` y `PAGOS_WEBHOOK_SECRETO` por claves largas cualquiera
+(las usan la API simulada de pagos y el banco simulado, ver más abajo **"6. Pagos"**).
+
+> Si ya tenías el proyecto y alguien agregó librerías nuevas (por ejemplo las del QR y del PDF),
+> vuelve a ejecutar `composer install`.
 
 ### 3. Crear la base de datos
 
@@ -99,17 +103,98 @@ php artisan serve
 
 Abre **http://127.0.0.1:8000**
 
-### 6. Pagos: la API simulada
+### 6. Pagos
 
-No hay banco real: los pagos con **QR** y **tarjeta** pasan por una API simulada,
-`POST /api/pagos/simular`, que responde `APROBADO` (con un código `PAY-123456`) o `RECHAZADO`.
-Aprueba siempre, **salvo la tarjeta de prueba que termina en `0002`** (ej. `4000 0000 0000 0002`).
-El efectivo solo lo registra recepción y no pasa por la API (referencia `EFE-123456`).
+No hay banco real: todo es **simulado** para fines académicos.
 
-En el `.env` se elige cómo la llama Laravel:
+| Forma de pago | Quién | Cómo funciona |
+|---|---|---|
+| **QR** | Cliente, agencia, recepción | Se genera un QR por el monto, válido 15 min. Se escanea con el celular, se abre **Banco Siesta** (banco simulado), se confirma y el banco avisa al hotel por **webhook**. La pantalla de la PC se actualiza sola. |
+| **Tarjeta** | Cliente, agencia, recepción | Pasarela simulada con validación de Luhn y 3-D Secure. Del pago solo se guardan la marca y los 4 últimos dígitos. |
+| **Transferencia** | Cliente y agencia | Se transfiere a la cuenta del hotel (datos de ejemplo en *Datos del hotel*), se sube el comprobante y queda **en revisión** hasta que recepción lo aprueba o lo rechaza (menú *Transferencias*). |
+| **Efectivo** | Solo recepción | Se aprueba al momento (referencia `EFE-…`). |
+
+Cada pago aprobado genera un **recibo** (`REC-000001`, `REC-000002`…) con PDF y un QR de verificación.
+El recibo **no es una factura**. Si actualizas el proyecto y ya tenías pagos, crea sus recibos con:
+
+```powershell
+php artisan recibos:generar
+```
+
+#### Tarjetas de prueba
+
+| Número | Resultado |
+|---|---|
+| `4242 4242 4242 4242` (Visa) | Aprobada |
+| `5555 5555 5555 4444` (Mastercard) | Aprobada |
+| `4000 0000 0000 0002` (Visa) | Rechazada por fondos insuficientes |
+| `4000 0000 0000 3220` (Visa) | Pide un código por SMS (3-D Secure). El código de prueba se muestra en pantalla. |
+
+Cualquier vencimiento futuro (ej. `12/30`) y cualquier CVV de 3 dígitos. Un número que no cumple Luhn
+(ej. `4242 4242 4242 4241`) se rechaza antes de enviarse.
+
+#### Pagar con QR desde el celular (misma red WiFi)
+
+El celular tiene que poder llegar a tu PC, así que `127.0.0.1` no sirve: hay que usar la IP de la PC.
+
+1. En PowerShell ejecuta `ipconfig` y copia la **Dirección IPv4** del WiFi (ej. `192.168.1.50`).
+2. En `.env`: `PAGOS_URL_PUBLICA=http://192.168.1.50:8000` y luego `php artisan optimize:clear`.
+3. Inicia el servidor escuchando en la red: `php artisan serve --host=0.0.0.0`
+4. La primera vez Windows pregunta si permite a **php.exe** usar la red: marca **Redes privadas** y acepta.
+   Tu WiFi debe estar como red *privada* (Configuración → Red e Internet → WiFi → Tipo de perfil de red).
+   Si no te preguntó: Panel de control → Firewall de Windows Defender → *Permitir una aplicación* →
+   busca `C:\xampp\php\php.exe` y marca *Privada*.
+5. Genera el QR de un pago y escanéalo con la cámara del celular. Se abre Banco Siesta:
+   ingresa cualquier PIN de 4 dígitos y pulsa **Confirmar pago**. Para mostrar un rechazo usa
+   *"simular fondos insuficientes"*.
+
+Si la pantalla del QR dice *"Esta dirección solo funciona en esta computadora"*, falta el paso 2.
+
+#### Modo `interno` o `http`
+
+En el `.env` se elige cómo se comunican el hotel y el "banco":
 
 | `PAGOS_API_MODO` | Qué hace | Cuándo usarlo |
 |---|---|---|
+| `interno` (por defecto) | La pasarela de tarjetas y Banco Siesta funcionan **dentro** del mismo servidor. Nunca se cuelga. | Siempre que trabajes normal |
+| `http` | El banco es **otro servidor** (puerto 8001): la tarjeta se cobra con `POST /api/pagos/simular` y Banco Siesta avisa al hotel con un **webhook HTTP real**. | Para mostrarlo en la defensa |
+
+En Windows `php artisan serve` atiende una petición a la vez y no puede llamarse a sí mismo; por eso
+en modo `http` el banco corre en un segundo servidor. **Modo `http` paso a paso:**
+
+1. En `.env` (con la IP de tu PC):
+   ```
+   PAGOS_API_MODO=http
+   PAGOS_URL_PUBLICA=http://192.168.1.50:8000
+   PAGOS_BANCO_URL=http://192.168.1.50:8001
+   PAGOS_API_URL=http://127.0.0.1:8001/api/pagos/simular
+   PAGOS_WEBHOOK_URL=http://127.0.0.1:8000/api/pagos/webhook
+   ```
+2. `php artisan optimize:clear`
+3. Terminal 1 (el hotel): `php artisan serve --host=0.0.0.0`
+4. Terminal 2 (el banco): `php artisan serve --host=0.0.0.0 --port=8001`
+5. Paga con QR: el celular abre la página del banco en el puerto 8001 y, al confirmar, en la
+   terminal 1 se ve llegar `POST /api/pagos/webhook`. Con tarjeta, en la terminal 2 llega `POST /api/pagos/simular`.
+
+Si el servidor 8001 no está encendido, el sistema avisa *"No se pudo conectar…"* y no cobra nada.
+
+#### Probar la API con Postman
+
+```
+POST http://127.0.0.1:8000/api/pagos/simular
+Cabeceras:  X-Api-Clave: <tu PAGOS_API_CLAVE>
+            Accept: application/json
+Cuerpo (JSON):  {"monto": 300, "metodo": "QR"}
+            o   {"monto": 300, "metodo": "TARJETA", "ultimos4": "0002"}
+```
+
+Respuestas: `{"estado":"APROBADO","codigo":"PAY-123456"}` · `{"estado":"RECHAZADO","motivo":"Fondos insuficientes."}` ·
+`401` si la clave no coincide · `422` si faltan datos · `429` si pasas de 30 pedidos por minuto.
+
+El webhook `POST /api/pagos/webhook` solo acepta avisos firmados con `PAGOS_WEBHOOK_SECRETO`
+(cabecera `X-Firma`, HMAC-SHA256 del cuerpo): sin la firma correcta responde `401`.
+
+---|---|---|
 | `interno` (por defecto) | Laravel usa la lógica de la API **por dentro**. Nunca se cuelga. | Siempre que trabajes normal |
 | `http` | Laravel hace una **petición HTTP real** a `PAGOS_API_URL`. | Para mostrar la API en la defensa |
 
@@ -200,6 +285,9 @@ muestra fondos elegantes en su lugar. Si las fotos se ven rotas, falta `php arti
 | *Demasiados intentos* al iniciar sesión | Es la protección del login (5 intentos fallidos): espera 60 segundos. |
 | *No se pudo conectar con la pasarela de pagos* | Estás en `PAGOS_API_MODO=http` sin el segundo servidor: abre otra terminal con `php artisan serve --port=8001`, o vuelve a `PAGOS_API_MODO=interno` y `php artisan optimize:clear`. |
 | La API responde `401` | La cabecera `X-Api-Clave` no es igual a `PAGOS_API_CLAVE` del `.env` (o está vacía). |
+| El celular no abre el QR (*no se puede acceder al sitio*) | Revisa `PAGOS_URL_PUBLICA` con la IP de `ipconfig`, que el servidor esté con `--host=0.0.0.0`, que el celular esté en el mismo WiFi y que el firewall permita `php.exe` en redes privadas. |
+| El PDF del recibo sale sin logo | Activa `extension=gd` en `php.ini` y reinicia el servidor. |
+| *Class "chillerlan\QRCode\QRCode" not found* o *Pdf not found* | Faltan las librerías nuevas: `composer install`. |
 
 ---
 
