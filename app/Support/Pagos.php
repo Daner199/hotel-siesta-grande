@@ -40,7 +40,7 @@ class Pagos
         }
 
         $pagado = $reserva->totalPagado();
-        $maximo = round($reserva->total() - $pagado, 2);
+        $maximo = $reserva->saldo();
         $minimo = $reserva->esEstado(EstadoReserva::PENDIENTE)
             ? round(max(0.01, $reserva->adelanto() - $pagado), 2)
             : 0.01;

@@ -18,7 +18,8 @@
     $pendiente = $reserva->esEstado(EstadoReserva::PENDIENTE);
     $texto     = fn ($n) => number_format($n, 2, ',', '.');
     $metodoSel = old('metodo', $metodos->first()->nombre);
-    $montoIni  = old('monto', $texto($limites['minimo']));
+    $montoIni  = old('monto', $texto($pendiente ? $limites['minimo'] : $limites['maximo']));
+    $consumos  = $reserva->totalConsumos();
 
     $descripciones = [
         MetodoPago::EFECTIVO      => 'En caja',
@@ -244,6 +245,9 @@
                     </dd>
                 </div>
                 <div><dt>Total de la estadía</dt><dd>{{ Moneda::formato($reserva->total()) }}</dd></div>
+                @if ($consumos > 0)
+                    <div><dt>Consumos</dt><dd>{{ Moneda::formato($consumos) }}</dd></div>
+                @endif
                 <div><dt>Pagado</dt><dd>{{ Moneda::formato($pagado) }}</dd></div>
                 @if ($pendiente)
                     <div><dt>Adelanto que falta</dt><dd>{{ Moneda::formato($limites['minimo']) }}</dd></div>

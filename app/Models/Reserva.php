@@ -127,10 +127,16 @@ class Reserva extends Model
             ->sum('monto'), 2);
     }
 
-    // Lo que falta pagar de la estadía (los consumos se suman en el Módulo 7)
+    // Restaurante y frigobar (precio guardado × cantidad)
+    public function totalConsumos(): float
+    {
+        return round((float) Consumo::where('reserva_id', $this->id)->sum(\Illuminate\Support\Facades\DB::raw('cantidad * precio_unitario')), 2);
+    }
+
+    // Lo que falta pagar: estadía + consumos − pagos aprobados
     public function saldo(): float
     {
-        return round(max(0, $this->total() - $this->totalPagado()), 2);
+        return round(max(0, $this->total() + $this->totalConsumos() - $this->totalPagado()), 2);
     }
 
     // Transferencia que todavía no revisó recepción (bloquea otros pagos y la cancelación)

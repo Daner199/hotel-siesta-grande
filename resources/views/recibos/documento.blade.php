@@ -13,7 +13,11 @@
     $pago    = $recibo->pago;
     $reserva = $pago->reserva;
     $total   = $reserva->total();
-    $pagadoEntonces = max(0, $total - (float) $recibo->saldo_pendiente);
+    // Consumos cargados hasta que se emitió el recibo (los posteriores no cuentan)
+    $consumosEntonces = round((float) $reserva->consumos()
+        ->where('fecha_consumo', '<=', $recibo->fecha_emision)
+        ->sum(\Illuminate\Support\Facades\DB::raw('cantidad * precio_unitario')), 2);
+    $pagadoEntonces = max(0, $total + $consumosEntonces - (float) $recibo->saldo_pendiente);
 
     $pagador = $reserva->agencia
         ? $reserva->agencia->nombre . ' (NIT ' . $reserva->agencia->nit . ')'
@@ -128,6 +132,9 @@
     {{-- Estado de cuenta al momento del recibo --}}
     <table class="cuenta">
         <tr><td class="gris">Total de la estadía</td><td class="num">{{ Moneda::formato($total) }}</td></tr>
+        @if ($consumosEntonces > 0)
+            <tr><td class="gris">Consumos</td><td class="num">{{ Moneda::formato($consumosEntonces) }}</td></tr>
+        @endif
         <tr><td class="gris">Pagado a la fecha</td><td class="num">{{ Moneda::formato($pagadoEntonces) }}</td></tr>
         <tr class="saldo"><td>Saldo pendiente</td><td class="num">{{ Moneda::formato($recibo->saldo_pendiente) }}</td></tr>
     </table>

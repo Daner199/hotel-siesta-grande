@@ -13,6 +13,8 @@
     $total     = $reserva->total();
     $adelanto  = $reserva->adelanto();
     $pagado    = $reserva->totalPagado();
+    $consumos  = $reserva->totalConsumos();
+    $alojado   = in_array($reserva->estado->nombre, ['CHECK_IN', 'CHECK_OUT'], true);
     $estado    = $reserva->estado->nombre;
     $cancelable = $reserva->sePuedeCancelar();
     $devuelve  = $reserva->devuelveSiCancela();
@@ -35,6 +37,10 @@
 @endphp
 
 @section('titulo', "Reserva {$reserva->codigo}")
+
+@push('estilos')
+    <link rel="stylesheet" href="{{ asset('css/pagos.css') }}">
+@endpush
 
 @section('panel')
 <header class="cabecera-pagina">
@@ -165,6 +171,16 @@
             </div>
         </section>
 
+        {{-- ===== Consumos (con el huésped alojado) ===== --}}
+        @if ($alojado)
+            <section class="bloque" id="consumos">
+                <div class="bloque-cabecera">
+                    <h2>Consumos</h2>
+                </div>
+                @include('cuenta.consumos', ['consumos' => $reserva->consumos()->with('tipo')->get(), 'anular' => false])
+            </section>
+        @endif
+
         {{-- ===== Pagos ===== --}}
         <section class="bloque" id="pagos">
             <div class="bloque-cabecera">
@@ -201,9 +217,15 @@
                     <dt>Pagado</dt>
                     <dd>{{ Moneda::formato($pagado) }}</dd>
                 </div>
+                @if ($consumos > 0)
+                    <div>
+                        <dt>Consumos</dt>
+                        <dd>{{ Moneda::formato($consumos) }}</dd>
+                    </div>
+                @endif
                 <div class="resumen-cuenta-falta">
-                    <dt>Falta pagar</dt>
-                    <dd>{{ Moneda::formato(max(0, $total - $pagado)) }}</dd>
+                    <dt>Saldo</dt>
+                    <dd>{{ Moneda::formato($reserva->saldo()) }}</dd>
                 </div>
             </dl>
 
