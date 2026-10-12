@@ -10,8 +10,7 @@
 <section class="seccion seccion-clara" id="ubicacion" aria-labelledby="titulo-ubicacion">
     <div class="contenedor">
         <header class="seccion-cabecera revelar">
-            <p class="antetitulo antetitulo-oscuro">Ubicación</p>
-            <h2 id="titulo-ubicacion" class="titulo-seccion">Te esperamos en {{ $d['ciudad'] }}</h2>
+            <h2 id="titulo-ubicacion" class="titulo-seccion">Ubicación</h2>
         </header>
 
         <div @class(['ubicacion', 'ubicacion-sin-mapa' => ! $mapa])>

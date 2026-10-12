@@ -8,9 +8,8 @@
 <section class="seccion seccion-oscura" id="promociones" aria-labelledby="titulo-promociones">
     <div class="contenedor">
         <header class="seccion-cabecera revelar">
-            <p class="antetitulo">{{ $promociones->isNotEmpty() ? 'Promociones y beneficios' : 'Beneficios' }}</p>
             <h2 id="titulo-promociones" class="titulo-seccion">
-                {{ $promociones->isNotEmpty() ? 'Más por tu estadía' : 'Suma beneficios a tu estadía' }}
+                {{ $promociones->isNotEmpty() ? 'Promociones' : 'Beneficios' }}
             </h2>
         </header>
 

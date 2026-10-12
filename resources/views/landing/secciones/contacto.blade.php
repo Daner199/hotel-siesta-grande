@@ -12,9 +12,8 @@
 <section class="seccion seccion-contacto" id="contacto" aria-labelledby="titulo-contacto">
     <div class="contenedor">
         <header class="seccion-cabecera revelar">
-            <p class="antetitulo">Contacto</p>
-            <h2 id="titulo-contacto" class="titulo-seccion">Escríbenos o llámanos</h2>
-            <p>Respondemos tus consultas sobre reservas, eventos y servicios.</p>
+            <h2 id="titulo-contacto" class="titulo-seccion">Contacto</h2>
+            <p>Recepción {{ mb_strtolower($hotel['recepcion']) }}.</p>
         </header>
 
         <ul class="contactos">

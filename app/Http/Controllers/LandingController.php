@@ -58,7 +58,6 @@ class LandingController extends Controller
             'tipos'        => $tipos,
             'habitaciones' => Habitacion::count(),
             'pisos'        => Habitacion::distinct()->count('piso'),
-            'anios'        => (int) Carbon::parse($hotel['desde'])->diffInYears(today()),
             'beneficios'   => Beneficio::where('activo', true)->orderBy('id')->get(),
             'promociones'  => $promociones,
             'salones'      => SalonEvento::where('activo', true)->with('fotos')->orderBy('nombre')->get(),

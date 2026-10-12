@@ -19,11 +19,6 @@
     <canvas class="portada-3d portada-3d-fondo" data-portada-3d aria-hidden="true"></canvas>
 
     <div class="contenedor portada-contenido">
-        <p class="antetitulo">
-            <i data-lucide="map-pin"></i>
-            Hotel en {{ $hotel['direccion']['ciudad'] }}
-        </p>
-
         <h1 class="portada-titulo">
             <span class="sr-only">{{ $nombre }}</span>
             <span aria-hidden="true">{{ $titulo }}</span>
@@ -33,11 +28,16 @@
             <p class="portada-eslogan">{{ $hotel['eslogan'] }}</p>
         @endif
 
+        <p class="portada-datos">
+            {{ $hotel['direccion']['calle'] }}, {{ $hotel['direccion']['ciudad'] }}
+            @if ($precioDesde) · Desde {{ \App\Support\Moneda::formato($precioDesde) }} por noche @endif
+        </p>
+
         <div class="portada-botones">
             <a href="#disponibilidad" class="boton boton-tajibo">
                 <i data-lucide="calendar-search"></i> Ver disponibilidad
             </a>
-            <a href="#habitaciones" class="boton boton-fantasma">Conoce las habitaciones</a>
+            <a href="#habitaciones" class="boton boton-fantasma">Habitaciones y tarifas</a>
         </div>
     </div>
 

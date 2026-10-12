@@ -2,7 +2,7 @@
 
 {{--
     Página pública del hotel. TODO sale de la BD (LandingController):
-    $hotel (Hotel::datos()), $tipos, $habitaciones, $pisos, $anios, $beneficios, $promociones, $salones.
+    $hotel (Hotel::datos()), $tipos, $habitaciones, $pisos, $beneficios, $promociones, $salones.
     Promociones y salones se ocultan solos si no hay datos.
 --}}
 
@@ -70,7 +70,6 @@
     @include('landing.secciones.portada')
     @include('landing.secciones.buscador')
     @include('landing.secciones.hotel')
-    @include('landing.secciones.cifras')
     @include('landing.secciones.habitaciones')
     @include('landing.secciones.servicios')
     @include('landing.secciones.promociones')

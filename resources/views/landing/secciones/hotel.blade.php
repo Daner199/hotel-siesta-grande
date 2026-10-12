@@ -18,8 +18,7 @@
         </figure>
 
         <div class="hotel-texto revelar">
-            <p class="antetitulo antetitulo-oscuro">El hotel</p>
-            <h2 id="titulo-hotel" class="titulo-seccion">Recibiendo huéspedes desde {{ $desde->year }}</h2>
+            <h2 id="titulo-hotel" class="titulo-seccion">El hotel</h2>
             <p>
                 Abrimos nuestras puertas el {{ $desde->isoFormat('D [de] MMMM [de] YYYY') }} en
                 {{ $hotel['direccion']['ciudad'] }}.
@@ -34,10 +33,12 @@
                 y una recepción que te atiende {{ mb_strtolower($hotel['recepcion']) }}.
             </p>
 
-            <ul class="horarios-hotel">
-                <li><i data-lucide="log-in"></i> Check-in desde las <strong>{{ $hotel['check_in'] }}</strong></li>
-                <li><i data-lucide="log-out"></i> Check-out hasta las <strong>{{ $hotel['check_out'] }}</strong></li>
-            </ul>
+            <dl class="datos-hotel">
+                <div><dt>Check-in</dt><dd>Desde las {{ $hotel['check_in'] }}</dd></div>
+                <div><dt>Check-out</dt><dd>Hasta las {{ $hotel['check_out'] }}</dd></div>
+                <div><dt>Recepción</dt><dd>{{ $hotel['recepcion'] }}</dd></div>
+                <div><dt>Dirección</dt><dd>{{ $hotel['direccion']['calle'] }}, {{ $hotel['direccion']['ciudad'] }}</dd></div>
+            </dl>
         </div>
     </div>
 </section>

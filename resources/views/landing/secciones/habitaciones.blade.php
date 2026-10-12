@@ -7,9 +7,8 @@
 <section class="seccion seccion-clara seccion-habitaciones" id="habitaciones" aria-labelledby="titulo-habitaciones">
     <div class="contenedor">
         <header class="seccion-cabecera revelar">
-            <p class="antetitulo antetitulo-oscuro">Habitaciones</p>
-            <h2 id="titulo-habitaciones" class="titulo-seccion">Elige cómo quieres descansar</h2>
-            <p>Tarifas de hoy por noche, en bolivianos.</p>
+            <h2 id="titulo-habitaciones" class="titulo-seccion">Habitaciones</h2>
+            <p>Tarifa de hoy por habitación y por noche. Más de {{ \App\Support\Disponibilidad::NOCHES_PRECIO_NORMAL }} noches: {{ \App\Support\Disponibilidad::DESCUENTO_LARGA }} % menos desde la {{ \App\Support\Disponibilidad::NOCHES_PRECIO_NORMAL + 1 }}.ª.</p>
         </header>
     </div>
 
@@ -24,7 +23,6 @@
             </div>
 
             <div class="bloque-habitacion-texto revelar">
-                <p class="bloque-numero">{{ str_pad($loop->iteration, 2, '0', STR_PAD_LEFT) }} / {{ str_pad($loop->count, 2, '0', STR_PAD_LEFT) }}</p>
                 <h3 id="tipo-{{ $tipo->id }}">{{ $tipo->nombreVisible() }}</h3>
                 @if ($tipo->descripcion)
                     <p>{{ $tipo->descripcion }}</p>
@@ -53,7 +51,7 @@
         </article>
     @empty
         <div class="contenedor">
-            <p class="vacio-landing">Muy pronto publicaremos nuestras habitaciones.</p>
+            <p class="vacio-landing">Sin habitaciones publicadas.</p>
         </div>
     @endforelse
 </section>

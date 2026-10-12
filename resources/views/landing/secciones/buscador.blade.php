@@ -3,7 +3,7 @@
     <div class="contenedor">
         <div class="buscador-tarjeta">
             <div class="buscador-encabezado">
-                <h2 id="titulo-buscador">Consulta disponibilidad</h2>
+                <h2 id="titulo-buscador">Disponibilidad y precios</h2>
                 <p>Precios en bolivianos por habitación, para toda la estadía.</p>
             </div>
 

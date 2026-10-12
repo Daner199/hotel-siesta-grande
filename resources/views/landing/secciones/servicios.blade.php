@@ -26,7 +26,6 @@
             <div class="servicio-pantalla-velo" aria-hidden="true"></div>
 
             <div class="contenedor servicio-pantalla-texto revelar">
-                <p class="antetitulo"><i data-lucide="{{ $s['icono'] }}"></i> Servicios del hotel</p>
                 <h2 id="servicio-{{ $loop->index }}">{{ $s['titulo'] }}</h2>
                 @if ($s['texto'])
                     <p>{{ $s['texto'] }}</p>
@@ -40,7 +39,6 @@
         <section class="seccion seccion-clara" aria-labelledby="titulo-salones">
             <div class="contenedor">
                 <header class="seccion-cabecera revelar">
-                    <p class="antetitulo antetitulo-oscuro">Eventos</p>
                     <h2 id="titulo-salones" class="titulo-seccion">
                         {{ $salones->count() === 1 ? 'Salón de eventos' : 'Salones de eventos' }}
                     </h2>
