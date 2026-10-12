@@ -3,7 +3,11 @@
 namespace App\Support;
 
 use App\Models\Habitacion;
+use App\Models\Agencia;
 use App\Models\EstadoHabitacion;
+use App\Models\EstadoReserva;
+use App\Models\Pago;
+use App\Models\Reserva;
 use App\Models\TipoHabitacion;
 use App\Models\Usuario;
 use Carbon\Carbon;
@@ -29,6 +33,8 @@ class Reportes
     // clave de la URL => título y quién lo ve (recepción solo los que usa en su trabajo)
     public const LISTA = [
         'disponibles' => ['titulo' => 'Habitaciones disponibles', 'roles' => self::AMBOS],
+        'agencias'    => ['titulo' => 'Reservas de agencias', 'roles' => [Usuario::ADMINISTRADOR]],
+        'no-show'     => ['titulo' => 'No-show', 'roles' => self::AMBOS],
     ];
 
     /** @return array<string, string> [clave => título] que puede ver ese rol */
@@ -54,6 +60,10 @@ class Reportes
     {
         return match ($clave) {
             'disponibles' => ['tipos' => TipoHabitacion::where('activo', true)->orderBy('capacidad')->orderBy('nombre')->get()],
+            'agencias'    => [
+                'agencias' => Agencia::orderBy('nombre')->get(['id', 'nombre']),
+                'estados'  => EstadoReserva::orderBy('id')->get(),
+            ],
             default       => [],
         };
     }
@@ -95,6 +105,17 @@ class Reportes
                 'salida'  => ['date_format:Y-m-d', 'after:llegada'],
                 'tipo'    => ['nullable', 'integer'],
             ], ['llegada' => $hoy->toDateString(), 'salida' => $hoy->copy()->addDay()->toDateString(), 'tipo' => null]],
+            'agencias' => [[
+                'desde'   => ['date_format:Y-m-d'],
+                'hasta'   => ['date_format:Y-m-d', 'after_or_equal:desde'],
+                'agencia' => ['nullable', 'integer'],
+                'estado'  => ['nullable', 'string', 'max:30'],
+            ], ['desde' => $hoy->copy()->startOfMonth()->toDateString(), 'hasta' => $hoy->copy()->endOfMonth()->toDateString(),
+                'agencia' => null, 'estado' => null]],
+            'no-show' => [[
+                'desde' => ['date_format:Y-m-d'],
+                'hasta' => ['date_format:Y-m-d', 'after_or_equal:desde'],
+            ], ['desde' => $hoy->copy()->startOfMonth()->toDateString(), 'hasta' => $hoy->toDateString()]],
         };
 
         $datos = array_merge($defecto, array_filter($request->only(array_keys($reglas)), fn ($v) => $v !== null && $v !== ''));
@@ -102,6 +123,9 @@ class Reportes
         Validator::make($datos, $reglas, [
             'date_format'    => 'Fecha no válida.',
             'after'          => 'La salida debe ser después de la llegada.',
+            'after_or_equal' => 'La fecha "hasta" no puede ser antes de "desde".',
+            'max'            => 'Valor no válido.',
+            'string'         => 'Valor no válido.',
             'integer'        => 'Valor no válido.',
         ])->validate();
 
@@ -191,5 +215,178 @@ class Reportes
             ],
             'nota' => null,
         ];
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // 2. Reservas de agencias entre fechas (por fecha de entrada)
+    // ---------------------------------------------------------------------------------------------
+
+    private static function agencias(array $f): array
+    {
+        $desde = Carbon::parse($f['desde']);
+        $hasta = Carbon::parse($f['hasta']);
+
+        $reservas = self::conPagado(Reserva::query())
+            ->whereNotNull('agencia_id')
+            ->whereBetween('fecha_entrada', [$desde->toDateString(), $hasta->toDateString()])
+            ->when($f['agencia'], fn ($q) => $q->where('agencia_id', (int) $f['agencia']))
+            ->when($f['estado'], fn ($q) => $q->whereHas('estado', fn ($e) => $e->where('nombre', $f['estado'])))
+            ->with(['agencia', 'estado', 'habitaciones'])
+            ->orderBy('fecha_entrada')->orderBy('id')
+            ->get();
+
+        // El importe no cuenta las canceladas (no se cobran)
+        $cancelada = fn ($r) => $r->esEstado(EstadoReserva::CANCELADA);
+        $importe   = fn ($r) => $cancelada($r) ? 0 : $r->total();
+
+        $porAgencia = $reservas->groupBy(fn ($r) => $r->agencia->nombre)->map(fn ($g, $nombre) => [
+            $nombre,
+            $g->count(),
+            $g->filter($cancelada)->count(),
+            $g->reject($cancelada)->sum(fn ($r) => $r->noches() * $r->habitaciones->count()),
+            round($g->sum($importe), 2),
+            round($g->sum(fn ($r) => (float) $r->pagado), 2),
+        ])->sortByDesc(4)->values();
+
+        $totalImporte = round($reservas->sum($importe), 2);
+        $totalPagado  = round($reservas->sum(fn ($r) => (float) $r->pagado), 2);
+
+        $filtroTexto = collect([
+            $f['agencia'] ? (Agencia::find($f['agencia'])?->nombre ?? '—') : 'Todas las agencias',
+            $f['estado'] ? (EstadoReserva::where('nombre', $f['estado'])->first()?->etiqueta() ?? $f['estado']) : null,
+        ])->filter()->join(' · ');
+
+        return [
+            'titulo'  => self::LISTA['agencias']['titulo'],
+            'periodo' => 'Entrada del ' . $desde->format('d/m/Y') . ' al ' . $hasta->format('d/m/Y') . ' · ' . $filtroTexto,
+            'cifras'  => [
+                ['texto' => 'Reservas', 'valor' => (string) $reservas->count()],
+                ['texto' => 'Agencias', 'valor' => (string) $porAgencia->count()],
+                ['texto' => 'Importe (sin canceladas)', 'valor' => Moneda::formato($totalImporte)],
+                ['texto' => 'Pagado', 'valor' => Moneda::formato($totalPagado)],
+            ],
+            'graficos' => [],
+            'tablas'  => [
+                [
+                    'titulo'   => 'Por agencia',
+                    'columnas' => [
+                        ['texto' => 'Agencia', 'tipo' => 'texto'],
+                        ['texto' => 'Reservas', 'tipo' => 'entero'],
+                        ['texto' => 'Canceladas', 'tipo' => 'entero'],
+                        ['texto' => 'Noches-habitación', 'tipo' => 'entero'],
+                        ['texto' => 'Importe', 'tipo' => 'moneda'],
+                        ['texto' => 'Pagado', 'tipo' => 'moneda'],
+                    ],
+                    'filas' => $porAgencia->all(),
+                    'pie'   => $porAgencia->count() > 1
+                        ? ['Total', $reservas->count(), $porAgencia->sum(2), $porAgencia->sum(3), $totalImporte, $totalPagado]
+                        : null,
+                    'vacio' => 'Sin reservas de agencias en esas fechas.',
+                ],
+                [
+                    'titulo'   => 'Reservas',
+                    'columnas' => [
+                        ['texto' => 'Código', 'tipo' => 'texto'],
+                        ['texto' => 'Agencia', 'tipo' => 'texto'],
+                        ['texto' => 'Titular', 'tipo' => 'texto'],
+                        ['texto' => 'Entrada', 'tipo' => 'fecha'],
+                        ['texto' => 'Salida', 'tipo' => 'fecha'],
+                        ['texto' => 'Hab.', 'tipo' => 'entero'],
+                        ['texto' => 'Estado', 'tipo' => 'texto'],
+                        ['texto' => 'Importe', 'tipo' => 'moneda'],
+                        ['texto' => 'Pagado', 'tipo' => 'moneda'],
+                    ],
+                    'filas' => $reservas->map(fn ($r) => [
+                        $r->codigo, $r->agencia->nombre, $r->nombre_titular, $r->fecha_entrada, $r->fecha_salida,
+                        $r->habitaciones->count(), $r->estado->etiqueta(), $importe($r), (float) $r->pagado,
+                    ])->all(),
+                    'pie'   => $reservas->isNotEmpty() ? ['Total', null, null, null, null, null, null, $totalImporte, $totalPagado] : null,
+                    'vacio' => 'Sin reservas.',
+                ],
+            ],
+            'nota' => 'Importes con el ' . Disponibilidad::DESCUENTO_AGENCIA . ' % de descuento de agencia ya aplicado.',
+        ];
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // 3. Reservas con no-show (por fecha de llegada)
+    // ---------------------------------------------------------------------------------------------
+
+    private static function noShow(array $f): array
+    {
+        $desde = Carbon::parse($f['desde']);
+        $hasta = Carbon::parse($f['hasta']);
+        $rango = [$desde->toDateString(), $hasta->toDateString()];
+
+        $reservas = self::conPagado(Reserva::query())
+            ->whereHas('estado', fn ($e) => $e->where('nombre', EstadoReserva::NO_SHOW))
+            ->whereBetween('fecha_entrada', $rango)
+            ->with(['agencia', 'creador', 'habitaciones.habitacion'])
+            ->orderBy('fecha_entrada')->orderBy('id')
+            ->get();
+
+        // Llegadas esperadas en el período (todas menos las canceladas): base de la tasa
+        $esperadas = Reserva::whereBetween('fecha_entrada', $rango)
+            ->whereHas('estado', fn ($e) => $e->where('nombre', '!=', EstadoReserva::CANCELADA))
+            ->count();
+
+        $retenido = round($reservas->sum(fn ($r) => (float) $r->pagado), 2);
+
+        return [
+            'titulo'  => self::LISTA['no-show']['titulo'],
+            'periodo' => 'Llegada del ' . $desde->format('d/m/Y') . ' al ' . $hasta->format('d/m/Y'),
+            'cifras'  => [
+                ['texto' => 'Reservas no-show', 'valor' => (string) $reservas->count()],
+                ['texto' => 'Llegadas esperadas', 'valor' => (string) $esperadas],
+                ['texto' => 'Tasa de no-show', 'valor' => self::celda($esperadas ? $reservas->count() / $esperadas * 100 : 0, 'porcentaje')],
+                ['texto' => 'Pagado retenido', 'valor' => Moneda::formato($retenido)],
+            ],
+            'graficos' => [],
+            'tablas'  => [[
+                'titulo'   => 'Reservas',
+                'columnas' => [
+                    ['texto' => 'Código', 'tipo' => 'texto'],
+                    ['texto' => 'Titular', 'tipo' => 'texto'],
+                    ['texto' => 'Canal', 'tipo' => 'texto'],
+                    ['texto' => 'Llegada', 'tipo' => 'fecha'],
+                    ['texto' => 'Noches', 'tipo' => 'entero'],
+                    ['texto' => 'Habitaciones', 'tipo' => 'texto'],
+                    ['texto' => 'Importe', 'tipo' => 'moneda'],
+                    ['texto' => 'Pagado retenido', 'tipo' => 'moneda'],
+                ],
+                'filas' => $reservas->map(fn ($r) => [
+                    $r->codigo, $r->nombre_titular, self::canal($r), $r->fecha_entrada, $r->noches(),
+                    $r->habitaciones->map(fn ($rh) => $rh->habitacion->numero)->join(', '), $r->total(), (float) $r->pagado,
+                ])->all(),
+                'pie'   => $reservas->isNotEmpty()
+                    ? ['Total', null, null, null, $reservas->sum(fn ($r) => $r->noches()), null,
+                        round($reservas->sum(fn ($r) => $r->total()), 2), $retenido]
+                    : null,
+                'vacio' => 'Sin no-show en esas fechas.',
+            ]],
+            'nota' => null,
+        ];
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // Ayudas
+    // ---------------------------------------------------------------------------------------------
+
+    // Agrega "pagado" (suma de pagos aprobados) sin una consulta por reserva
+    private static function conPagado($consulta)
+    {
+        return $consulta->select('reserva.*')->addSelect(['pagado' => Pago::selectRaw('COALESCE(SUM(monto), 0)')
+            ->whereColumn('pago.reserva_id', 'reserva.id')
+            ->where('estado', Pago::APROBADO)]);
+    }
+
+    // Quién hizo la reserva: la agencia, recepción o el cliente en línea
+    private static function canal(Reserva $r): string
+    {
+        if ($r->agencia) {
+            return $r->agencia->nombre;
+        }
+
+        return $r->creador?->rol === Usuario::RECEPCIONISTA ? 'Recepción' : 'En línea';
     }
 }

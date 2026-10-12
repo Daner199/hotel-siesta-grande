@@ -9,6 +9,7 @@ use App\Support\ReporteExcel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Módulo 9: reportes del administrador (los 6) y de recepción (los que usa en su trabajo).
