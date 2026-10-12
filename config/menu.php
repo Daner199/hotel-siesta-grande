@@ -29,7 +29,7 @@ return [
             ['texto' => 'Salón de eventos', 'icono' => 'party-popper', 'ruta' => null],
         ]],
         ['grupo' => 'Análisis', 'items' => [
-            ['texto' => 'Reportes', 'icono' => 'chart-column', 'ruta' => null],
+            ['texto' => 'Reportes', 'icono' => 'chart-column', 'ruta' => 'admin.reportes.index', 'patron' => 'admin.reportes.*'],
         ]],
     ],
 
@@ -46,6 +46,9 @@ return [
             ['texto' => 'Mis comisiones', 'icono' => 'coins', 'ruta' => 'recepcion.comisiones'],
             ['texto' => 'Consumos', 'icono' => 'utensils', 'ruta' => 'recepcion.consumos.index', 'patron' => 'recepcion.consumos.*'],
             ['texto' => 'Huéspedes alojados', 'icono' => 'users', 'ruta' => null],
+        ]],
+        ['grupo' => 'Consultas', 'items' => [
+            ['texto' => 'Reportes', 'icono' => 'chart-column', 'ruta' => 'recepcion.reportes.index', 'patron' => 'recepcion.reportes.*'],
         ]],
     ],
 

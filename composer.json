@@ -11,6 +11,7 @@
         "chillerlan/php-qrcode": "^6.0",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "phpoffice/phpspreadsheet": "^5.10",
         "propaganistas/laravel-phone": "^6.1"
     },
     "require-dev": {

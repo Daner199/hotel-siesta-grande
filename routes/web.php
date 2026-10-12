@@ -5,6 +5,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\Banco\BancoSiestaController;
 use App\Http\Controllers\PanelController;
 use App\Http\Controllers\ReciboVerificacionController;
+use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\Auth\RegistroController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\RecepcionistaController;
@@ -154,6 +155,11 @@ Route::middleware(['auth', 'rol:ADMINISTRADOR'])
             ->whereNumber(['habitacion', 'foto'])->scopeBindings()->name('habitaciones.fotos.mover');
         Route::delete('/habitaciones/{habitacion}/fotos/{foto}', [FotoHabitacionController::class, 'destroy'])
             ->whereNumber(['habitacion', 'foto'])->scopeBindings()->name('habitaciones.fotos.destroy');
+
+        // Reportes (los 6); ?exportar=pdf|excel
+        Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
+        Route::get('/reportes/{reporte}', [ReporteController::class, 'show'])
+            ->where('reporte', '[a-z-]+')->name('reportes.show');
     });
 
 Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
@@ -167,6 +173,11 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
     Route::get('/recepcion/recibos/{recibo}', [ReservaRecepcion::class, 'recibo'])->whereNumber('recibo')->name('recepcion.recibos.show');
     Route::get('/recepcion/recibos/{recibo}/pdf', [ReservaRecepcion::class, 'reciboPdf'])->whereNumber('recibo')->name('recepcion.recibos.pdf');
     Route::get('/recepcion/comisiones', [ComisionRecepcion::class, 'index'])->name('recepcion.comisiones');
+
+    // Reportes que usa recepción (disponibles, no-show, alojados, cuenta); ?exportar=pdf|excel
+    Route::get('/recepcion/reportes', [ReporteController::class, 'index'])->name('recepcion.reportes.index');
+    Route::get('/recepcion/reportes/{reporte}', [ReporteController::class, 'show'])
+        ->where('reporte', '[a-z-]+')->name('recepcion.reportes.show');
 
     // Check-in / Check-out y cuenta del huésped
     Route::get('/recepcion/estadias', [EstadiaRecepcion::class, 'index'])->name('recepcion.estadias.index');

@@ -1,0 +1,55 @@
+/* ============================================================
+   REPORTES (Módulo 9): plano, líneas finas, números alineados a la derecha.
+   ============================================================ */
+
+.pestanas-reportes { margin: 1.5rem 0 1rem; overflow-x: auto; scrollbar-width: thin; }
+.pestanas-reportes a { white-space: nowrap; }
+
+/* ---------- Filtros ---------- */
+.filtros-reporte { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem 1rem; }
+.filtros-reporte .campo { margin: 0; min-width: 150px; }
+.filtros-reporte .campo-codigo { min-width: 240px; }
+.filtros-reporte .campo input,
+.filtros-reporte .campo select { padding: .6rem .75rem; font-size: .95rem; }
+.filtros-reporte .btn { padding: .65rem 1.4rem; }
+.filtros-error { flex-basis: 100%; margin: 0; }
+
+/* ---------- Hoja del reporte ---------- */
+.hoja-reporte { margin-top: 1rem; }
+.reporte-cabecera { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.reporte-cabecera h2 { margin: 0; font-size: 1.15rem; }
+.reporte-cabecera p { margin: .2rem 0 0; color: var(--piedra); font-size: .92rem; }
+.reporte-exportar { display: flex; gap: .4rem; }
+
+.cifras-reporte {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    margin: 1.25rem 0 0;
+    border-top: 1px solid var(--p-linea);
+    border-bottom: 1px solid var(--p-linea);
+}
+.cifras-reporte > div { padding: .8rem 1rem .8rem 0; }
+.cifras-reporte > div + div { padding-left: 1rem; border-left: 1px solid var(--p-linea); }
+.cifras-reporte dt { font-size: .82rem; color: var(--piedra); }
+.cifras-reporte dd { margin: .1rem 0 0; font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* ---------- Gráficos ---------- */
+.graficos-reporte { display: grid; gap: 1.5rem; margin-top: 1.5rem; }
+.grafico { margin: 0; }
+.grafico figcaption { margin-bottom: .6rem; font-weight: 600; font-size: .95rem; }
+.grafico svg { display: block; width: 100%; max-width: 760px; height: auto; }
+.grafico g:hover rect:last-of-type { opacity: .82; }
+
+/* ---------- Tablas ---------- */
+.tabla-reporte-titulo { margin: 1.75rem 0 .6rem; font-family: var(--f-texto); font-size: 1rem; font-weight: 600; }
+.tabla.tabla-reporte th, .tabla.tabla-reporte td { padding: .55rem .9rem; font-size: .9rem; }
+.tabla.tabla-reporte th { font-size: .8rem; }
+.tabla-reporte .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tabla.tabla-reporte tfoot td { font-weight: 700; border-top: 1px solid var(--selva); background: #FAFBF8; }
+.nota-reporte { margin: 1rem 0 0; font-size: .85rem; color: var(--piedra); }
+
+@media (max-width: 640px) {
+    .cifras-reporte { grid-template-columns: 1fr 1fr; }
+    .cifras-reporte > div:nth-child(odd) { padding-left: 0; border-left: 0; }
+    .filtros-reporte .campo { flex: 1 1 140px; }
+}
