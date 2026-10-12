@@ -178,6 +178,7 @@ Route::middleware(['auth', 'rol:RECEPCIONISTA'])->group(function () {
     Route::get('/recepcion/reportes', [ReporteController::class, 'index'])->name('recepcion.reportes.index');
     Route::get('/recepcion/reportes/{reporte}', [ReporteController::class, 'show'])
         ->where('reporte', '[a-z-]+')->name('recepcion.reportes.show');
+    Route::get('/recepcion/alojados', [ReporteController::class, 'alojados'])->name('recepcion.alojados');
 
     // Check-in / Check-out y cuenta del huésped
     Route::get('/recepcion/estadias', [EstadiaRecepcion::class, 'index'])->name('recepcion.estadias.index');

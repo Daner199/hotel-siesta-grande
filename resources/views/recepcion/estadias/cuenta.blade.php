@@ -59,6 +59,9 @@
                 </form>
             @endif
         @endif
+        <a href="{{ route('recepcion.reportes.show', ['cuenta', 'codigo' => $reserva->codigo, 'exportar' => 'pdf']) }}" class="btn btn-secundario">
+            <i data-lucide="file-text"></i> PDF
+        </a>
         <a href="{{ route('recepcion.reservas.show', $reserva) }}" class="btn btn-secundario">Reserva</a>
     </div>
 </header>

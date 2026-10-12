@@ -121,7 +121,7 @@ class ReporteExcel
         }
 
         if (! empty($tabla['pie'])) {
-            self::fila($hoja, $tabla['columnas'], $tabla['pie'], $fila);
+            self::fila($hoja, $tabla['columnas'], $tabla['pie'], $fila, true);
             $hoja->getStyle("A{$fila}:{$ultima}{$fila}")->applyFromArray([
                 'font'    => ['bold' => true],
                 'borders' => ['top' => ['borderStyle' => Border::BORDER_THIN, 'color' => ['rgb' => '1D3A2E']]],
@@ -132,7 +132,8 @@ class ReporteExcel
         return $fila + 1;
     }
 
-    private static function fila(Worksheet $hoja, array $columnas, array $valores, int $fila): void
+    // En el pie, la primera celda es el texto "Total" (aunque la columna sea de fechas)
+    private static function fila(Worksheet $hoja, array $columnas, array $valores, int $fila, bool $pie = false): void
     {
         foreach ($columnas as $i => $col) {
             $valor = $valores[$i] ?? null;
@@ -142,7 +143,7 @@ class ReporteExcel
                 continue;
             }
 
-            switch ($col['tipo']) {
+            switch ($pie && $i === 0 ? 'texto' : $col['tipo']) {
                 case 'moneda':
                 case 'entero':
                     $hoja->setCellValue($celda, (float) $valor);
@@ -158,7 +159,7 @@ class ReporteExcel
                     $hoja->setCellValueExplicit($celda, (string) $valor, \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
             }
 
-            if (isset(self::FORMATOS[$col['tipo']])) {
+            if (isset(self::FORMATOS[$col['tipo']]) && ! ($pie && $i === 0)) {
                 $hoja->getStyle($celda)->getNumberFormat()->setFormatCode(self::FORMATOS[$col['tipo']]);
             }
         }

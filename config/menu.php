@@ -45,7 +45,7 @@ return [
             ['texto' => 'Transferencias', 'icono' => 'landmark', 'ruta' => 'recepcion.transferencias.index', 'patron' => 'recepcion.transferencias.*', 'contador' => 'transferencias'],
             ['texto' => 'Mis comisiones', 'icono' => 'coins', 'ruta' => 'recepcion.comisiones'],
             ['texto' => 'Consumos', 'icono' => 'utensils', 'ruta' => 'recepcion.consumos.index', 'patron' => 'recepcion.consumos.*'],
-            ['texto' => 'Huéspedes alojados', 'icono' => 'users', 'ruta' => null],
+            ['texto' => 'Huéspedes alojados', 'icono' => 'users', 'ruta' => 'recepcion.alojados'],
         ]],
         ['grupo' => 'Consultas', 'items' => [
             ['texto' => 'Reportes', 'icono' => 'chart-column', 'ruta' => 'recepcion.reportes.index', 'patron' => 'recepcion.reportes.*'],

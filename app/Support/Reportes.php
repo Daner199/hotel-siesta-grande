@@ -2,9 +2,9 @@
 
 namespace App\Support;
 
-use App\Models\Habitacion;
 use App\Models\Agencia;
 use App\Models\EstadoHabitacion;
+use App\Models\Habitacion;
 use App\Models\EstadoReserva;
 use App\Models\Pago;
 use App\Models\Reserva;
@@ -35,6 +35,8 @@ class Reportes
         'disponibles' => ['titulo' => 'Habitaciones disponibles', 'roles' => self::AMBOS],
         'agencias'    => ['titulo' => 'Reservas de agencias', 'roles' => [Usuario::ADMINISTRADOR]],
         'no-show'     => ['titulo' => 'No-show', 'roles' => self::AMBOS],
+        'alojados'    => ['titulo' => 'Huéspedes alojados', 'roles' => self::AMBOS],
+        'cuenta'      => ['titulo' => 'Cuenta del huésped', 'roles' => self::AMBOS],
     ];
 
     /** @return array<string, string> [clave => título] que puede ver ese rol */
@@ -64,6 +66,11 @@ class Reportes
                 'agencias' => Agencia::orderBy('nombre')->get(['id', 'nombre']),
                 'estados'  => EstadoReserva::orderBy('id')->get(),
             ],
+            'alojados'    => ['pisos' => Habitacion::distinct()->orderBy('piso')->pluck('piso')],
+            // Sugerencias: primero los alojados, luego las más recientes
+            'cuenta'      => ['codigos' => Reserva::join('estado_reserva as er', 'er.id', '=', 'reserva.estado_reserva_id')
+                ->orderByRaw("CASE WHEN er.nombre = 'CHECK_IN' THEN 0 ELSE 1 END")->orderByDesc('reserva.id')
+                ->limit(40)->pluck('nombre_titular', 'codigo')],
             default       => [],
         };
     }
@@ -116,6 +123,8 @@ class Reportes
                 'desde' => ['date_format:Y-m-d'],
                 'hasta' => ['date_format:Y-m-d', 'after_or_equal:desde'],
             ], ['desde' => $hoy->copy()->startOfMonth()->toDateString(), 'hasta' => $hoy->toDateString()]],
+            'alojados' => [['piso' => ['nullable', 'integer']], ['piso' => null]],
+            'cuenta'   => [['codigo' => ['nullable', 'string', 'max:30']], ['codigo' => null]],
         };
 
         $datos = array_merge($defecto, array_filter($request->only(array_keys($reglas)), fn ($v) => $v !== null && $v !== ''));
@@ -364,6 +373,159 @@ class Reportes
                     : null,
                 'vacio' => 'Sin no-show en esas fechas.',
             ]],
+            'nota' => null,
+        ];
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // 4. Huéspedes actualmente alojados (CHECK_IN)
+    // ---------------------------------------------------------------------------------------------
+
+    private static function alojados(array $f): array
+    {
+        $piso = $f['piso'] !== null ? (int) $f['piso'] : null;
+
+        $reservas = Reserva::whereHas('estado', fn ($e) => $e->where('nombre', EstadoReserva::CHECK_IN))
+            ->when($piso !== null, fn ($q) => $q->whereHas('habitaciones.habitacion', fn ($h) => $h->where('piso', $piso)))
+            ->with(['agencia', 'creador', 'estado', 'habitaciones.habitacion.tipo'])
+            ->get()
+            ->sortBy(fn ($r) => $r->habitaciones->map(fn ($rh) => $rh->habitacion->numero)->min())
+            ->values();
+
+        $filas = $reservas->map(fn ($r) => [
+            $r->habitaciones->map(fn ($rh) => $rh->habitacion->numero)->join(', '),
+            $r->nombre_titular,
+            $r->cantidad_personas,
+            self::canal($r),
+            $r->check_in_en,
+            $r->fecha_salida,
+            max(0, (int) today()->diffInDays($r->fecha_salida, false)),
+            $r->totalConsumos(),
+            $r->saldo(),
+        ]);
+
+        $ocupadas = $reservas->sum(fn ($r) => $r->habitaciones->count());
+        $enServicio = Habitacion::whereHas('estado', fn ($e) => $e->where('nombre', EstadoHabitacion::ACTIVA))
+            ->when($piso !== null, fn ($q) => $q->where('piso', $piso))
+            ->count();
+
+        return [
+            'titulo'  => self::LISTA['alojados']['titulo'],
+            'periodo' => 'Al ' . now()->format('d/m/Y H:i') . ($piso !== null ? ' · Piso ' . $piso : ' · Todos los pisos'),
+            'cifras'  => [
+                ['texto' => 'Habitaciones ocupadas', 'valor' => $ocupadas . ' de ' . $enServicio],
+                ['texto' => 'Ocupación', 'valor' => self::celda($enServicio ? $ocupadas / $enServicio * 100 : 0, 'porcentaje')],
+                ['texto' => 'Huéspedes', 'valor' => (string) $reservas->sum('cantidad_personas')],
+                ['texto' => 'Saldo por cobrar', 'valor' => Moneda::formato($filas->sum(8))],
+            ],
+            'graficos' => [],
+            'tablas'  => [[
+                'titulo'   => 'Alojados',
+                'columnas' => [
+                    ['texto' => 'Hab.', 'tipo' => 'texto'],
+                    ['texto' => 'Titular', 'tipo' => 'texto'],
+                    ['texto' => 'Personas', 'tipo' => 'entero'],
+                    ['texto' => 'Canal', 'tipo' => 'texto'],
+                    ['texto' => 'Check-in', 'tipo' => 'fechahora'],
+                    ['texto' => 'Salida', 'tipo' => 'fecha'],
+                    ['texto' => 'Noches que faltan', 'tipo' => 'entero'],
+                    ['texto' => 'Consumos', 'tipo' => 'moneda'],
+                    ['texto' => 'Saldo', 'tipo' => 'moneda'],
+                ],
+                'filas' => $filas->all(),
+                'pie'   => $filas->isNotEmpty()
+                    ? ['Total', null, $reservas->sum('cantidad_personas'), null, null, null, null, round($filas->sum(7), 2), round($filas->sum(8), 2)]
+                    : null,
+                'vacio' => 'No hay huéspedes alojados.',
+            ]],
+            'nota' => null,
+        ];
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // 5. Cuenta de un huésped: estadía, consumos y pagos
+    // ---------------------------------------------------------------------------------------------
+
+    private static function cuenta(array $f): array
+    {
+        $codigo  = mb_strtoupper(trim((string) $f['codigo']));
+        $reserva = $codigo !== '' ? Reserva::where('codigo', $codigo)->with(['estado', 'agencia'])->first() : null;
+
+        if (! $reserva) {
+            return [
+                'titulo'     => self::LISTA['cuenta']['titulo'],
+                'periodo'    => $codigo === '' ? 'Escribe el código de la reserva.' : "No existe la reserva {$codigo}.",
+                'cifras'     => [],
+                'graficos'   => [],
+                'tablas'     => [],
+                'nota'       => null,
+                'exportable' => false,
+            ];
+        }
+
+        $cuenta = Cuentas::de($reserva);
+        $noches = $reserva->noches();
+
+        return [
+            'titulo'  => self::LISTA['cuenta']['titulo'] . ' · ' . $reserva->nombre_titular,
+            'periodo' => $reserva->codigo . ' · Del ' . $reserva->fecha_entrada->format('d/m/Y') . ' al ' . $reserva->fecha_salida->format('d/m/Y')
+                . ' · ' . $noches . ($noches === 1 ? ' noche' : ' noches') . ' · ' . $reserva->estado->etiqueta()
+                . ($reserva->agencia ? ' · ' . $reserva->agencia->nombre : ''),
+            'cifras'  => [
+                ['texto' => 'Estadía', 'valor' => Moneda::formato($cuenta['estadia'])],
+                ['texto' => 'Consumos', 'valor' => Moneda::formato($cuenta['totalConsumos'])],
+                ['texto' => 'Pagado', 'valor' => Moneda::formato($cuenta['pagado'])],
+                ['texto' => 'Saldo', 'valor' => Moneda::formato($cuenta['saldo'])],
+            ],
+            'graficos' => [],
+            'tablas'  => [
+                [
+                    'titulo'   => 'Estadía',
+                    'columnas' => [
+                        ['texto' => 'Habitación', 'tipo' => 'texto'],
+                        ['texto' => 'Tipo', 'tipo' => 'texto'],
+                        ['texto' => 'Noches', 'tipo' => 'entero'],
+                        ['texto' => 'Precio por noche', 'tipo' => 'moneda'],
+                        ['texto' => 'Importe', 'tipo' => 'moneda'],
+                    ],
+                    'filas' => $reserva->habitaciones->map(fn ($rh) => [
+                        $rh->habitacion->numero, $rh->habitacion->tipo->nombreVisible(), $noches, (float) $rh->precio_noche_aplicado,
+                        Disponibilidad::calcularEstadia((float) $rh->precio_noche_aplicado, $noches)['total'],
+                    ])->all(),
+                    'pie'   => ['Total estadía', null, null, null, $cuenta['estadia']],
+                    'vacio' => 'Sin habitaciones.',
+                ],
+                [
+                    'titulo'   => 'Consumos',
+                    'columnas' => [
+                        ['texto' => 'Fecha', 'tipo' => 'fechahora'],
+                        ['texto' => 'Tipo', 'tipo' => 'texto'],
+                        ['texto' => 'Detalle', 'tipo' => 'texto'],
+                        ['texto' => 'Cant.', 'tipo' => 'entero'],
+                        ['texto' => 'P. unit.', 'tipo' => 'moneda'],
+                        ['texto' => 'Importe', 'tipo' => 'moneda'],
+                    ],
+                    'filas' => $cuenta['consumos']->sortBy('fecha_consumo')->map(fn ($c) => [
+                        $c->fecha_consumo, $c->tipo->etiqueta(), $c->descripcion, $c->cantidad, (float) $c->precio_unitario, $c->importe(),
+                    ])->values()->all(),
+                    'pie'   => $cuenta['consumos']->isNotEmpty() ? ['Total consumos', null, null, null, null, $cuenta['totalConsumos']] : null,
+                    'vacio' => 'Sin consumos.',
+                ],
+                [
+                    'titulo'   => 'Pagos',
+                    'columnas' => [
+                        ['texto' => 'Fecha', 'tipo' => 'fechahora'],
+                        ['texto' => 'Método', 'tipo' => 'texto'],
+                        ['texto' => 'Recibo', 'tipo' => 'texto'],
+                        ['texto' => 'Monto', 'tipo' => 'moneda'],
+                    ],
+                    'filas' => $cuenta['pagos']->sortBy('fecha_pago')->map(fn ($p) => [
+                        $p->fecha_pago, $p->metodo->etiqueta(), $p->recibo?->codigo(), (float) $p->monto,
+                    ])->values()->all(),
+                    'pie'   => $cuenta['pagos']->isNotEmpty() ? ['Total pagado', null, null, $cuenta['pagado']] : null,
+                    'vacio' => 'Sin pagos.',
+                ],
+            ],
             'nota' => null,
         ];
     }
