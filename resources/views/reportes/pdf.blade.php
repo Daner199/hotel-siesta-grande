@@ -26,7 +26,8 @@
         .datos tfoot td { font-weight: bold; border-top: 1.5px solid #1D3A2E; border-bottom: 0; }
         .vacio { color: #5D6A63; }
         .grafico { margin: 6px 0 4px; }
-        .grafico img { width: 100%; }
+        .grafico img { width: 78%; }
+        .junta { page-break-inside: avoid; }
         .nota { margin-top: 14px; color: #5D6A63; font-style: italic; }
         .pie { position: fixed; bottom: -28px; left: 0; right: 0; font-size: 8.5px; color: #5D6A63; }
     </style>
@@ -69,6 +70,8 @@
     @endforeach
 
     @foreach ($reporte['tablas'] as $tabla)
+        {{-- Una tabla corta no se parte entre dos páginas --}}
+        <div @class(['junta' => count($tabla['filas']) <= 20])>
         <h2>{{ $tabla['titulo'] }}</h2>
         @if (empty($tabla['filas']))
             <p class="vacio">{{ $tabla['vacio'] }}</p>
@@ -103,6 +106,7 @@
                 @endif
             </table>
         @endif
+        </div>
     @endforeach
 
     @if (! empty($reporte['nota']))

@@ -12,6 +12,7 @@ use App\Models\TipoHabitacion;
 use App\Models\Usuario;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
@@ -37,6 +38,7 @@ class Reportes
         'no-show'     => ['titulo' => 'No-show', 'roles' => self::AMBOS],
         'alojados'    => ['titulo' => 'Huéspedes alojados', 'roles' => self::AMBOS],
         'cuenta'      => ['titulo' => 'Cuenta del huésped', 'roles' => self::AMBOS],
+        'ocupacion'   => ['titulo' => 'Ocupación e ingresos', 'roles' => [Usuario::ADMINISTRADOR]],
     ];
 
     /** @return array<string, string> [clave => título] que puede ver ese rol */
@@ -125,6 +127,7 @@ class Reportes
             ], ['desde' => $hoy->copy()->startOfMonth()->toDateString(), 'hasta' => $hoy->toDateString()]],
             'alojados' => [['piso' => ['nullable', 'integer']], ['piso' => null]],
             'cuenta'   => [['codigo' => ['nullable', 'string', 'max:30']], ['codigo' => null]],
+            'ocupacion' => [['mes' => ['date_format:Y-m']], ['mes' => $hoy->format('Y-m')]],
         };
 
         $datos = array_merge($defecto, array_filter($request->only(array_keys($reglas)), fn ($v) => $v !== null && $v !== ''));
@@ -527,6 +530,141 @@ class Reportes
                 ],
             ],
             'nota' => null,
+        ];
+    }
+
+    // ---------------------------------------------------------------------------------------------
+    // 6. Ocupación de cada tipo de habitación en un mes + ingresos cobrados
+    // ---------------------------------------------------------------------------------------------
+
+    private static function ocupacion(array $f): array
+    {
+        $inicio = Carbon::createFromFormat('Y-m-d', $f['mes'] . '-01')->startOfDay();
+        $fin    = $inicio->copy()->addMonth(); // exclusivo
+        $dias   = $inicio->daysInMonth;
+
+        // Habitaciones que se pueden vender (las fuera de servicio no cuentan)
+        $tipos = TipoHabitacion::withCount(['habitaciones as en_servicio' => fn ($q) => $q
+                ->whereHas('estado', fn ($e) => $e->where('nombre', '!=', EstadoHabitacion::FUERA_SERVICIO))])
+            ->orderBy('capacidad')->orderBy('nombre')
+            ->get()
+            ->filter(fn ($t) => $t->en_servicio > 0);
+
+        // Noches vendidas dentro del mes: confirmadas, alojadas y finalizadas
+        $lineas = DB::table('reserva_habitacion as rh')
+            ->join('reserva as r', 'r.id', '=', 'rh.reserva_id')
+            ->join('estado_reserva as er', 'er.id', '=', 'r.estado_reserva_id')
+            ->join('habitacion as h', 'h.id', '=', 'rh.habitacion_id')
+            ->whereIn('er.nombre', [EstadoReserva::CONFIRMADA, EstadoReserva::CHECK_IN, EstadoReserva::CHECK_OUT])
+            ->where('r.fecha_entrada', '<', $fin->toDateString())
+            ->where('r.fecha_salida', '>', $inicio->toDateString())
+            ->get(['h.tipo_habitacion_id', 'r.fecha_entrada', 'r.fecha_salida', 'rh.precio_noche_aplicado']);
+
+        // Noche por noche: desde la 8.ª noche de la estadía, 15 % menos (misma regla que el total)
+        $noches = [];
+        $ingreso = [];
+        foreach ($lineas as $l) {
+            $entrada = Carbon::parse($l->fecha_entrada);
+            $hasta   = Carbon::parse($l->fecha_salida)->min($fin);
+            $precio  = (float) $l->precio_noche_aplicado;
+            $rebajado = round($precio * (100 - Disponibilidad::DESCUENTO_LARGA) / 100, 2);
+
+            for ($d = $entrada->copy()->max($inicio); $d->lt($hasta); $d->addDay()) {
+                $t = $l->tipo_habitacion_id;
+                $noches[$t]  = ($noches[$t] ?? 0) + 1;
+                $ingreso[$t] = ($ingreso[$t] ?? 0) + ($entrada->diffInDays($d) >= Disponibilidad::NOCHES_PRECIO_NORMAL ? $rebajado : $precio);
+            }
+        }
+
+        $filas = $tipos->map(fn ($t) => [
+            $t->nombreVisible(),
+            $t->en_servicio,
+            $t->en_servicio * $dias,
+            $noches[$t->id] ?? 0,
+            ($noches[$t->id] ?? 0) / ($t->en_servicio * $dias) * 100,
+            round($ingreso[$t->id] ?? 0, 2),
+        ])->values();
+
+        $disponibles = $filas->sum(2);
+        $vendidas    = $filas->sum(3);
+        $ingresoEstadia = round($filas->sum(5), 2);
+        $ocupacion   = $disponibles ? $vendidas / $disponibles * 100 : 0;
+
+        // Ingresos cobrados: pagos aprobados en el mes (estadía y consumos)
+        $pagos = Pago::where('estado', Pago::APROBADO)
+            ->where('fecha_pago', '>=', $inicio)->where('fecha_pago', '<', $fin)
+            ->with('metodo')
+            ->get();
+        $porDia = array_fill(1, $dias, 0.0);
+        foreach ($pagos as $p) {
+            $porDia[$p->fecha_pago->day] += (float) $p->monto;
+        }
+        $cobrado = round($pagos->sum(fn ($p) => (float) $p->monto), 2);
+
+        $mesTexto = ucfirst($inicio->locale('es')->isoFormat('MMMM [de] YYYY'));
+
+        return [
+            'titulo'  => self::LISTA['ocupacion']['titulo'],
+            'periodo' => $mesTexto . ' · ' . $dias . ' días',
+            'cifras'  => [
+                ['texto' => 'Ocupación', 'valor' => self::celda($ocupacion, 'porcentaje')],
+                ['texto' => 'Noches vendidas', 'valor' => self::celda($vendidas, 'entero') . ' de ' . self::celda($disponibles, 'entero')],
+                ['texto' => 'Tarifa promedio', 'valor' => Moneda::formato($vendidas ? $ingresoEstadia / $vendidas : 0)],
+                ['texto' => 'Ingresos cobrados', 'valor' => Moneda::formato($cobrado)],
+            ],
+            'graficos' => [
+                [
+                    'titulo' => 'Ocupación por tipo',
+                    'svg'    => Graficos::barrasHorizontales($filas->map(fn ($r) => [
+                        'etiqueta' => $r[0], 'valor' => $r[4], 'texto' => self::celda($r[4], 'porcentaje'),
+                    ])->all(), 100),
+                ],
+                [
+                    'titulo' => 'Ingresos cobrados por día',
+                    'svg'    => Graficos::barrasVerticales($porDia, fn ($v) => 'Bs ' . number_format($v, 0, ',', '.')),
+                ],
+            ],
+            'tablas'  => [
+                [
+                    'titulo'   => 'Ocupación por tipo',
+                    'columnas' => [
+                        ['texto' => 'Tipo', 'tipo' => 'texto'],
+                        ['texto' => 'Habitaciones', 'tipo' => 'entero'],
+                        ['texto' => 'Noches disponibles', 'tipo' => 'entero'],
+                        ['texto' => 'Noches vendidas', 'tipo' => 'entero'],
+                        ['texto' => 'Ocupación', 'tipo' => 'porcentaje'],
+                        ['texto' => 'Ingreso por estadía', 'tipo' => 'moneda'],
+                    ],
+                    'filas' => $filas->all(),
+                    'pie'   => ['Total', $filas->sum(1), $disponibles, $vendidas, $ocupacion, $ingresoEstadia],
+                    'vacio' => 'No hay habitaciones en servicio.',
+                ],
+                [
+                    'titulo'   => 'Ingresos cobrados por método',
+                    'columnas' => [
+                        ['texto' => 'Método', 'tipo' => 'texto'],
+                        ['texto' => 'Pagos', 'tipo' => 'entero'],
+                        ['texto' => 'Monto', 'tipo' => 'moneda'],
+                    ],
+                    'filas' => $pagos->groupBy(fn ($p) => $p->metodo->etiqueta())
+                        ->map(fn ($g, $metodo) => [$metodo, $g->count(), round($g->sum(fn ($p) => (float) $p->monto), 2)])
+                        ->sortByDesc(2)->values()->all(),
+                    'pie'   => $pagos->isNotEmpty() ? ['Total', $pagos->count(), $cobrado] : null,
+                    'vacio' => 'Sin pagos en el mes.',
+                ],
+                [
+                    'titulo'   => 'Ingresos cobrados por día',
+                    'columnas' => [
+                        ['texto' => 'Fecha', 'tipo' => 'fecha'],
+                        ['texto' => 'Monto', 'tipo' => 'moneda'],
+                    ],
+                    'filas' => collect($porDia)->filter()->map(fn ($monto, $dia) => [$inicio->copy()->day($dia), round($monto, 2)])->values()->all(),
+                    'pie'   => null,
+                    'vacio' => 'Sin pagos en el mes.',
+                ],
+            ],
+            'nota' => 'Ocupación: reservas confirmadas, alojadas y finalizadas. Ingreso por estadía: noches del mes al precio cobrado. '
+                . 'Ingresos cobrados: pagos aprobados en el mes (estadía y consumos).',
         ];
     }
 
