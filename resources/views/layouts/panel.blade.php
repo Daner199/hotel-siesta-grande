@@ -41,26 +41,19 @@
             @foreach ($menu as $bloque)
                 <p class="lateral-grupo">{{ $bloque['grupo'] }}</p>
                 <ul>
-                    @foreach ($bloque['items'] as $item)
+                    {{-- Solo los módulos que ya existen --}}
+                    @foreach (array_filter($bloque['items'], fn ($i) => $i['ruta']) as $item)
                         <li>
-                            @if ($item['ruta'])
-                                @php $activo = request()->routeIs($item['patron'] ?? $item['ruta']); @endphp
-                                <a href="{{ route($item['ruta']) }}"
-                                   @class(['lateral-enlace', 'activo' => $activo])
-                                   @if ($activo) aria-current="page" @endif>
-                                    <i data-lucide="{{ $item['icono'] }}"></i>
-                                    <span>{{ $item['texto'] }}</span>
-                                    @if (! empty($item['contador']) && ($n = \App\Support\Contadores::valor($item['contador'])))
-                                        <span class="contador-menu" aria-label="{{ $n }} por revisar">{{ $n }}</span>
-                                    @endif
-                                </a>
-                            @else
-                                <span class="lateral-enlace deshabilitado" title="Disponible en un próximo módulo">
-                                    <i data-lucide="{{ $item['icono'] }}"></i>
-                                    <span>{{ $item['texto'] }}</span>
-                                    <small>Pronto</small>
-                                </span>
-                            @endif
+                            @php $activo = request()->routeIs($item['patron'] ?? $item['ruta']); @endphp
+                            <a href="{{ route($item['ruta']) }}"
+                               @class(['lateral-enlace', 'activo' => $activo])
+                               @if ($activo) aria-current="page" @endif>
+                                <i data-lucide="{{ $item['icono'] }}"></i>
+                                <span>{{ $item['texto'] }}</span>
+                                @if (! empty($item['contador']) && ($n = \App\Support\Contadores::valor($item['contador'])))
+                                    <span class="contador-menu" aria-label="{{ $n }} por revisar">{{ $n }}</span>
+                                @endif
+                            </a>
                         </li>
                     @endforeach
                 </ul>

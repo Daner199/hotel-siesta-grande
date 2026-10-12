@@ -2,120 +2,130 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Agencia;
+use App\Models\EstadoHabitacion;
 use App\Models\EstadoReserva;
+use App\Models\Habitacion;
+use App\Models\Pago;
 use App\Models\Reserva;
+use App\Models\TipoHabitacion;
 use App\Models\Usuario;
+use App\Support\Contadores;
 use App\Support\Disponibilidad;
+use App\Support\Estadias;
+use App\Support\Moneda;
+use App\Support\NoShow;
+use App\Support\Reportes;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
+/**
+ * Inicio de cada panel: los datos del día de cada rol (llegadas, salidas, ocupación,
+ * pendientes de cobro, próximas reservas). Las vistas están en panel/inicio/<rol>.
+ */
 class PanelController extends Controller
 {
     public function admin()
     {
+        $ocupacion = $this->ocupacionEstaNoche();
+        $inicioMes = today()->startOfMonth();
+
+        $libresPorTipo = Disponibilidad::libresPorTipo(today(), today()->addDay());
+        $tipos = TipoHabitacion::where('activo', true)
+            ->withCount(['habitaciones as en_servicio' => fn ($q) => $q->whereHas('estado', fn ($e) => $e->where('nombre', EstadoHabitacion::ACTIVA))])
+            ->orderBy('capacidad')->orderBy('nombre')
+            ->get()
+            ->filter(fn ($t) => $t->en_servicio > 0);
+
         return view('panel.inicio', [
-            'titulo'  => 'Administración',
-            'resumen' => 'Gestiona el personal, las agencias y la información del hotel.',
-
-            'estadisticas' => [
-                [
-                    'texto' => 'Recepcionistas activos',
-                    'valor' => Usuario::where('rol', Usuario::RECEPCIONISTA)->where('activo', true)->count(),
-                    'icono' => 'concierge-bell',
-                    'color' => 'verde',
-                ],
-                [
-                    'texto' => 'Agencias activas',
-                    'valor' => Agencia::where('activa', true)->count(),
-                    'icono' => 'building-2',
-                    'color' => 'rosa',
-                ],
-                [
-                    'texto' => 'Clientes registrados',
-                    'valor' => Usuario::where('rol', Usuario::CLIENTE)->count(),
-                    'icono' => 'users',
-                    'color' => 'dorado',
-                ],
-                [
-                    'texto' => 'Habitaciones',
-                    'valor' => DB::table('habitacion')->count(),
-                    'icono' => 'bed-double',
-                    'color' => 'azul',
-                ],
+            'titulo'   => 'Administración',
+            'rol'      => 'admin',
+            'acciones' => [['texto' => 'Reportes', 'ruta' => route('admin.reportes.index'), 'icono' => 'chart-column']],
+            'cifras'   => [
+                ['texto' => 'Ocupación esta noche', 'valor' => Reportes::celda($ocupacion['porcentaje'], 'porcentaje'),
+                    'detalle' => $ocupacion['ocupadas'] . ' de ' . $ocupacion['enServicio'] . ' habitaciones'],
+                ['texto' => 'Llegan hoy', 'valor' => Estadias::lista('llegadas')->count()],
+                ['texto' => 'Salen hoy', 'valor' => Estadias::lista('salidas')->count()],
+                ['texto' => 'Ingresos del mes', 'valor' => Moneda::formato(Pago::where('estado', Pago::APROBADO)
+                    ->where('fecha_pago', '>=', $inicioMes)->sum('monto')),
+                    'detalle' => ucfirst($inicioMes->locale('es')->isoFormat('MMMM'))],
+                ['texto' => 'Sin adelanto', 'valor' => $this->conEstado(Reserva::query(), [EstadoReserva::PENDIENTE])->count(),
+                    'detalle' => 'reservas pendientes'],
             ],
-
-            'secciones' => [
-                                ['nombre' => 'Recepcionistas', 'descripcion' => 'Crea y gestiona las cuentas del personal de recepción.', 'icono' => 'concierge-bell', 'paso' => 'Paso 1.4b', 'ruta' => 'admin.recepcionistas.index'],
-                ['nombre' => 'Agencias', 'descripcion' => 'Registra agencias y a su persona de contacto.', 'icono' => 'building-2', 'paso' => 'Paso 1.4c', 'ruta' => 'admin.agencias.index'],
-                ['nombre' => 'Clientes', 'descripcion' => 'Consulta los clientes registrados y activa o desactiva sus cuentas.', 'icono' => 'users', 'paso' => 'Paso 1.5', 'ruta' => 'admin.clientes.index'],
-                ['nombre' => 'Datos del hotel', 'descripcion' => 'Fotos, contacto, redes, horarios y ubicación en el mapa.', 'icono' => 'hotel', 'paso' => 'Paso 2.5', 'ruta' => 'admin.hotel.edit'],
-                ['nombre' => 'Tipos y tarifas', 'descripcion' => 'Capacidad de cada tipo y su historial de precios por noche.', 'icono' => 'tags', 'paso' => 'Paso 2.2', 'ruta' => 'admin.tipos.index'],
-                ['nombre' => 'Habitaciones', 'descripcion' => 'Las ' . DB::table('habitacion')->count() . ' habitaciones: número, piso, tipo y estado.', 'icono' => 'bed-double', 'paso' => 'Paso 2.3', 'ruta' => 'admin.habitaciones.index'],
-                ['nombre' => 'Promociones y beneficios', 'descripcion' => 'Paquetes con beneficios configurables y vigencia.', 'icono' => 'sparkles', 'paso' => 'Módulo 3'],
-                ['nombre' => 'Salón de eventos', 'descripcion' => 'Capacidad, costo por hora y reservas del salón.', 'icono' => 'party-popper', 'paso' => 'Módulo 8'],
-                ['nombre' => 'Reportes', 'descripcion' => 'Ocupación, NO_SHOW y reservas de agencias.', 'icono' => 'chart-column', 'paso' => 'Módulo 9'],
-            ],
+            // Ocupación de esta noche por tipo (barras simples en HTML)
+            'porTipo' => $tipos->map(fn ($t) => [
+                'tipo'       => $t->nombreVisible(),
+                'ocupadas'   => $t->en_servicio - ($libresPorTipo[$t->id] ?? 0),
+                'enServicio' => $t->en_servicio,
+            ])->values(),
+            'proximas' => $this->conEstado(Reserva::query(), [EstadoReserva::PENDIENTE, EstadoReserva::CONFIRMADA])
+                ->whereBetween('fecha_entrada', [today()->toDateString(), today()->addDays(7)->toDateString()])
+                ->with(['estado', 'agencia', 'habitaciones'])
+                ->orderBy('fecha_entrada')->orderBy('id')
+                ->limit(8)->get(),
+            'reportes' => Reportes::permitidos(Usuario::ADMINISTRADOR),
         ]);
     }
 
     public function recepcion()
     {
-        \App\Support\NoShow::siCorresponde();
+        NoShow::siCorresponde();
+
+        $ocupacion = $this->ocupacionEstaNoche();
+        $llegadas  = Estadias::lista('llegadas')->with(['estado', 'habitaciones.habitacion'])->get();
+        $salidas   = Estadias::lista('salidas')->with(['estado', 'habitaciones.habitacion', 'habitaciones'])->get();
+        $alojados  = Estadias::lista('alojados')->withCount('habitaciones')->get();
+        $transferencias = Contadores::valor('transferencias');
+
+        $cifras = [
+            ['texto' => 'Llegan hoy', 'valor' => $llegadas->count(), 'ruta' => route('recepcion.estadias.index', ['pestana' => 'llegadas'])],
+            ['texto' => 'Salen hoy', 'valor' => $salidas->count(), 'ruta' => route('recepcion.estadias.index', ['pestana' => 'salidas'])],
+            ['texto' => 'Alojados', 'valor' => $alojados->sum('habitaciones_count'),
+                'detalle' => $alojados->sum('cantidad_personas') . ($alojados->sum('cantidad_personas') === 1 ? ' huésped' : ' huéspedes'), 'ruta' => route('recepcion.alojados')],
+            ['texto' => 'Libres esta noche', 'valor' => $ocupacion['enServicio'] - $ocupacion['ocupadas'],
+                'detalle' => 'de ' . $ocupacion['enServicio'] . ' habitaciones'],
+        ];
+        if ($transferencias > 0) {
+            $cifras[] = ['texto' => 'Transferencias', 'valor' => $transferencias, 'detalle' => 'por revisar',
+                'ruta' => route('recepcion.transferencias.index'), 'alerta' => true];
+        }
 
         return view('panel.inicio', [
-            'titulo'       => 'Recepción',
-            'resumen'      => 'Reservas, llegadas, salidas y cuentas de los huéspedes.',
-            'estadisticas' => [
-                [
-                    'texto' => 'Reservas pendientes',
-                    'valor' => Reserva::whereHas('estado', fn ($q) => $q->where('nombre', EstadoReserva::PENDIENTE))->count(),
-                    'icono' => 'hourglass',
-                    'color' => 'dorado',
-                ],
-                [
-                    'texto' => 'Reservas confirmadas',
-                    'valor' => Reserva::whereHas('estado', fn ($q) => $q->where('nombre', EstadoReserva::CONFIRMADA))->count(),
-                    'icono' => 'calendar-check',
-                    'color' => 'verde',
-                ],
-                [
-                    'texto' => 'Llegan hoy',
-                    'valor' => Reserva::whereDate('fecha_entrada', today())
-                        ->whereHas('estado', fn ($q) => $q->whereIn('nombre', [EstadoReserva::PENDIENTE, EstadoReserva::CONFIRMADA]))
-                        ->count(),
-                    'icono' => 'plane-landing',
-                    'color' => 'rosa',
-                ],
-                [
-                    'texto' => 'Habitaciones libres hoy',
-                    'valor' => Disponibilidad::habitacionesLibres(today(), today()->addDay())->count(),
-                    'icono' => 'bed-double',
-                    'color' => 'azul',
-                ],
+            'titulo'   => 'Recepción',
+            'rol'      => 'recepcion',
+            'acciones' => [
+                ['texto' => 'Check-in / Check-out', 'ruta' => route('recepcion.estadias.index'), 'icono' => 'door-open'],
+                ['texto' => 'Nueva reserva', 'ruta' => route('recepcion.reservas.create'), 'icono' => 'calendar-plus', 'principal' => true],
             ],
-            'secciones'    => [
-                ['nombre' => 'Reservas', 'descripcion' => 'Crea, consulta, edita y cancela reservas de huéspedes.', 'icono' => 'calendar-check', 'paso' => 'Paso 4.6', 'ruta' => 'recepcion.reservas.index'],
-                ['nombre' => 'Pagos', 'descripcion' => 'Registra adelantos y pagos del saldo.', 'icono' => 'wallet', 'paso' => 'Paso 5.4', 'ruta' => 'recepcion.pagos.index'],
-                ['nombre' => 'Mis comisiones', 'descripcion' => 'Bs 5 por cada reserva que confirmas.', 'icono' => 'coins', 'paso' => 'Paso 5.4', 'ruta' => 'recepcion.comisiones'],
-                ['nombre' => 'Check-in y check-out', 'descripcion' => 'Llegadas, alojados, salidas y cuenta del huésped.', 'icono' => 'door-open', 'paso' => 'Paso 6.3', 'ruta' => 'recepcion.estadias.index'],
-                ['nombre' => 'Consumos', 'descripcion' => 'Restaurante y frigobar cargados a la cuenta.', 'icono' => 'utensils', 'paso' => 'Paso 7.1', 'ruta' => 'recepcion.consumos.index'],
-                ['nombre' => 'Huéspedes alojados', 'descripcion' => 'Quién está en el hotel ahora mismo.', 'icono' => 'users', 'paso' => 'Módulo 9'],
-            ],
+            'cifras'    => $cifras,
+            'llegadas'  => $llegadas,
+            'salidas'   => $salidas,
+            // Pendientes de pago: las que llegan antes primero
+            'pendientes' => $this->conEstado(Reserva::query(), [EstadoReserva::PENDIENTE])
+                ->with(['estado', 'habitaciones'])
+                ->orderBy('fecha_entrada')->orderBy('id')
+                ->limit(6)->get(),
         ]);
     }
 
-    public function agencia()
+    public function agencia(Request $request)
     {
-        return view('panel.inicio', [
-            'titulo'       => 'Agencia',
-            'resumen'      => 'Reserva habitaciones para tus clientes con ' . Disponibilidad::DESCUENTO_AGENCIA . ' % de descuento.',
-            'estadisticas' => [],
-            'secciones'    => [
-                ['nombre' => 'Nueva reserva', 'descripcion' => 'Reserva para el titular y sus acompañantes.', 'icono' => 'calendar-plus', 'paso' => 'Paso 4.5', 'ruta' => 'agencia.reservas.create'],
-                ['nombre' => 'Mis reservas', 'descripcion' => 'Estado de todas las reservas de la agencia.', 'icono' => 'calendar-check', 'paso' => 'Paso 4.5', 'ruta' => 'agencia.reservas.index'],
-                ['nombre' => 'Pagos', 'descripcion' => 'Adelantos y saldos de cada reserva.', 'icono' => 'wallet', 'paso' => 'Paso 5.3', 'ruta' => 'agencia.pagos.index'],
-            ],
+        $propias = fn () => Reserva::where('agencia_id', $request->user()->agencia->id);
+
+        return view('panel.inicio', $this->datosCuenta($propias, 'agencia') + [
+            'titulo' => $request->user()->agencia->nombre,
+            'rol'    => 'agencia',
+            'acciones' => [['texto' => 'Nueva reserva', 'ruta' => route('agencia.reservas.create'), 'icono' => 'calendar-plus', 'principal' => true]],
+        ]);
+    }
+
+    public function cliente(Request $request)
+    {
+        $propias = fn () => Reserva::where('cliente_id', $request->user()->id);
+
+        return view('panel.inicio', $this->datosCuenta($propias, 'cliente') + [
+            'titulo' => 'Mi cuenta',
+            'rol'    => 'cliente',
+            'acciones' => [['texto' => 'Nueva reserva', 'ruta' => route('cliente.reservas.create'), 'icono' => 'calendar-plus', 'principal' => true]],
         ]);
     }
 
@@ -139,17 +149,54 @@ class PanelController extends Controller
         return redirect()->route($ruta, $request->only(['llegada', 'salida', 'tipo']));
     }
 
-    public function cliente()
+    // Cliente y agencia: próximas reservas, lo que falta pagar y la próxima estadía
+    private function datosCuenta(\Closure $propias, string $prefijo): array
     {
-        return view('panel.inicio', [
-            'titulo'       => 'Mi cuenta',
-            'resumen'      => 'Consulta tus reservas, tus pagos y el estado de tu cuenta.',
-            'estadisticas' => [],
-            'secciones'    => [
-                ['nombre' => 'Nueva reserva', 'descripcion' => 'Elige fechas y habitaciones: el total se calcula al instante.', 'icono' => 'calendar-plus', 'paso' => 'Paso 4.4', 'ruta' => 'cliente.reservas.create'],
-                ['nombre' => 'Mis reservas', 'descripcion' => 'Estado y detalle de tus reservas.', 'icono' => 'calendar-check', 'paso' => 'Paso 4.4', 'ruta' => 'cliente.reservas.index'],
-                ['nombre' => 'Mis pagos', 'descripcion' => 'Lo que pagaste y lo que falta pagar.', 'icono' => 'wallet', 'paso' => 'Paso 5.3', 'ruta' => 'cliente.pagos.index'],
-            ],
-        ]);
+        $activas = $this->conEstado($propias(), EstadoReserva::OCUPAN)
+            ->with(['estado', 'habitaciones.habitacion.tipo'])
+            ->orderBy('fecha_entrada')->orderBy('id')
+            ->get();
+
+        $porPagar = round($activas->sum(fn ($r) => $r->saldo()), 2);
+        $inicioMes = today()->startOfMonth();
+
+        $cifras = [
+            ['texto' => 'Reservas activas', 'valor' => $activas->count(), 'ruta' => route($prefijo . '.reservas.index')],
+            ['texto' => 'Llegan esta semana', 'valor' => $activas->filter(fn ($r) => $r->fecha_entrada->between(today(), today()->addDays(7)))->count()],
+            ['texto' => 'Por pagar', 'valor' => Moneda::formato($porPagar), 'alerta' => $porPagar > 0],
+        ];
+        $cifras[] = $prefijo === 'agencia'
+            ? ['texto' => 'Reservado este mes', 'valor' => Moneda::formato(
+                $this->conEstado($propias(), [EstadoReserva::CANCELADA], false)
+                    ->where('fecha_creacion', '>=', $inicioMes)->with('habitaciones')->get()->sum(fn ($r) => $r->total())),
+                'detalle' => ucfirst($inicioMes->locale('es')->isoFormat('MMMM'))]
+            : ['texto' => 'Estadías realizadas', 'valor' => $this->conEstado($propias(), [EstadoReserva::CHECK_OUT])->count()];
+
+        return [
+            'cifras'   => $cifras,
+            'prefijo'  => $prefijo,
+            'proxima'  => $activas->first(),
+            'activas'  => $activas->take(8),
+        ];
+    }
+
+    // Habitaciones en servicio y cuántas están ocupadas esta noche (reservas o bloqueos)
+    private function ocupacionEstaNoche(): array
+    {
+        $enServicio = Habitacion::whereHas('estado', fn ($q) => $q->where('nombre', EstadoHabitacion::ACTIVA))
+            ->whereHas('tipo', fn ($q) => $q->where('activo', true))
+            ->count();
+        $ocupadas = $enServicio - Disponibilidad::habitacionesLibres(today(), today()->addDay())->count();
+
+        return [
+            'enServicio' => $enServicio,
+            'ocupadas'   => $ocupadas,
+            'porcentaje' => $enServicio ? $ocupadas / $enServicio * 100 : 0,
+        ];
+    }
+
+    private function conEstado(Builder $consulta, array $estados, bool $incluir = true): Builder
+    {
+        return $consulta->whereHas('estado', fn ($q) => $incluir ? $q->whereIn('nombre', $estados) : $q->whereNotIn('nombre', $estados));
     }
 }

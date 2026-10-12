@@ -147,4 +147,31 @@ class Estadias
             ->orderBy('fecha_entrada')
             ->pluck('codigo');
     }
+
+    // Listas de recepción: llegadas, alojados, salidas y no-show (pestañas de Check-in / Check-out e inicio)
+    public static function lista(string $pestana)
+    {
+        $hoy = today()->toDateString();
+        $estado = fn (array $nombres) => fn ($q) => $q->whereIn('nombre', $nombres);
+
+        return match ($pestana) {
+            // Confirmadas (y pendientes, para cobrar el adelanto) que llegan hoy o ayer dentro del plazo
+            'llegadas' => Reserva::whereHas('estado', $estado([EstadoReserva::CONFIRMADA, EstadoReserva::PENDIENTE]))
+                ->where('fecha_entrada', '<=', $hoy)
+                ->where('fecha_entrada', '>=', today()->subDay()->toDateString())
+                ->orderBy('fecha_entrada')->orderBy('codigo'),
+            'alojados' => Reserva::whereHas('estado', $estado([EstadoReserva::CHECK_IN]))
+                ->orderBy('fecha_salida')->orderBy('codigo'),
+            'salidas' => Reserva::whereHas('estado', $estado([EstadoReserva::CHECK_IN]))
+                ->where('fecha_salida', '<=', $hoy)
+                ->orderBy('fecha_salida')->orderBy('codigo'),
+            // Últimos 30 días: no-show y pendientes liberadas sin pago
+            default => Reserva::where(fn ($q) => $q
+                    ->whereHas('estado', $estado([EstadoReserva::NO_SHOW]))
+                    ->orWhere(fn ($w) => $w->whereHas('estado', $estado([EstadoReserva::CANCELADA]))
+                        ->where('observacion', 'LIKE', '%' . NoShow::NOTA_VENCIDA . '%')))
+                ->where('fecha_entrada', '>=', today()->subDays(30)->toDateString())
+                ->orderByDesc('fecha_entrada')->orderBy('codigo'),
+        };
+    }
 }

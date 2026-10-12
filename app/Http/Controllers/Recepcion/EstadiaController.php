@@ -36,7 +36,7 @@ class EstadiaController extends Controller
         $buscar  = trim((string) $request->query('buscar'));
         $texto   = '%' . addcslashes($buscar, '%_\\') . '%';
 
-        $reservas = $this->consulta($pestana)
+        $reservas = Estadias::lista($pestana)
             ->with(['estado', 'habitaciones.habitacion.tipo', 'agencia'])
             ->when($buscar !== '', fn ($q) => $q->where(fn ($w) => $w
                 ->where('codigo', 'ILIKE', $texto)
@@ -49,7 +49,7 @@ class EstadiaController extends Controller
             'reservas' => $reservas,
             'pestana'  => $pestana,
             'buscar'   => $buscar,
-            'conteos'  => collect(self::PESTANAS)->map(fn ($t, $clave) => $this->consulta($clave)->count()),
+            'conteos'  => collect(self::PESTANAS)->map(fn ($t, $clave) => Estadias::lista($clave)->count()),
         ]);
     }
 
@@ -127,32 +127,5 @@ class EstadiaController extends Controller
             $r['no_show'] + $r['liberadas'] === 0
                 ? 'No hay reservas vencidas.'
                 : "No-show: {$r['no_show']} · pendientes liberadas: {$r['liberadas']}.");
-    }
-
-    // Filtro de cada pestaña
-    private function consulta(string $pestana)
-    {
-        $hoy = today()->toDateString();
-        $estado = fn (array $nombres) => fn ($q) => $q->whereIn('nombre', $nombres);
-
-        return match ($pestana) {
-            // Confirmadas (y pendientes, para cobrar el adelanto) que llegan hoy o ayer dentro del plazo
-            'llegadas' => Reserva::whereHas('estado', $estado([EstadoReserva::CONFIRMADA, EstadoReserva::PENDIENTE]))
-                ->where('fecha_entrada', '<=', $hoy)
-                ->where('fecha_entrada', '>=', today()->subDay()->toDateString())
-                ->orderBy('fecha_entrada')->orderBy('codigo'),
-            'alojados' => Reserva::whereHas('estado', $estado([EstadoReserva::CHECK_IN]))
-                ->orderBy('fecha_salida')->orderBy('codigo'),
-            'salidas' => Reserva::whereHas('estado', $estado([EstadoReserva::CHECK_IN]))
-                ->where('fecha_salida', '<=', $hoy)
-                ->orderBy('fecha_salida')->orderBy('codigo'),
-            // Últimos 30 días: no-show y pendientes liberadas sin pago
-            default => Reserva::where(fn ($q) => $q
-                    ->whereHas('estado', $estado([EstadoReserva::NO_SHOW]))
-                    ->orWhere(fn ($w) => $w->whereHas('estado', $estado([EstadoReserva::CANCELADA]))
-                        ->where('observacion', 'LIKE', '%' . NoShow::NOTA_VENCIDA . '%')))
-                ->where('fecha_entrada', '>=', today()->subDays(30)->toDateString())
-                ->orderByDesc('fecha_entrada')->orderBy('codigo'),
-        };
     }
 }

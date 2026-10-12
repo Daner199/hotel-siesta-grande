@@ -222,6 +222,7 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
     width: 100%;
     max-width: 1280px;
     display: grid;
+    grid-template-columns: minmax(0, 1fr); /* una tabla ancha no estira la página en celular */
     gap: 1.75rem;
     padding: clamp(1.25rem, 3vw, 2.5rem);
 }
@@ -1732,3 +1733,90 @@ a.lateral-enlace:hover { background: rgba(255, 255, 255, .06); color: #fff; }
 /* Líneas del resumen: "1 habitación Doble × 3 noches" */
 .resumen-lineas { margin: 0 0 .75rem; padding: 0; list-style: none; font-size: .95rem; }
 .resumen-lineas li + li { margin-top: .2rem; }
+
+/* ---------- Inicio de cada panel: datos del día (plano, sin degradados) ---------- */
+.saludo-inicio { margin: 0 0 .3rem; font-size: .95rem; color: var(--piedra); }
+
+.cifras-dia {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1px;
+    margin: 1.75rem 0 1rem;
+    overflow: hidden;
+    background: #E3E6E1;
+    border: 1px solid #E3E6E1;
+    border-radius: 8px;
+}
+.cifras-dia > div { padding: 1rem 1.25rem; background: #fff; }
+.cifras-dia dt { font-size: .85rem; color: var(--piedra); }
+.cifras-dia dt a { color: inherit; text-decoration: none; }
+.cifras-dia dt a:hover { color: var(--selva); text-decoration: underline; }
+.cifras-dia dd { margin: .2rem 0 0; font-size: 1.6rem; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.cifras-dia .cifra-detalle { margin-top: .15rem; font-size: .82rem; font-weight: 400; color: var(--piedra); }
+.cifra-alerta dd:not(.cifra-detalle) { color: var(--tajibo); }
+
+.inicio-rejilla { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.inicio-rejilla > .caja-plana + .caja-plana { margin-top: 0; }
+.caja-inicio { margin-top: 1rem; }
+.caja-cabecera { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; margin-bottom: .75rem; }
+.caja-cabecera h2 { margin: 0; }
+.caja-cabecera a { font-size: .88rem; font-weight: 600; color: var(--selva); }
+.caja-nota { font-size: .85rem; color: var(--piedra); }
+.dato-gris { font-size: .85rem; color: var(--piedra); }
+
+.lista-trabajo { margin: 0; padding: 0; list-style: none; }
+.lista-trabajo li {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: .9rem;
+    padding: .7rem 0;
+    border-bottom: 1px solid #E3E6E1;
+}
+.lista-trabajo li:last-child { border-bottom: 0; }
+.lista-trabajo strong, .lista-trabajo .dato-gris { display: block; }
+.lista-trabajo form { margin: 0; }
+
+.lista-enlaces { margin: 0; padding: 0; list-style: none; }
+.lista-enlaces a {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .65rem 0;
+    color: var(--tinta);
+    text-decoration: none;
+    border-bottom: 1px solid #E3E6E1;
+}
+.lista-enlaces li:last-child a { border-bottom: 0; }
+.lista-enlaces a:hover { color: var(--tajibo); }
+.lista-enlaces svg { width: 16px; height: 16px; color: var(--piedra); }
+
+.tabla.tabla-inicio th, .tabla.tabla-inicio td { padding: .6rem .9rem; font-size: .92rem; }
+.tabla-inicio .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.caja-cabecera a { text-decoration: none; }
+.caja-cabecera a:hover { text-decoration: underline; }
+
+.barras-inicio { margin: 0; padding: 0; list-style: none; }
+.barras-inicio li { display: grid; grid-template-columns: 110px 1fr 70px; align-items: center; gap: .9rem; padding: .55rem 0; }
+.barras-inicio strong { font-size: .9rem; text-align: right; font-variant-numeric: tabular-nums; }
+.barras-inicio .barra-progreso { display: block; height: 10px; overflow: hidden; background: #ECEEE8; border-radius: 4px; }
+.barras-inicio .barra-progreso span { display: block; height: 100%; min-width: 0; background: var(--selva); border-radius: 4px; }
+
+.proxima-datos { display: grid; gap: 1rem 2.5rem; margin-bottom: 1rem; }
+.proxima-fechas { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin: 0 0 .35rem; font-size: 1.35rem; font-weight: 600; }
+.proxima-fechas svg { width: 18px; height: 18px; color: var(--piedra); }
+.proxima-datos p.dato-gris { margin: .2rem 0 0; }
+
+@media (min-width: 1100px) {
+    .inicio-rejilla { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 900px) {
+    .proxima-datos { grid-template-columns: 1fr 320px; }
+}
+@media (max-width: 560px) {
+    .cifras-dia { grid-template-columns: 1fr 1fr; }
+    .cifras-dia dd { font-size: 1.3rem; }
+    .cifras-dia > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+    .lista-trabajo li { grid-template-columns: 1fr auto; }
+    .lista-trabajo .numeros-habitacion { grid-column: 1 / -1; }
+}
