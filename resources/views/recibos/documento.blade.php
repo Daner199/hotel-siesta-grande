@@ -15,7 +15,7 @@
     $total   = $reserva->total();
     // Consumos cargados hasta que se emitió el recibo (los posteriores no cuentan)
     $consumosEntonces = round((float) $reserva->consumos()
-        ->where('fecha_consumo', '<=', $recibo->fecha_emision)
+        ->where('fecha_consumo', '<', $recibo->fecha_emision->copy()->addSecond()) // la BD guarda milisegundos
         ->sum(\Illuminate\Support\Facades\DB::raw('cantidad * precio_unitario')), 2);
     $pagadoEntonces = max(0, $total + $consumosEntonces - (float) $recibo->saldo_pendiente);
 

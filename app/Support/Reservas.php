@@ -94,7 +94,7 @@ class Reservas
         $tipos = TipoHabitacion::where('activo', true)->orderBy('id')->get();
 
         $datosTipos = [];
-        $porTipo = [];
+        $elegidas = []; // ['Doble' => 1] para las líneas del resumen
         $totales = ['habitaciones' => 0, 'capacidad' => 0, 'sin_descuento' => 0.0, 'total' => 0.0];
 
         foreach ($tipos as $tipo) {
@@ -110,7 +110,7 @@ class Reservas
             $n = (int) ($cantidades[$tipo->id] ?? 0);
             if ($n > 0 && $precio !== null) {
                 $estadia = Disponibilidad::calcularEstadia($precio, $noches);
-                $porTipo[$tipo->nombreVisible()] = $n;
+                $elegidas[$tipo->nombreVisible()] = $n;
                 $totales['habitaciones']  += $n;
                 $totales['capacidad']     += $n * $tipo->capacidad;
                 $totales['sin_descuento'] += $n * $base * $noches;
@@ -132,7 +132,7 @@ class Reservas
 
             $resumen = [
                 'habitaciones'  => $totales['habitaciones'],
-                'lineas'        => self::lineas($porTipo, $noches),
+                'lineas'        => self::lineas($elegidas, $noches),
                 'capacidad'     => $totales['capacidad'],
                 'etiquetas'     => $etiquetas,
                 'sin_descuento' => $etiquetas ? Moneda::formato($totales['sin_descuento']) : null,
